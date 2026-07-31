@@ -123,7 +123,7 @@ update aiusagelimits -
 fix broken logics - 
 update test mode - 
 update deck logic - 
-Merge branch 'main' of https://github.com/robot3-track/cognitastudyfirebase - 
+Merge branch 'main' - 
 update deck logics - 
 Update iframe source URL in IReadyPrep component - 
 Mask profile picture for private accounts - 
