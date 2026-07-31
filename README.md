@@ -1,5 +1,8 @@
 ## Cognita Study
 
+## Disclaimer
+This is a copy of my functional repo that actually manages the connection to Vercel Deployment. Unfortuantely, I wasn't able to publish my real repo because it's past commits included leaked API keys that I will not want to share. However, below is the list of commits I had done on that repo with no API leaking:
+
 ## WELCOME!
 Welcome to Cognita Study, a study app built by a student of MHS. It features 40+ tools and requires no purchases at all, with no ads as well!
 
