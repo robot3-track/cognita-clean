@@ -1,7 +1,7 @@
 {
   "projectId": "cognitastudy",
   "appId": "1:131896144044:web:eb9e3c91f95a3635446f09",
-  "apiKey": "AIzaSyC3NSp-goinqwTtKLjqo90EDoOjOnLoeRA",
+  "apiKey": "Firebase-API-Key",
   "authDomain": "cognitastudy.firebaseapp.com",
   "firestoreDatabaseId": "(default)",
   "storageBucket": "cognitastudy.firebasestorage.app",
