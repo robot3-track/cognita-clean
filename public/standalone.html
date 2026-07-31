@@ -1,0 +1,647 @@
+const db = globalThis.__B44_DB__ || { auth:{ isAuthenticated: async()=>false, me: async()=>null }, entities:new Proxy({}, { get:()=>({ filter:async()=>[], get:async()=>null, create:async()=>({}), update:async()=>({}), delete:async()=>({}) }) }), integrations:{ Core:{ UploadFile:async()=>({ file_url:'' }) } } };
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cognita — AI Study Platform</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- React + ReactDOM + Babel (for JSX in browser) -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- KaTeX for LaTeX math rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+
+  <!-- Marked for markdown -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <!-- Lucide icons -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+  <style>
+    :root {
+      --app-bg: #0d0d14;
+      --app-surface: rgba(255,255,255,0.05);
+      --app-surface-solid: #1a1a2e;
+      --app-border: rgba(255,255,255,0.08);
+      --app-text: #f0f0f8;
+      --app-text-muted: rgba(240,240,248,0.45);
+      --app-nav-bg: rgba(13,13,20,0.85);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--app-bg); color: var(--app-text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+    .card { background: var(--app-surface); border: 1px solid var(--app-border); }
+    input, textarea { background: var(--app-surface); border: 1px solid var(--app-border); color: var(--app-text); outline: none; }
+    input::placeholder, textarea::placeholder { color: var(--app-text-muted); }
+    .prose p { margin-bottom: 0.5rem; line-height: 1.7; }
+    .prose ul { list-style: disc; margin-left: 1.2rem; margin-bottom: 0.5rem; }
+    .prose ol { list-style: decimal; margin-left: 1.2rem; margin-bottom: 0.5rem; }
+    .prose code { background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 4px; font-size: 0.8em; }
+    .prose pre { background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 10px; overflow-x: auto; margin-bottom: 0.5rem; }
+    .prose h1,.prose h2,.prose h3 { font-weight: 700; margin-bottom: 0.4rem; }
+    .prose strong { font-weight: 700; }
+    .prose blockquote { border-left: 3px solid #7c3aed; padding-left: 0.75rem; opacity: 0.8; }
+    .flip-card { perspective: 1000px; }
+    .flip-card-inner { transition: transform 0.5s; transform-style: preserve-3d; position: relative; }
+    .flip-card-inner.flipped { transform: rotateY(180deg); }
+    .flip-card-front, .flip-card-back { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+    .flip-card-back { transform: rotateY(180deg); position: absolute; inset: 0; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .animate-spin { animation: spin 1s linear infinite; }
+  </style>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            violet: { 400: '#a78bfa', 500: '#8b5cf6', 600: '#7c3aed' },
+            blue: { 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb' },
+            emerald: { 400: '#34d399', 500: '#10b981' },
+            amber: { 400: '#fbbf24' },
+            red: { 400: '#f87171' },
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+// ── Mock data ──────────────────────────────────────────────────────────────
+const MOCK_USER = { id: "demo", email: "demo@cognita.app", full_name: "Demo User", role: "user" };
+const INITIAL_DECKS = [
+  { id: "d1", title: "Biology 101", subject: "Science", card_count: 24, color: "#7c3aed", is_public: false, description: "Cell structure, DNA, and evolution" },
+  { id: "d2", title: "World History", subject: "History", card_count: 18, color: "#2563eb", is_public: true, description: "From ancient civilisations to WW2", author_name: "Alex" },
+  { id: "d3", title: "Calculus Essentials", subject: "Math", card_count: 32, color: "#0891b2", is_public: true, description: "Derivatives, integrals, and limits", author_name: "Sam" },
+];
+const INITIAL_CARDS = {
+  d1: [
+    { id: "c1", front: "What is a cell?", back: "The basic structural and functional unit of all living organisms.", deck_id: "d1" },
+    { id: "c2", front: "What does DNA stand for?", back: "Deoxyribonucleic acid — the molecule carrying genetic instructions.", deck_id: "d1" },
+    { id: "c3", front: "What is mitosis?", back: "Cell division resulting in two genetically identical daughter cells.", deck_id: "d1" },
+  ],
+  d2: [
+    { id: "c4", front: "When did WW2 end?", back: "1945, with Germany surrendering in May and Japan in September.", deck_id: "d2" },
+    { id: "c5", front: "What was the Renaissance?", back: "A cultural movement in 14th–17th century Europe celebrating arts and sciences.", deck_id: "d2" },
+  ],
+  d3: [
+    { id: "c6", front: "Derivative of $x^2$?", back: "$\\frac{d}{dx}x^2 = 2x$", deck_id: "d3" },
+    { id: "c7", front: "What is $\\int x\\,dx$?", back: "$\\frac{x^2}{2} + C$", deck_id: "d3" },
+  ],
+};
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function renderLatex(text) {
+  if (!text) return "";
+  const regex = /\$\$[\s\S]+?\$\$|\$[^$\n]+?\$/g;
+  const parts = [];
+  let last = 0, match, key = 0;
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > last) parts.push({ type: "text", content: text.slice(last, match.index), key: key++ });
+    const isBlock = match[0].startsWith("$$");
+    const inner = isBlock ? match[0].slice(2, -2).trim() : match[0].slice(1, -1).trim();
+    parts.push({ type: isBlock ? "block" : "inline", content: inner, key: key++ });
+    last = match.index + match[0].length;
+  }
+  if (last < text.length) parts.push({ type: "text", content: text.slice(last), key: key++ });
+  return parts;
+}
+
+function LatexText({ text }) {
+  const parts = renderLatex(text || "");
+  const containerRef = useRef(null);
+  useEffect(() => {
+    if (!window.katex || !containerRef.current) return;
+    containerRef.current.querySelectorAll(".katex-render").forEach(el => {
+      const math = el.dataset.math;
+      const isBlock = el.dataset.block === "1";
+      try { window.katex.render(math, el, { displayMode: isBlock, throwOnError: false }); }
+      catch {}
+    });
+  });
+  return (
+    <span ref={containerRef}>
+      {parts.map(p => {
+        if (p.type === "block") return <span key={p.key} className="katex-render block my-2" data-math={p.content} data-block="1" />;
+        if (p.type === "inline") return <span key={p.key} className="katex-render" data-math={p.content} data-block="0" />;
+        return <span key={p.key}>{p.content}</span>;
+      })}
+    </span>
+  );
+}
+
+function MarkdownMsg({ content }) {
+  const html = window.marked ? window.marked.parse(content || "") : (content || "").replace(/\n/g, "<br/>");
+  return (
+    <div className="prose text-sm leading-relaxed"
+      dangerouslySetInnerHTML={{ __html: html }} />
+  );
+}
+
+// ── Icons (fallback SVG wrappers) ──────────────────────────────────────────
+const Icon = ({ name, className = "w-5 h-5" }) => {
+  const ref = useRef(null);
+  useEffect(() => {
+    if (window.lucide && ref.current) {
+      ref.current.innerHTML = "";
+      const el = document.createElement("i");
+      el.setAttribute("data-lucide", name);
+      ref.current.appendChild(el);
+      window.lucide.createIcons({ icons: window.lucide.icons });
+    }
+  }, [name]);
+  return <span ref={ref} className={`inline-flex items-center justify-center ${className}`} />;
+};
+
+// ── Components ─────────────────────────────────────────────────────────────
+function Spinner() {
+  return <div className="w-5 h-5 border-2 border-violet-400 border-t-transparent rounded-full animate-spin" />;
+}
+
+function StarRow({ rating = 0, count = 0, onRate }) {
+  return (
+    <div className="flex items-center gap-1">
+      {[1,2,3,4,5].map(s => (
+        <button key={s} onClick={() => onRate && onRate(s)} className="text-amber-400 text-sm hover:scale-110 transition-transform">
+          {s <= Math.round(rating) ? "★" : "☆"}
+        </button>
+      ))}
+      {count > 0 && <span className="text-xs ml-1" style={{ color: "var(--app-text-muted)" }}>{rating.toFixed(1)} ({count})</span>}
+    </div>
+  );
+}
+
+// ── Pages ──────────────────────────────────────────────────────────────────
+
+function HomePage({ setPage, decks, setActiveDeck }) {
+  const tools = [
+    { label: "Spaced Repetition", icon: "brain", page: "spaced", gradient: "from-violet-600 to-purple-600" },
+    { label: "Checkpoint Quiz", icon: "target", page: "checkpoint", gradient: "from-blue-600 to-cyan-600" },
+    { label: "Write Mode", icon: "pen-line", page: "write", gradient: "from-emerald-600 to-teal-600" },
+    { label: "Matching Game", icon: "gamepad-2", page: "match", gradient: "from-pink-600 to-rose-600" },
+    { label: "Public Decks", icon: "globe", page: "public", gradient: "from-amber-600 to-orange-600" },
+    { label: "AI Chat", icon: "message-square", page: "chat", gradient: "from-indigo-600 to-violet-600" },
+  ];
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-10 pb-28">
+      {/* Welcome */}
+      <div className="mb-8">
+        <p className="text-sm mb-1" style={{ color: "var(--app-text-muted)" }}>Welcome back,</p>
+        <h1 className="text-3xl font-black tracking-tight">Demo User 👋</h1>
+        <p className="text-sm mt-1" style={{ color: "var(--app-text-muted)" }}>You have {decks.length} decks · Keep studying!</p>
+      </div>
+
+      {/* Quick tools */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
+        {tools.map(t => (
+          <button key={t.page} onClick={() => setPage(t.page)}
+            className={`flex flex-col items-start gap-2 p-4 rounded-2xl bg-gradient-to-br ${t.gradient} text-white font-semibold text-sm text-left hover:opacity-90 transition-all`}>
+            <span className="text-xl">{
+              t.icon === "brain" ? "🧠" : t.icon === "target" ? "🎯" : t.icon === "pen-line" ? "✍️" :
+              t.icon === "gamepad-2" ? "🎮" : t.icon === "globe" ? "🌐" : "💬"
+            }</span>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* My Decks */}
+      <h2 className="text-lg font-bold mb-3">My Decks</h2>
+      <div className="space-y-2">
+        {decks.map(d => (
+          <button key={d.id} onClick={() => { setActiveDeck(d); setPage("study"); }}
+            className="w-full flex items-center gap-4 rounded-2xl p-4 card text-left hover:opacity-90 transition-all">
+            <div className="w-10 h-10 rounded-xl shrink-0" style={{ background: d.color }} />
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-sm truncate">{d.title}</p>
+              <p className="text-xs" style={{ color: "var(--app-text-muted)" }}>{d.subject} · {d.card_count} cards</p>
+            </div>
+            <span className="text-xs text-violet-400 font-semibold">Study →</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function StudyPage({ deck, cards, setPage }) {
+  const [idx, setIdx] = useState(0);
+  const [flipped, setFlipped] = useState(false);
+  const [done, setDone] = useState(false);
+  if (!deck || !cards?.length) return (
+    <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+      <p className="text-lg font-bold">No cards in this deck.</p>
+      <button onClick={() => setPage("home")} className="text-violet-400 underline">← Back</button>
+    </div>
+  );
+  const card = cards[idx];
+  if (done) return (
+    <div className="flex flex-col items-center justify-center min-h-screen gap-6 px-6">
+      <div className="text-5xl">🎉</div>
+      <h2 className="text-2xl font-black">Deck Complete!</h2>
+      <p style={{ color: "var(--app-text-muted)" }}>You reviewed all {cards.length} cards.</p>
+      <div className="flex gap-3">
+        <button onClick={() => { setIdx(0); setFlipped(false); setDone(false); }} className="px-6 py-3 rounded-2xl card text-sm font-semibold">Restart</button>
+        <button onClick={() => setPage("home")} className="px-6 py-3 rounded-2xl bg-violet-600 text-white text-sm font-semibold">← Home</button>
+      </div>
+    </div>
+  );
+  return (
+    <div className="max-w-xl mx-auto px-4 py-10 pb-28">
+      <div className="flex items-center justify-between mb-6">
+        <button onClick={() => setPage("home")} className="text-sm font-medium" style={{ color: "var(--app-text-muted)" }}>← {deck.title}</button>
+        <span className="text-sm" style={{ color: "var(--app-text-muted)" }}>{idx+1} / {cards.length}</span>
+      </div>
+      <div className="flip-card h-64 cursor-pointer" onClick={() => setFlipped(f => !f)}>
+        <div className={`flip-card-inner w-full h-full ${flipped ? "flipped" : ""}`}>
+          <div className="flip-card-front w-full h-full rounded-3xl card flex items-center justify-center p-8 text-center">
+            <p className="text-xl font-semibold leading-relaxed"><LatexText text={card.front} /></p>
+          </div>
+          <div className="flip-card-back w-full h-full rounded-3xl flex items-center justify-center p-8 text-center" style={{ background: "rgba(124,58,237,0.15)", border: "1px solid rgba(124,58,237,0.3)" }}>
+            <p className="text-lg leading-relaxed"><LatexText text={card.back} /></p>
+          </div>
+        </div>
+      </div>
+      <p className="text-xs text-center mt-3 mb-6" style={{ color: "var(--app-text-muted)" }}>{flipped ? "Answer" : "Tap card to reveal"}</p>
+      {flipped && (
+        <div className="grid grid-cols-3 gap-3">
+          {[["Hard","🔴","bg-red-500/10 border-red-500/20 text-red-400"],["Good","🟡","bg-amber-500/10 border-amber-500/20 text-amber-400"],["Easy","🟢","bg-emerald-500/10 border-emerald-500/20 text-emerald-400"]].map(([label,_,cls]) => (
+            <button key={label} onClick={() => { setFlipped(false); if (idx < cards.length-1) setIdx(i=>i+1); else setDone(true); }}
+              className={`py-4 rounded-2xl border font-semibold text-sm ${cls} transition-all hover:opacity-80`}>{label}</button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ChatPage({ setPage }) {
+  const [messages, setMessages] = useState([
+    { role: "assistant", content: "Hi! I'm **Cognita AI**, your study assistant. Ask me anything — I can explain concepts, help you memorize, solve math with $LaTeX$, and more! 🚀" }
+  ]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const bottomRef = useRef(null);
+
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
+
+  const send = async () => {
+    if (!input.trim() || loading) return;
+    const userMsg = { role: "user", content: input.trim() };
+    setMessages(prev => [...prev, userMsg]);
+    setInput("");
+    setLoading(true);
+    // Simulate AI response (demo only — real app uses db.integrations.Core.InvokeLLM)
+    await new Promise(r => setTimeout(r, 900));
+    const demos = [
+      "Great question! Here's an explanation with math: The quadratic formula is $$x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$$",
+      "Let me break that down:\n\n1. **First**, understand the core concept\n2. **Then**, practice with examples\n3. **Finally**, test yourself\n\nWant me to generate flashcards from this?",
+      "In the **real app**, I connect to a live AI API and give full responses. This demo shows the rendering pipeline — markdown, **bold**, *italic*, `code`, and $inline$ math all work!",
+    ];
+    const aiMsg = { role: "assistant", content: demos[Math.floor(Math.random() * demos.length)] };
+    setMessages(prev => [...prev, aiMsg]);
+    setLoading(false);
+  };
+
+  return (
+    <div className="flex flex-col" style={{ height: "calc(100vh - 64px)" }}>
+      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
+        {messages.map((msg, i) => (
+          <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+            <div className={`max-w-[80%] px-4 py-3 rounded-2xl text-sm ${msg.role === "user" ? "bg-violet-600 text-white rounded-br-sm" : "card rounded-bl-sm"}`}>
+              {msg.role === "assistant" ? <MarkdownMsg content={msg.content} /> : <span>{msg.content}</span>}
+            </div>
+          </div>
+        ))}
+        {loading && (
+          <div className="flex justify-start">
+            <div className="px-4 py-3 rounded-2xl card rounded-bl-sm"><Spinner /></div>
+          </div>
+        )}
+        <div ref={bottomRef} />
+      </div>
+      <div className="px-4 py-4 border-t" style={{ borderColor: "var(--app-border)" }}>
+        <div className="flex gap-3 max-w-3xl mx-auto">
+          <input value={input} onChange={e => setInput(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && !e.shiftKey && send()}
+            placeholder="Ask anything..."
+            className="flex-1 px-4 py-3 rounded-2xl text-sm focus:border-violet-500/50 transition-colors" />
+          <button onClick={send} disabled={!input.trim() || loading}
+            className="bg-violet-600 hover:bg-violet-500 disabled:opacity-40 text-white px-4 py-3 rounded-2xl transition-all">
+            ➤
+          </button>
+        </div>
+        <p className="text-center text-xs mt-2" style={{ color: "var(--app-text-muted)" }}>Demo mode — live app connects to real AI API</p>
+      </div>
+    </div>
+  );
+}
+
+function PublicDecksPage({ decks, setActiveDeck, setPage }) {
+  const [search, setSearch] = useState("");
+  const [ratings, setRatings] = useState({ d2: { avg: 4.3, count: 12 }, d3: { avg: 4.8, count: 27 } });
+  const pub = decks.filter(d => d.is_public && (!search || d.title.toLowerCase().includes(search.toLowerCase())));
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-10 pb-28">
+      <div className="flex items-center gap-3 mb-2">
+        <span className="text-2xl">🌐</span>
+        <h1 className="text-2xl font-black">Public Decks</h1>
+      </div>
+      <p className="text-sm mb-6" style={{ color: "var(--app-text-muted)" }}>Community flashcard decks — study anything</p>
+      <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search decks..."
+        className="w-full px-4 py-3 rounded-2xl text-sm mb-6" />
+      <div className="space-y-3">
+        {pub.map(d => {
+          const r = ratings[d.id];
+          return (
+            <div key={d.id} className="rounded-2xl p-4 card">
+              <button onClick={() => { setActiveDeck(d); setPage("study"); }} className="w-full flex items-center gap-4 text-left hover:opacity-90 transition-all">
+                <div className="w-10 h-10 rounded-xl shrink-0" style={{ background: d.color }} />
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm">{d.title}</p>
+                  <p className="text-xs" style={{ color: "var(--app-text-muted)" }}>{d.author_name} · {d.subject} · {d.card_count} cards</p>
+                  {d.description && <p className="text-xs truncate mt-0.5" style={{ color: "var(--app-text-muted)", opacity: 0.7 }}>{d.description}</p>}
+                </div>
+                <span className="text-xs text-violet-400">Study →</span>
+              </button>
+              <div className="mt-2 pl-1">
+                <StarRow rating={r?.avg || 0} count={r?.count || 0}
+                  onRate={s => setRatings(prev => ({ ...prev, [d.id]: { avg: s, count: (prev[d.id]?.count || 0) + 1 } }))} />
+              </div>
+            </div>
+          );
+        })}
+        {pub.length === 0 && <p className="text-center py-12 text-sm" style={{ color: "var(--app-text-muted)" }}>No decks found.</p>}
+      </div>
+    </div>
+  );
+}
+
+function CheckpointPage({ deck, cards, setPage }) {
+  const [answers, setAnswers] = useState({});
+  const [submitted, setSubmitted] = useState(false);
+  if (!deck || !cards?.length) return <div className="flex items-center justify-center min-h-screen"><button onClick={() => setPage("home")} className="text-violet-400">← Pick a deck first</button></div>;
+  const score = submitted ? cards.filter(c => answers[c.id] === c.back).length : 0;
+  return (
+    <div className="max-w-xl mx-auto px-4 py-10 pb-28">
+      <div className="flex items-center gap-3 mb-6">
+        <button onClick={() => setPage("home")} className="text-sm" style={{ color: "var(--app-text-muted)" }}>← Back</button>
+        <h1 className="text-xl font-black">Checkpoint: {deck.title}</h1>
+      </div>
+      {submitted ? (
+        <div className="text-center py-12">
+          <p className="text-4xl font-black mb-2">{score}/{cards.length}</p>
+          <p className="text-sm mb-6" style={{ color: "var(--app-text-muted)" }}>{score === cards.length ? "Perfect! 🎉" : "Keep practicing!"}</p>
+          <button onClick={() => { setAnswers({}); setSubmitted(false); }} className="bg-violet-600 text-white px-6 py-3 rounded-2xl text-sm font-semibold">Try Again</button>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {cards.map(c => (
+            <div key={c.id} className="rounded-2xl p-4 card">
+              <p className="text-sm font-semibold mb-2"><LatexText text={c.front} /></p>
+              <input value={answers[c.id] || ""} onChange={e => setAnswers(a => ({ ...a, [c.id]: e.target.value }))}
+                placeholder="Your answer..." className="w-full px-3 py-2 rounded-xl text-sm" />
+            </div>
+          ))}
+          <button onClick={() => setSubmitted(true)} className="w-full bg-violet-600 text-white py-3 rounded-2xl font-semibold text-sm mt-2">Submit</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function WritePage({ deck, cards, setPage }) {
+  const [idx, setIdx] = useState(0);
+  const [input, setInput] = useState("");
+  const [result, setResult] = useState(null);
+  const [score, setScore] = useState(0);
+  if (!deck || !cards?.length) return <div className="flex items-center justify-center min-h-screen"><button onClick={() => setPage("home")} className="text-violet-400">← Pick a deck first</button></div>;
+  if (idx >= cards.length) return (
+    <div className="flex flex-col items-center justify-center min-h-screen gap-6">
+      <div className="text-5xl">✍️</div>
+      <h2 className="text-2xl font-black">Done! {score}/{cards.length}</h2>
+      <button onClick={() => { setIdx(0); setInput(""); setResult(null); setScore(0); }} className="bg-violet-600 text-white px-6 py-3 rounded-2xl font-semibold">Restart</button>
+    </div>
+  );
+  const card = cards[idx];
+  const check = () => {
+    const correct = input.trim().toLowerCase().includes(card.back.toLowerCase().slice(0, 10));
+    setResult(correct);
+    if (correct) setScore(s => s + 1);
+  };
+  const next = () => { setIdx(i => i + 1); setInput(""); setResult(null); };
+  return (
+    <div className="max-w-xl mx-auto px-4 py-10 pb-28">
+      <div className="flex items-center justify-between mb-6">
+        <button onClick={() => setPage("home")} className="text-sm" style={{ color: "var(--app-text-muted)" }}>← Back</button>
+        <span className="text-sm" style={{ color: "var(--app-text-muted)" }}>{idx+1}/{cards.length} · {score} correct</span>
+      </div>
+      <div className="rounded-3xl p-8 card mb-4 text-center">
+        <p className="text-lg font-semibold"><LatexText text={card.front} /></p>
+      </div>
+      <input value={input} onChange={e => setInput(e.target.value)}
+        onKeyDown={e => e.key === "Enter" && !result && check()}
+        placeholder="Type your answer..."
+        className={`w-full px-4 py-3 rounded-2xl text-sm mb-3 ${result === true ? "border-emerald-500/50" : result === false ? "border-red-500/50" : ""}`} />
+      {result !== null && (
+        <div className={`rounded-2xl p-3 mb-3 text-sm ${result ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400"}`}>
+          {result ? "✓ Correct!" : `✗ Answer: `}{!result && <LatexText text={card.back} />}
+        </div>
+      )}
+      {result === null
+        ? <button onClick={check} className="w-full bg-violet-600 text-white py-3 rounded-2xl font-semibold text-sm">Check</button>
+        : <button onClick={next} className="w-full bg-emerald-600 text-white py-3 rounded-2xl font-semibold text-sm">Next →</button>
+      }
+    </div>
+  );
+}
+
+function MatchPage({ deck, cards, setPage }) {
+  const [matched, setMatched] = useState(new Set());
+  const [selected, setSelected] = useState(null);
+  const [error, setError] = useState(null);
+  const pool = cards?.slice(0, 4) || [];
+  const items = [...pool.map(c => ({ id: c.id + "_f", text: c.front, pair: c.id })), ...pool.map(c => ({ id: c.id + "_b", text: c.back, pair: c.id }))].sort(() => Math.random() - 0.5);
+  const [shuffled] = useState(items);
+  if (!deck || !pool.length) return <div className="flex items-center justify-center min-h-screen"><button onClick={() => setPage("home")} className="text-violet-400">← Pick a deck first</button></div>;
+  const allDone = matched.size === pool.length;
+  const pick = (item) => {
+    if (matched.has(item.pair)) return;
+    if (!selected) { setSelected(item); setError(null); return; }
+    if (selected.id === item.id) { setSelected(null); return; }
+    if (selected.pair === item.pair) {
+      setMatched(prev => new Set([...prev, item.pair]));
+      setSelected(null);
+    } else {
+      setError(item.id);
+      setTimeout(() => { setSelected(null); setError(null); }, 600);
+    }
+  };
+  return (
+    <div className="max-w-xl mx-auto px-4 py-10 pb-28">
+      <div className="flex items-center justify-between mb-6">
+        <button onClick={() => setPage("home")} className="text-sm" style={{ color: "var(--app-text-muted)" }}>← Back</button>
+        <p className="text-sm font-semibold">Match: {deck.title}</p>
+      </div>
+      {allDone ? (
+        <div className="text-center py-16">
+          <p className="text-4xl mb-3">🎉</p>
+          <p className="text-xl font-black mb-6">All matched!</p>
+          <button onClick={() => setPage("home")} className="bg-violet-600 text-white px-6 py-3 rounded-2xl font-semibold">← Home</button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-3">
+          {shuffled.map(item => {
+            const isMatched = matched.has(item.pair);
+            const isSelected = selected?.id === item.id;
+            const isError = error === item.id;
+            return (
+              <button key={item.id} onClick={() => pick(item)}
+                className={`p-4 rounded-2xl text-sm text-center min-h-16 transition-all border ${isMatched ? "opacity-30 pointer-events-none border-emerald-500/30 bg-emerald-500/10" : isError ? "border-red-500/50 bg-red-500/10" : isSelected ? "border-violet-500/60 bg-violet-500/15" : "card hover:opacity-80"}`}>
+                <LatexText text={item.text} />
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SignInPage({ onSignIn }) {
+  const [email, setEmail] = useState("");
+  const [sent, setSent] = useState(false);
+  return (
+    <div className="min-h-screen flex items-center justify-center px-6">
+      <div className="max-w-sm w-full">
+        <div className="flex items-center gap-2 mb-8 justify-center">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 to-blue-600 flex items-center justify-center text-white font-bold">✦</div>
+          <span className="font-black text-2xl tracking-tight">Cognita</span>
+        </div>
+        <div className="rounded-3xl p-8 card">
+          <h2 className="text-xl font-black mb-1 text-center">Welcome back</h2>
+          <p className="text-sm text-center mb-6" style={{ color: "var(--app-text-muted)" }}>Sign in to continue studying</p>
+          {sent ? (
+            <div className="text-center">
+              <p className="text-4xl mb-3">📧</p>
+              <p className="font-semibold text-sm mb-2">Check your inbox!</p>
+              <p className="text-xs" style={{ color: "var(--app-text-muted)" }}>We sent a magic link to <strong>{email}</strong></p>
+              <button onClick={onSignIn} className="mt-4 text-xs text-violet-400 underline">Continue as demo →</button>
+            </div>
+          ) : (
+            <>
+              <input value={email} onChange={e => setEmail(e.target.value)}
+                placeholder="your@email.com" type="email"
+                className="w-full px-4 py-3 rounded-2xl text-sm mb-3"
+                onKeyDown={e => e.key === "Enter" && email && setSent(true)} />
+              <button onClick={() => email ? setSent(true) : null}
+                className="w-full bg-gradient-to-r from-violet-600 to-blue-600 text-white py-3 rounded-2xl font-semibold text-sm transition-all hover:opacity-90">
+                Send Magic Link
+              </button>
+              <div className="flex items-center gap-3 my-4">
+                <div className="flex-1 h-px" style={{ background: "var(--app-border)" }} />
+                <span className="text-xs" style={{ color: "var(--app-text-muted)" }}>or</span>
+                <div className="flex-1 h-px" style={{ background: "var(--app-border)" }} />
+              </div>
+              <button onClick={onSignIn}
+                className="w-full border py-3 rounded-2xl text-sm font-semibold transition-all hover:opacity-90" style={{ borderColor: "var(--app-border)" }}>
+                Continue as Demo
+              </button>
+            </>
+          )}
+        </div>
+        <p className="text-center text-xs mt-4" style={{ color: "var(--app-text-muted)" }}>
+          🔒 Privacy-first · No tracking · Your data stays yours
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ── Main App ───────────────────────────────────────────────────────────────
+function App() {
+  const [authed, setAuthed] = useState(false);
+  const [page, setPage] = useState("home");
+  const [decks, setDecks] = useState(INITIAL_DECKS);
+  const [activeDeck, setActiveDeck] = useState(null);
+
+  const cards = activeDeck ? (INITIAL_CARDS[activeDeck.id] || []) : [];
+
+  const navItems = [
+    { label: "Home", icon: "🏠", page: "home" },
+    { label: "Decks", icon: "📚", page: "study" },
+    { label: "Chat", icon: "💬", page: "chat" },
+    { label: "Public", icon: "🌐", page: "public" },
+    { label: "Match", icon: "🎮", page: "match" },
+  ];
+
+  if (!authed) return <SignInPage onSignIn={() => setAuthed(true)} />;
+
+  return (
+    <div style={{ minHeight: "100vh", background: "var(--app-bg)", color: "var(--app-text)" }}>
+      {/* Top nav */}
+      <nav className="sticky top-0 z-50 flex items-center px-4 py-3 backdrop-blur-xl" style={{ borderBottom: "1px solid var(--app-border)", background: "var(--app-nav-bg)" }}>
+        <div className="flex items-center gap-2 flex-1">
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-600 to-blue-600 flex items-center justify-center text-white text-xs font-bold">✦</div>
+          <span className="font-black text-lg tracking-tight">Cognita</span>
+        </div>
+        <div className="hidden sm:flex items-center gap-1">
+          {navItems.map(n => (
+            <button key={n.page} onClick={() => setPage(n.page)}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all ${page === n.page ? "bg-violet-500/15 text-violet-400" : "opacity-50 hover:opacity-80"}`}>
+              {n.icon} {n.label}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2 ml-2">
+          <button onClick={() => setPage("chat")}
+            className="flex items-center gap-1.5 bg-gradient-to-r from-violet-600 to-blue-600 text-white px-3 py-1.5 rounded-xl text-xs font-semibold">
+            💬 Chat AI
+          </button>
+        </div>
+      </nav>
+
+      {/* Page content */}
+      <main>
+        {page === "home" && <HomePage setPage={setPage} decks={decks} setActiveDeck={setActiveDeck} />}
+        {page === "study" && <StudyPage deck={activeDeck} cards={cards} setPage={setPage} />}
+        {page === "chat" && <ChatPage setPage={setPage} />}
+        {page === "public" && <PublicDecksPage decks={decks} setActiveDeck={setActiveDeck} setPage={setPage} />}
+        {page === "checkpoint" && <CheckpointPage deck={activeDeck} cards={cards} setPage={setPage} />}
+        {page === "write" && <WritePage deck={activeDeck} cards={cards} setPage={setPage} />}
+        {page === "match" && <MatchPage deck={activeDeck} cards={cards} setPage={setPage} />}
+        {page === "spaced" && <StudyPage deck={activeDeck} cards={cards} setPage={setPage} />}
+      </main>
+
+      {/* Mobile bottom nav */}
+      <div className="sm:hidden fixed bottom-0 inset-x-0 z-50 flex" style={{ background: "var(--app-nav-bg)", borderTop: "1px solid var(--app-border)", paddingBottom: "env(safe-area-inset-bottom)" }}>
+        {navItems.map(n => (
+          <button key={n.page} onClick={() => setPage(n.page)}
+            className={`flex-1 flex flex-col items-center gap-1 py-3 text-xs font-medium transition-all ${page === n.page ? "text-violet-400" : "opacity-40"}`}>
+            <span className="text-lg">{n.icon}</span>
+            {n.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

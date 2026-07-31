@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Cognita – Offline Study App</title>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --border: rgba(255,255,255,0.08);
+    --text: #f1f0ff;
+    --muted: rgba(255,255,255,0.45);
+    --violet: #8b5cf6;
+    --blue: #3b82f6;
+    --emerald: #10b981;
+    --amber: #f59e0b;
+    --red: #ef4444;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; min-height: 100vh; }
+  h1 { font-size: 2rem; font-weight: 900; letter-spacing: -0.03em; }
+  h2 { font-size: 1.3rem; font-weight: 800; }
+  h3 { font-size: 1rem; font-weight: 700; }
+  p { line-height: 1.6; }
+  input, textarea { background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: 12px; padding: 10px 14px; font-size: 0.875rem; outline: none; width: 100%; font-family: inherit; }
+  input:focus, textarea:focus { border-color: rgba(139,92,246,0.5); }
+  button { cursor: pointer; font-family: inherit; font-weight: 600; border: none; transition: opacity 0.15s; border-radius: 12px; padding: 10px 18px; font-size: 0.875rem; }
+  button:hover { opacity: 0.85; }
+  button:disabled { opacity: 0.4; cursor: default; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 20px; }
+  .badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.2); border-radius: 99px; padding: 5px 14px; font-size: 0.8rem; color: var(--violet); }
+  .btn-primary { background: linear-gradient(135deg, var(--violet), var(--blue)); color: #fff; }
+  .btn-surface { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
+  .btn-emerald { background: var(--emerald); color: #fff; }
+  .btn-danger { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); color: var(--red); }
+  .btn-donate { background: rgba(236,72,153,0.15); border: 1px solid rgba(236,72,153,0.3); color: #f472b6; display: inline-flex; align-items: center; gap: 6px; }
+  .nav { background: rgba(10,10,15,0.92); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  .nav-logo { display: flex; align-items: center; gap: 8px; font-weight: 900; font-size: 1.1rem; text-decoration: none; color: var(--text); }
+  .nav-logo-icon { width: 30px; height: 30px; background: linear-gradient(135deg, var(--violet), var(--blue)); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; }
+  .tab-bar { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 4px; }
+  .tab { flex: 1; padding: 8px 12px; border-radius: 10px; font-size: 0.8rem; font-weight: 600; color: var(--muted); background: transparent; border: none; }
+  .tab.active { background: rgba(139,92,246,0.15); color: var(--violet); }
+  .page { display: none; max-width: 700px; margin: 0 auto; padding: 30px 20px 80px; }
+  .page.active { display: block; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .muted { color: var(--muted); font-size: 0.85rem; }
+  .mt2 { margin-top: 8px; }
+  .mt4 { margin-top: 16px; }
+  .mt6 { margin-top: 24px; }
+  .mb2 { margin-bottom: 8px; }
+  .mb4 { margin-bottom: 16px; }
+  .flex { display: flex; align-items: center; gap: 8px; }
+  .flex-between { display: flex; align-items: center; justify-content: space-between; }
+  .space-y > * + * { margin-top: 10px; }
+  .hidden { display: none !important; }
+  .tag { display: inline-block; background: rgba(139,92,246,0.1); color: var(--violet); border-radius: 6px; padding: 2px 8px; font-size: 0.72rem; font-weight: 600; }
+  .flip-card { min-height: 180px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; text-align: center; padding: 30px; font-size: 1.1rem; font-weight: 600; user-select: none; transition: background 0.2s; }
+  .flip-card:hover { background: rgba(139,92,246,0.06); }
+  .flip-card.revealed { border-color: rgba(139,92,246,0.3); background: rgba(139,92,246,0.06); }
+  .progress-bar { height: 4px; background: var(--border); border-radius: 4px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--emerald); border-radius: 4px; transition: width 0.3s; }
+  .scramble-tiles { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 12px 0; }
+  .scramble-tile { width: 36px; height: 36px; background: rgba(16,185,129,0.15); color: #6ee7b7; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem; }
+  .match-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .match-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px 10px; text-align: center; font-size: 0.8rem; font-weight: 600; cursor: pointer; min-height: 70px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .match-card.selected { border-color: var(--violet); background: rgba(139,92,246,0.1); color: var(--violet); }
+  .match-card.matched { border-color: var(--emerald); background: rgba(16,185,129,0.1); color: var(--emerald); opacity: 0.5; pointer-events: none; }
+  .match-card.wrong { border-color: var(--red); background: rgba(239,68,68,0.1); animation: shake 0.3s; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
+  footer { border-top: 1px solid var(--border); margin-top: 40px; padding: 28px 20px; text-align: center; }
+  footer .donate-section { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 20px; margin-bottom: 16px; }
+  @media (max-width: 500px) { .grid2 { grid-template-columns: 1fr; } .match-grid { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <a class="nav-logo" href="#" onclick="showPage('home')">
+    <div class="nav-logo-icon">✦</div>
+    Cognita
+  </a>
+  <button class="btn-donate btn-surface" onclick="window.open('https://www.paypal.com/paypalme/YCMusicModels','_blank')" style="font-size:0.78rem;padding:7px 14px;">❤ Donate</button>
+</nav>
+
+<!-- HOME PAGE -->
+<div class="page active" id="page-home">
+  <div class="badge mb4">✦ Offline Study Mode</div>
+  <h1 class="mb2">Welcome to Cognita</h1>
+  <p class="muted mb4">Create flashcard decks and study them — no internet needed.</p>
+
+  <div class="grid2 mb6">
+    <div class="card" style="cursor:pointer;" onclick="showPage('decks')">
+      <div style="font-size:1.5rem;margin-bottom:8px;">📚</div>
+      <h3>My Decks</h3>
+      <p class="muted mt2">Create & manage flashcard sets</p>
+    </div>
+    <div class="card" style="cursor:pointer;" onclick="showPage('study')">
+      <div style="font-size:1.5rem;margin-bottom:8px;">🧠</div>
+      <h3>Study</h3>
+      <p class="muted mt2">Flashcards & review</p>
+    </div>
+    <div class="card" style="cursor:pointer;" onclick="showPage('match')">
+      <div style="font-size:1.5rem;margin-bottom:8px;">🎮</div>
+      <h3>Matching Game</h3>
+      <p class="muted mt2">Match terms to definitions</p>
+    </div>
+    <div class="card" style="cursor:pointer;" onclick="showPage('scramble')">
+      <div style="font-size:1.5rem;margin-bottom:8px;">🔡</div>
+      <h3>Word Scramble</h3>
+      <p class="muted mt2">Unscramble the answers</p>
+    </div>
+  </div>
+
+  <div class="card" style="background: rgba(16,185,129,0.05); border-color: rgba(16,185,129,0.2);">
+    <div class="flex mb2"><span style="font-size:1.1rem;">⭐</span><strong style="color: #6ee7b7;">+15% avg quiz score improvement</strong></div>
+    <p class="muted" style="font-size:0.8rem;">Students using Cognita reported a 15% average increase in test &amp; quiz scores.</p>
+  </div>
+
+  <footer>
+    <div class="donate-section">
+      <div style="font-size:1.3rem;margin-bottom:8px;">❤️</div>
+      <h3 class="mb2">Support Cognita</h3>
+      <p class="muted mb4" style="font-size:0.85rem;">Help keep this app free for everyone</p>
+      <button class="btn-donate" onclick="window.open('https://www.paypal.com/paypalme/YCMusicModels','_blank')" style="padding:10px 24px;font-size:0.9rem;">❤ Donate via PayPal</button>
+    </div>
+    <p class="muted" style="font-size:0.75rem;">© 2025 Cognita. All rights reserved.</p>
+  </footer>
+</div>
+
+<!-- DECKS PAGE -->
+<div class="page" id="page-decks">
+  <div class="flex-between mb4">
+    <h2>My Decks</h2>
+    <button class="btn-primary" onclick="showCreateDeck()">+ New Deck</button>
+  </div>
+
+  <div id="create-deck-form" class="card mb4 hidden">
+    <h3 class="mb4">Create Deck</h3>
+    <div class="space-y">
+      <input id="new-deck-title" placeholder="Deck title *" />
+      <input id="new-deck-subject" placeholder="Subject (e.g. Biology)" />
+    </div>
+    <div class="flex mt4">
+      <button class="btn-surface" onclick="hideCreateDeck()">Cancel</button>
+      <button class="btn-primary" onclick="createDeck()">Create</button>
+    </div>
+  </div>
+
+  <div id="decks-list" class="space-y"></div>
+  <p id="decks-empty" class="card muted" style="text-align:center;padding:40px;display:none;">No decks yet. Create your first one!</p>
+</div>
+
+<!-- DECK DETAIL PAGE -->
+<div class="page" id="page-deck-detail">
+  <button class="btn-surface mb4" onclick="showPage('decks')" style="padding:8px 14px;font-size:0.8rem;">← Back to Decks</button>
+  <div class="flex mb6" id="deck-detail-header"></div>
+
+  <div id="add-card-form" class="card mb4 hidden">
+    <h3 class="mb4">Add Card</h3>
+    <div class="space-y">
+      <input id="new-card-front" placeholder="Front (question / term)" />
+      <input id="new-card-back" placeholder="Back (answer / definition)" />
+    </div>
+    <div class="flex mt4">
+      <button class="btn-surface" onclick="document.getElementById('add-card-form').classList.add('hidden')">Cancel</button>
+      <button class="btn-emerald" onclick="addCard()">Add Card</button>
+    </div>
+  </div>
+
+  <div class="flex-between mb2">
+    <h3 id="deck-detail-title"></h3>
+    <button class="btn-primary" style="padding:8px 14px;font-size:0.8rem;" onclick="document.getElementById('add-card-form').classList.toggle('hidden')">+ Card</button>
+  </div>
+  <div id="cards-list" class="space-y"></div>
+  <p id="cards-empty" class="muted" style="display:none;text-align:center;padding:20px;">No cards yet.</p>
+
+  <div class="mt6">
+    <h3 class="mb2">Study This Deck</h3>
+    <div class="grid2">
+      <button class="btn-primary" onclick="startStudy('flashcards')">🧠 Flashcards</button>
+      <button class="btn-surface" onclick="startStudy('scramble')">🔡 Word Scramble</button>
+      <button class="btn-surface" onclick="startStudy('match')" style="grid-column:1/-1;">🎮 Matching Game</button>
+    </div>
+  </div>
+</div>
+
+<!-- STUDY (FLASHCARDS) PAGE -->
+<div class="page" id="page-study">
+  <button class="btn-surface mb4" onclick="exitStudy()" style="padding:8px 14px;font-size:0.8rem;">← Back</button>
+  <div class="flex-between mb2">
+    <h2>Flashcards</h2>
+    <span class="muted" id="study-counter"></span>
+  </div>
+  <div class="progress-bar mb4"><div class="progress-fill" id="study-progress"></div></div>
+
+  <div class="flip-card mb4" id="study-card" onclick="flipCard()">
+    <div id="study-card-text"></div>
+  </div>
+  <p class="muted" id="study-hint" style="text-align:center;font-size:0.8rem;margin-bottom:16px;">Tap card to reveal answer</p>
+
+  <div class="grid2">
+    <button class="btn-surface" onclick="markCard('again')">🔁 Study Again</button>
+    <button class="btn-emerald" onclick="markCard('got-it')">✓ Got It</button>
+  </div>
+  <div class="flex mt4" style="justify-content:center;gap:8px;">
+    <button class="btn-surface" id="study-prev" onclick="prevCard()" style="padding:8px 14px;">← Prev</button>
+    <button class="btn-primary" id="study-next" onclick="nextCard()">Next →</button>
+  </div>
+</div>
+
+<!-- WORD SCRAMBLE PAGE -->
+<div class="page" id="page-scramble">
+  <button class="btn-surface mb4" onclick="exitScramble()" style="padding:8px 14px;font-size:0.8rem;">← Back</button>
+  <div class="flex-between mb2">
+    <h2>Word Scramble</h2>
+    <span class="muted" id="scramble-counter"></span>
+  </div>
+  <div class="progress-bar mb4"><div class="progress-fill" id="scramble-progress"></div></div>
+
+  <div class="card mb4 text-center" id="scramble-clue" style="padding:24px;"></div>
+  <div class="card mb4" style="background:rgba(16,185,129,0.05);border-color:rgba(16,185,129,0.2);padding:20px;text-align:center;">
+    <p style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--emerald);margin-bottom:8px;">Unscramble</p>
+    <div class="scramble-tiles" id="scramble-tiles"></div>
+  </div>
+
+  <input id="scramble-input" placeholder="Type the unscrambled answer..." class="mb4" onkeydown="if(event.key==='Enter')checkScramble()" />
+  <div id="scramble-feedback" class="hidden card mb4" style="text-align:center;padding:20px;"></div>
+  <div class="grid2" id="scramble-btns">
+    <button class="btn-surface" onclick="showScrambleAnswer()">Show Answer</button>
+    <button class="btn-emerald" onclick="checkScramble()">Check</button>
+  </div>
+  <button class="btn-primary mt4 hidden" id="scramble-next-btn" onclick="nextScramble()" style="width:100%;">Next →</button>
+
+  <div id="scramble-done" class="hidden" style="text-align:center;padding:40px 20px;">
+    <div style="font-size:3rem;font-weight:900;color:var(--emerald);" id="scramble-score-pct"></div>
+    <p style="font-weight:700;font-size:1.1rem;" id="scramble-score-text"></p>
+    <div class="flex mt4" style="justify-content:center;">
+      <button class="btn-primary" onclick="restartScramble()">🔄 Play Again</button>
+      <button class="btn-surface" onclick="exitScramble()">← Back</button>
+    </div>
+  </div>
+</div>
+
+<!-- MATCHING GAME PAGE -->
+<div class="page" id="page-match">
+  <button class="btn-surface mb4" onclick="exitMatch()" style="padding:8px 14px;font-size:0.8rem;">← Back</button>
+  <div class="flex-between mb2">
+    <h2>Matching Game</h2>
+    <span class="muted" id="match-counter">0 matched</span>
+  </div>
+  <div id="match-deck-select" class="card mb4">
+    <p class="mb2" style="font-size:0.85rem;">Select a deck to play:</p>
+    <div id="match-deck-list" class="space-y"></div>
+  </div>
+  <div id="match-game-area" class="hidden">
+    <div class="match-grid" id="match-grid"></div>
+    <div id="match-done" class="hidden card mt4" style="text-align:center;padding:30px;">
+      <div style="font-size:2rem;">🎉</div>
+      <h3 class="mt2">All matched!</h3>
+      <p class="muted mt2" id="match-time-text"></p>
+      <button class="btn-primary mt4" onclick="restartMatch()">Play Again</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── State ───────────────────────────────────────────────────────────────────
+let decks = JSON.parse(localStorage.getItem('cog_decks') || '[]');
+let cards = JSON.parse(localStorage.getItem('cog_cards') || '[]');
+let currentDeckId = null;
+let studyCards = [];
+let studyIndex = 0;
+let studyFlipped = false;
+let studySource = 'study'; // which page to return to
+
+let scrambleCards = [];
+let scrambleIndex = 0;
+let scrambleScore = 0;
+let scrambleAnswered = false;
+
+let matchItems = [];
+let matchSelected = null;
+let matchMatched = 0;
+let matchStart = 0;
+let matchDeckId = null;
+
+function save() {
+  localStorage.setItem('cog_decks', JSON.stringify(decks));
+  localStorage.setItem('cog_cards', JSON.stringify(cards));
+}
+
+function uid() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
+
+// ─── Navigation ───────────────────────────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const el = document.getElementById('page-' + name);
+  if (el) el.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (name === 'decks') renderDecks();
+  if (name === 'match') renderMatchDeckSelect();
+}
+
+// ─── Decks ────────────────────────────────────────────────────────────────────
+function showCreateDeck() { document.getElementById('create-deck-form').classList.remove('hidden'); }
+function hideCreateDeck() { document.getElementById('create-deck-form').classList.add('hidden'); }
+
+function createDeck() {
+  const title = document.getElementById('new-deck-title').value.trim();
+  if (!title) return;
+  const deck = { id: uid(), title, subject: document.getElementById('new-deck-subject').value.trim(), color: '#' + Math.floor(Math.random()*0xffffff).toString(16).padStart(6,'0') };
+  decks.unshift(deck);
+  save();
+  document.getElementById('new-deck-title').value = '';
+  document.getElementById('new-deck-subject').value = '';
+  hideCreateDeck();
+  renderDecks();
+}
+
+function deleteDeck(id) {
+  if (!confirm('Delete this deck and all its cards?')) return;
+  decks = decks.filter(d => d.id !== id);
+  cards = cards.filter(c => c.deckId !== id);
+  save();
+  renderDecks();
+}
+
+function renderDecks() {
+  const list = document.getElementById('decks-list');
+  const empty = document.getElementById('decks-empty');
+  list.innerHTML = '';
+  if (decks.length === 0) { empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  decks.forEach(deck => {
+    const count = cards.filter(c => c.deckId === deck.id).length;
+    const div = document.createElement('div');
+    div.className = 'card flex-between';
+    div.innerHTML = `
+      <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0;">
+        <div style="width:36px;height:36px;border-radius:10px;background:${deck.color};flex-shrink:0;"></div>
+        <div style="min-width:0;">
+          <div style="font-weight:700;font-size:0.95rem;">${deck.title}</div>
+          <div class="muted" style="font-size:0.78rem;">${deck.subject ? deck.subject + ' · ' : ''}${count} card${count !== 1 ? 's' : ''}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0;">
+        <button class="btn-primary" onclick="openDeck('${deck.id}')" style="padding:7px 14px;font-size:0.78rem;">Open</button>
+        <button class="btn-danger" onclick="deleteDeck('${deck.id}')" style="padding:7px 10px;font-size:0.78rem;">✕</button>
+      </div>`;
+    list.appendChild(div);
+  });
+}
+
+function openDeck(id) {
+  currentDeckId = id;
+  const deck = decks.find(d => d.id === id);
+  document.getElementById('deck-detail-title').textContent = deck.title + (deck.subject ? ' · ' + deck.subject : '');
+  document.getElementById('deck-detail-header').innerHTML = `<div style="width:50px;height:50px;border-radius:14px;background:${deck.color};flex-shrink:0;"></div><div><div style="font-weight:900;font-size:1.3rem;">${deck.title}</div>${deck.subject ? `<div class="muted">${deck.subject}</div>` : ''}</div>`;
+  renderCards();
+  showPage('deck-detail');
+}
+
+function renderCards() {
+  const dc = cards.filter(c => c.deckId === currentDeckId);
+  const list = document.getElementById('cards-list');
+  const empty = document.getElementById('cards-empty');
+  list.innerHTML = '';
+  if (dc.length === 0) { empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  dc.forEach(card => {
+    const div = document.createElement('div');
+    div.className = 'card flex-between';
+    div.innerHTML = `
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:600;font-size:0.875rem;">${card.front}</div>
+        <div class="muted" style="margin-top:4px;font-size:0.8rem;">${card.back}</div>
+      </div>
+      <button class="btn-danger" onclick="deleteCard('${card.id}')" style="padding:6px 10px;font-size:0.75rem;flex-shrink:0;">✕</button>`;
+    list.appendChild(div);
+  });
+}
+
+function addCard() {
+  const front = document.getElementById('new-card-front').value.trim();
+  const back = document.getElementById('new-card-back').value.trim();
+  if (!front || !back) return;
+  cards.push({ id: uid(), deckId: currentDeckId, front, back });
+  save();
+  document.getElementById('new-card-front').value = '';
+  document.getElementById('new-card-back').value = '';
+  document.getElementById('add-card-form').classList.add('hidden');
+  renderCards();
+}
+
+function deleteCard(id) {
+  cards = cards.filter(c => c.id !== id);
+  save();
+  renderCards();
+}
+
+// ─── Study (Flashcards) ───────────────────────────────────────────────────────
+function startStudy(mode) {
+  const dc = cards.filter(c => c.deckId === currentDeckId);
+  if (dc.length === 0) { alert('Add some cards first!'); return; }
+  if (mode === 'scramble') { startScramble(dc); return; }
+  if (mode === 'match') { startMatchWithCards(dc); return; }
+  studyCards = [...dc].sort(() => Math.random() - 0.5);
+  studyIndex = 0;
+  studyFlipped = false;
+  studySource = 'deck-detail';
+  renderStudyCard();
+  showPage('study');
+}
+
+function renderStudyCard() {
+  const card = studyCards[studyIndex];
+  const el = document.getElementById('study-card');
+  el.classList.remove('revealed');
+  document.getElementById('study-card-text').textContent = card.front;
+  document.getElementById('study-hint').textContent = 'Tap card to reveal answer';
+  document.getElementById('study-counter').textContent = (studyIndex + 1) + ' / ' + studyCards.length;
+  document.getElementById('study-progress').style.width = ((studyIndex / studyCards.length) * 100) + '%';
+  document.getElementById('study-prev').disabled = studyIndex === 0;
+  studyFlipped = false;
+}
+
+function flipCard() {
+  const card = studyCards[studyIndex];
+  const el = document.getElementById('study-card');
+  studyFlipped = !studyFlipped;
+  el.classList.toggle('revealed', studyFlipped);
+  document.getElementById('study-card-text').textContent = studyFlipped ? card.back : card.front;
+  document.getElementById('study-hint').textContent = studyFlipped ? 'Answer' : 'Tap card to reveal answer';
+}
+
+function markCard(status) { nextCard(); }
+
+function nextCard() {
+  if (studyIndex < studyCards.length - 1) {
+    studyIndex++;
+    renderStudyCard();
+  } else {
+    alert('Session complete! You reviewed all ' + studyCards.length + ' cards.');
+    exitStudy();
+  }
+}
+
+function prevCard() {
+  if (studyIndex > 0) { studyIndex--; renderStudyCard(); }
+}
+
+function exitStudy() { showPage(studySource); }
+
+// ─── Word Scramble ────────────────────────────────────────────────────────────
+function scrambleStr(word) {
+  const a = word.trim().split('');
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  const r = a.join('');
+  return (r === word.trim() && word.length > 1) ? scrambleStr(word) : r;
+}
+
+function startScramble(dc) {
+  scrambleCards = [...dc].sort(() => Math.random() - 0.5);
+  scrambleIndex = 0;
+  scrambleScore = 0;
+  studySource = 'deck-detail';
+  renderScramble();
+  showPage('scramble');
+}
+
+function renderScramble() {
+  document.getElementById('scramble-done').classList.add('hidden');
+  document.getElementById('scramble-btns').classList.remove('hidden');
+  document.getElementById('scramble-next-btn').classList.add('hidden');
+  document.getElementById('scramble-feedback').classList.add('hidden');
+  document.getElementById('scramble-input').value = '';
+  scrambleAnswered = false;
+
+  const card = scrambleCards[scrambleIndex];
+  document.getElementById('scramble-clue').innerHTML = `<p style="font-weight:700;">${card.front}</p>`;
+  document.getElementById('scramble-counter').textContent = (scrambleIndex + 1) + ' / ' + scrambleCards.length;
+  document.getElementById('scramble-progress').style.width = ((scrambleIndex / scrambleCards.length) * 100) + '%';
+
+  const sc = scrambleStr(card.back);
+  const tiles = document.getElementById('scramble-tiles');
+  tiles.innerHTML = '';
+  sc.split('').forEach(ch => {
+    const t = document.createElement('div');
+    t.className = 'scramble-tile';
+    t.textContent = ch === ' ' ? '·' : ch;
+    tiles.appendChild(t);
+  });
+  document.getElementById('scramble-input').focus();
+}
+
+function checkScramble() {
+  if (scrambleAnswered) return;
+  const card = scrambleCards[scrambleIndex];
+  const val = document.getElementById('scramble-input').value.trim().toLowerCase();
+  if (!val) return;
+  const correct = val === card.back.trim().toLowerCase();
+  if (correct) scrambleScore++;
+  scrambleAnswered = true;
+  const fb = document.getElementById('scramble-feedback');
+  fb.classList.remove('hidden');
+  fb.style.background = correct ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)';
+  fb.style.borderColor = correct ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)';
+  fb.innerHTML = correct
+    ? `<div style="font-size:1.3rem;">✓</div><p style="color:var(--emerald);font-weight:700;">Correct!</p>`
+    : `<div style="font-size:1.3rem;">✗</div><p style="color:var(--red);font-weight:700;">Not quite!</p><p class="muted" style="margin-top:4px;">Answer: <strong style="color:#fca5a5;">${card.back}</strong></p>`;
+  document.getElementById('scramble-btns').classList.add('hidden');
+  document.getElementById('scramble-next-btn').classList.remove('hidden');
+  document.getElementById('scramble-next-btn').textContent = scrambleIndex + 1 < scrambleCards.length ? 'Next →' : 'See Results';
+}
+
+function showScrambleAnswer() {
+  const card = scrambleCards[scrambleIndex];
+  const fb = document.getElementById('scramble-feedback');
+  fb.classList.remove('hidden');
+  fb.style.background = 'rgba(245,158,11,0.1)';
+  fb.style.borderColor = 'rgba(245,158,11,0.3)';
+  fb.innerHTML = `<p class="muted" style="font-size:0.8rem;">Answer:</p><p style="font-weight:700;color:#fcd34d;">${card.back}</p>`;
+}
+
+function nextScramble() {
+  if (scrambleIndex + 1 < scrambleCards.length) {
+    scrambleIndex++;
+    renderScramble();
+  } else {
+    const pct = Math.round((scrambleScore / scrambleCards.length) * 100);
+    document.getElementById('scramble-score-pct').textContent = pct + '%';
+    document.getElementById('scramble-score-text').textContent = scrambleScore + '/' + scrambleCards.length + ' correct';
+    document.getElementById('scramble-btns').classList.add('hidden');
+    document.getElementById('scramble-next-btn').classList.add('hidden');
+    document.getElementById('scramble-done').classList.remove('hidden');
+  }
+}
+
+function restartScramble() {
+  scrambleCards = [...scrambleCards].sort(() => Math.random() - 0.5);
+  scrambleIndex = 0;
+  scrambleScore = 0;
+  renderScramble();
+}
+
+function exitScramble() { showPage(studySource || 'home'); }
+
+// ─── Matching Game ─────────────────────────────────────────────────────────────
+function renderMatchDeckSelect() {
+  const list = document.getElementById('match-deck-list');
+  list.innerHTML = '';
+  if (decks.length === 0) {
+    list.innerHTML = '<p class="muted" style="text-align:center;padding:16px;">No decks yet. Create one first!</p>';
+    return;
+  }
+  decks.forEach(deck => {
+    const count = cards.filter(c => c.deckId === deck.id).length;
+    if (count < 2) return;
+    const btn = document.createElement('button');
+    btn.className = 'btn-surface';
+    btn.style = 'width:100%;text-align:left;padding:12px 16px;';
+    btn.innerHTML = `<strong>${deck.title}</strong> <span class="muted" style="font-size:0.78rem;margin-left:8px;">${count} cards</span>`;
+    btn.onclick = () => startMatchWithDeck(deck.id);
+    list.appendChild(btn);
+  });
+}
+
+function startMatchWithDeck(deckId) {
+  const dc = cards.filter(c => c.deckId === deckId);
+  startMatchWithCards(dc);
+}
+
+function startMatchWithCards(dc) {
+  matchDeckId = currentDeckId;
+  studySource = 'deck-detail';
+  const sample = [...dc].sort(() => Math.random() - 0.5).slice(0, 8);
+  matchItems = [];
+  sample.forEach(c => {
+    matchItems.push({ id: uid(), text: c.front, pairId: c.id, type: 'front' });
+    matchItems.push({ id: uid(), text: c.back, pairId: c.id, type: 'back' });
+  });
+  matchItems = matchItems.sort(() => Math.random() - 0.5);
+  matchSelected = null;
+  matchMatched = 0;
+  matchStart = Date.now();
+  document.getElementById('match-deck-select').classList.add('hidden');
+  document.getElementById('match-game-area').classList.remove('hidden');
+  document.getElementById('match-done').classList.add('hidden');
+  document.getElementById('match-counter').textContent = '0 matched';
+  renderMatchGrid();
+  showPage('match');
+}
+
+function renderMatchGrid() {
+  const grid = document.getElementById('match-grid');
+  grid.innerHTML = '';
+  matchItems.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'match-card' + (item.matched ? ' matched' : '');
+    div.id = 'mc-' + item.id;
+    div.textContent = item.text;
+    div.onclick = () => selectMatchCard(item.id);
+    grid.appendChild(div);
+  });
+}
+
+function selectMatchCard(id) {
+  const item = matchItems.find(i => i.id === id);
+  if (!item || item.matched) return;
+  const el = document.getElementById('mc-' + id);
+
+  if (!matchSelected) {
+    matchSelected = id;
+    el.classList.add('selected');
+    return;
+  }
+
+  if (matchSelected === id) {
+    el.classList.remove('selected');
+    matchSelected = null;
+    return;
+  }
+
+  const prev = matchItems.find(i => i.id === matchSelected);
+  const prevEl = document.getElementById('mc-' + matchSelected);
+
+  if (prev.pairId === item.pairId && prev.type !== item.type) {
+    // Match!
+    prev.matched = true;
+    item.matched = true;
+    prevEl.classList.remove('selected');
+    prevEl.classList.add('matched');
+    el.classList.add('matched');
+    matchMatched++;
+    matchSelected = null;
+    document.getElementById('match-counter').textContent = matchMatched + ' matched';
+    if (matchMatched === matchItems.length / 2) {
+      const secs = Math.round((Date.now() - matchStart) / 1000);
+      document.getElementById('match-time-text').textContent = `Completed in ${secs}s`;
+      document.getElementById('match-done').classList.remove('hidden');
+    }
+  } else {
+    // Wrong
+    prevEl.classList.remove('selected');
+    prevEl.classList.add('wrong');
+    el.classList.add('wrong');
+    matchSelected = null;
+    setTimeout(() => {
+      prevEl.classList.remove('wrong');
+      el.classList.remove('wrong');
+    }, 500);
+  }
+}
+
+function restartMatch() {
+  const dc = cards.filter(c => c.deckId === (matchDeckId || currentDeckId));
+  startMatchWithCards(dc);
+}
+
+function exitMatch() {
+  document.getElementById('match-deck-select').classList.remove('hidden');
+  document.getElementById('match-game-area').classList.add('hidden');
+  showPage(studySource || 'home');
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+renderDecks();
+</script>
+</body>
+</html>

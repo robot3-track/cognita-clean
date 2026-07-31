@@ -1,0 +1,15 @@
+{
+  "short_name": "Cognita",
+  "name": "Cognita Study",
+  "icons": [
+    {
+      "src": "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69a5d468db61ac4f38472604/9e9c4097b_logo.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#ffffff",
+  "theme_color": "#4f46e5",
+  "display": "standalone"
+}

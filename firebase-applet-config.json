@@ -1,0 +1,10 @@
+{
+  "projectId": "cognitastudy",
+  "appId": "1:131896144044:web:eb9e3c91f95a3635446f09",
+  "apiKey": "AIzaSyC3NSp-goinqwTtKLjqo90EDoOjOnLoeRA",
+  "authDomain": "cognitastudy.firebaseapp.com",
+  "firestoreDatabaseId": "(default)",
+  "storageBucket": "cognitastudy.firebasestorage.app",
+  "messagingSenderId": "131896144044",
+  "measurementId": "G-96SNPY6Y9R"
+}

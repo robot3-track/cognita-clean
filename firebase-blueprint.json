@@ -1,0 +1,84 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile document",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "full_name": { "type": "string" },
+        "avatar_url": { "type": "string" },
+        "role": { "type": "string" },
+        "created_date": { "type": "string" }
+      }
+    },
+    "Deck": {
+      "title": "Deck",
+      "description": "Flashcard deck",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "subject": { "type": "string" },
+        "is_public": { "type": "boolean" },
+        "creator_email": { "type": "string" },
+        "created_date": { "type": "string" }
+      }
+    },
+    "Flashcard": {
+      "title": "Flashcard",
+      "description": "Individual flashcard inside a deck",
+      "type": "object",
+      "properties": {
+        "deck_id": { "type": "string" },
+        "front": { "type": "string" },
+        "back": { "type": "string" },
+        "created_date": { "type": "string" }
+      }
+    },
+    "Note": {
+      "title": "Note",
+      "description": "User notes",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "creator_email": { "type": "string" },
+        "created_date": { "type": "string" }
+      }
+    },
+    "StudySession": {
+      "title": "StudySession",
+      "description": "Time tracked study session",
+      "type": "object",
+      "properties": {
+        "user_email": { "type": "string" },
+        "duration_minutes": { "type": "number" },
+        "subject": { "type": "string" },
+        "created_date": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Collection of user profiles"
+    },
+    "/decks/{deckId}": {
+      "schema": { "$ref": "#/entities/Deck" },
+      "description": "Collection of study decks"
+    },
+    "/flashcards/{cardId}": {
+      "schema": { "$ref": "#/entities/Flashcard" },
+      "description": "Collection of flashcards"
+    },
+    "/notes/{noteId}": {
+      "schema": { "$ref": "#/entities/Note" },
+      "description": "Collection of user notes"
+    },
+    "/study_sessions/{sessionId}": {
+      "schema": { "$ref": "#/entities/StudySession" },
+      "description": "Collection of study sessions"
+    }
+  }
+}

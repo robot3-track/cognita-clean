@@ -1,0 +1,18 @@
+/* Hide scrollbars globally on all platforms */
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+*::-webkit-scrollbar {
+  display: none;
+}
+
+/* Dyslexia toolbar overrides — set via JS on :root */
+:root {
+  --dyslexia-font: inherit;
+  --dyslexia-size: 1rem;
+}
+body {
+  font-family: var(--dyslexia-font);
+  font-size: var(--dyslexia-size);
+}

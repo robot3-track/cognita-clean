@@ -1,0 +1,61 @@
+{
+  "exportedAt": "2026-07-27T05:15:14.108Z",
+  "exportDurationMs": 54048,
+  "fileCount": 252,
+  "assetCount": 24,
+  "resolvedAssetCount": 14,
+  "missingAssets": [
+    {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Cow_milk_production_by_country.png/1200px-Cow_milk_production_by_country.png",
+      "error": "HTTP 400"
+    },
+    {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Washington_Metro_Map.svg/800px-Washington_Metro_Map.svg.png",
+      "error": "HTTP 400"
+    },
+    {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Los_Angeles_County_location_map.svg/800px-Los_Angeles_County_location_map.svg.png",
+      "error": "HTTP 400"
+    },
+    {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/World_cities_by_size.svg/1200px-World_cities_by_size.svg.png",
+      "error": "HTTP 400"
+    },
+    {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Saskatchewan_map.png/640px-Saskatchewan_map.png",
+      "error": "HTTP 400"
+    },
+    {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Boston_metro_area_map.png/800px-Boston_metro_area_map.png",
+      "error": "HTTP 400"
+    },
+    {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/8/8e/Sahel_Map-Africa_rough.png",
+      "error": "HTTP 404"
+    },
+    {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Silk_Road_Trade_%28c.1200_CE%29.jpg/1280px-Silk_Road_Trade_%28c.1200_CE%29.jpg",
+      "error": "HTTP 404"
+    },
+    {
+      "url": "https://media.db.com/images/public/69b097f35579053a78af47a3/43f8b728d_9e9c4097b_logo1.png",
+      "error": "Failed to fetch"
+    },
+    {
+      "url": "https://media.db.com/images/public/69b097f35579053a78af47a3/1a62591a3_images.png",
+      "error": "Failed to fetch"
+    }
+  ],
+  "warnings": [
+    "Preview iframe scan failed: Failed to read a named property 'document' from 'Window': Blocked a frame with origin \"https://app.base44.com\" from accessing a cross-origin frame."
+  ],
+  "diagnostics": {
+    "exportState": "BUILDING_FILE_TREE",
+    "assetCount": 24,
+    "pendingFetches": 0,
+    "pendingImages": 0,
+    "domNodeCount": 6975,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+    "exportDurationMs": 54049
+  }
+}

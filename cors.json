@@ -1,0 +1,8 @@
+[
+  {
+    "origin": ["https://www.cognitastudy.me", "https://cognitastudy.vercel.app", "https://cognitastudyapp.vercel.app", "https://cognita.ai.studio", "https://cognitastudyfirebase.vercel.app", "http://localhost:5173"],
+    "method": ["GET", "POST", "PUT", "DELETE", "HEAD"],
+    "responseHeader": ["Content-Type", "Authorization", "x-goog-meta-*"],
+    "maxAgeSeconds": 3600
+  }
+]
