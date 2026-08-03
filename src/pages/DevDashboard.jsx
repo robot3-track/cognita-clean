@@ -247,6 +247,97 @@ function CourseApplicationsPanel({ cardStyle, mutedStyle }) {
   );
 }
 
+function UserSyncButton({ cardStyle, mutedStyle }) {
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState('');
+
+  const runUserSync = async () => {
+    setIsSyncing(true);
+    setSyncStatus('Starting deep synchronization scan...');
+    try {
+      setSyncStatus('Scanning Study Sessions...');
+      const sessions = await db.entities.StudySession.list("-created_date", 3000).catch(() => []);
+      
+      setSyncStatus('Scanning User Login Events...');
+      const loginEvents = await db.entities.UserLoginEvent.list("-created_date", 3000).catch(() => []);
+
+      // Aggregate all unique active emails found across activity logs
+      const activeEmails = new Set([
+        ...sessions.map(s => s.user_email || s.email),
+        ...loginEvents.map(e => e.user_email || e.email || e.userEmail)
+      ].filter(Boolean));
+
+      if (activeEmails.size === 0) {
+        setSyncStatus('✅ Scan complete: No active emails found in logs.');
+        setIsSyncing(false);
+        return;
+      }
+
+      setSyncStatus(`Found ${activeEmails.size} active log references. Fetching master directory...`);
+      const existingProfiles = await db.entities.User.list(null, 5000).catch(() => []);
+      const profileEmails = new Set(existingProfiles.map(u => String(u.email).toLowerCase().trim()));
+
+      let healedCount = 0;
+      for (const rawEmail of activeEmails) {
+        const cleanEmail = String(rawEmail).toLowerCase().trim();
+        
+        // If an active user has logged records but doesn't have a profile doc, fix it!
+        if (!profileEmails.has(cleanEmail)) {
+          setSyncStatus(`Healing missing profile: ${cleanEmail}...`);
+          const baseName = cleanEmail.split('@')[0];
+          const formattedName = baseName.charAt(0).toUpperCase() + baseName.slice(1);
+
+          const matchedSession = sessions.find(s => String(s.user_email || s.email).toLowerCase().trim() === cleanEmail);
+          const matchedEvent = loginEvents.find(e => String(e.user_email || e.email || e.userEmail).toLowerCase().trim() === cleanEmail);
+          const potentialUserId = matchedSession?.userId || matchedSession?.user_id || matchedEvent?.userId || matchedEvent?.user_id || null;
+
+          const newProfilePayload = {
+            email: cleanEmail,
+            full_name: formattedName,
+            role: 'user',
+            bio: 'Profile automatically recovered via activity logs check.',
+            created_date: matchedSession?.created_date || matchedEvent?.created_date || new Date().toISOString(),
+            updated_date: new Date().toISOString()
+          };
+
+          // Keep consistent with Firebase Authentication UUID mapping
+          if (potentialUserId) newProfilePayload.id = potentialUserId;
+          
+          await db.entities.User.create(newProfilePayload);
+          healedCount++;
+        }
+      }
+      setSyncStatus(`✅ Complete! Successfully recovered ${healedCount} missing user profiles.`);
+    } catch (err) {
+      console.error(err);
+      setSyncStatus(`❌ Sync failed: ${err.message || err}`);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  return (
+    <div className="rounded-2xl p-4 mb-4 border border-dashed text-xs" style={{ ...cardStyle, borderColor: 'var(--app-border)' }}>
+      <h3 className="text-sm font-bold text-indigo-400 mb-1">🔄 User Profile Synchronization</h3>
+      <p className="text-xs mb-3" style={mutedStyle}>
+        Scans background operational logs (Sessions, Logins) to find active users missing profile records, automatically healing them.
+      </p>
+      <button
+        onClick={runUserSync}
+        disabled={isSyncing}
+        className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-800 text-white text-xs font-semibold rounded-lg transition-colors inline-flex items-center gap-2"
+      >
+        {isSyncing ? 'Synchronizing Records...' : 'Scan & Sync Profiles'}
+      </button>
+      {syncStatus && (
+        <p className="text-xs font-mono mt-2 p-2 bg-black/30 rounded border border-zinc-800 text-zinc-300 break-all">
+          {syncStatus}
+        </p>
+      )}
+    </div>
+  );
+}
+
 function AnnouncementPanel({ cardStyle, mutedStyle, user }) {
   const [banners, setBanners] = useState([]);
   const [newMsg, setNewMsg] = useState("");
@@ -569,18 +660,45 @@ function PartnersPanel({ cardStyle, mutedStyle }) {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
-    const { file_url } = await db.integrations.Core.UploadFile({ file });
-    const record = await db.entities.PartnerImage.create({
-      image_url: file_url,
-      name: nameInput.trim() || file.name,
-      link_url: linkInput.trim() || "",
-      order: partners.length,
-    });
-    setPartners(prev => [...prev, record]);
-    setNameInput("");
-    setLinkInput("");
-    setUploading(false);
-    e.target.value = "";
+
+    try {
+      // 🛡️ Read the file locally into a Base64 string to completely bypass storage bucket CORS
+      const reader = new FileReader();
+      
+      reader.onloadend = async () => {
+        try {
+          const base64ImageUrl = reader.result;
+
+          // Save the raw data URL directly into your database document entity
+          const record = await db.entities.PartnerImage.create({
+            image_url: base64ImageUrl, // Stored safely as local data text string
+            name: nameInput.trim() || file.name,
+            link_url: linkInput.trim() || "",
+            order: partners.length,
+          });
+
+          setPartners(prev => [...prev, record]);
+          setNameInput("");
+          setLinkInput("");
+          setUploading(false);
+          e.target.value = "";
+        } catch (innerErr) {
+          console.error("Failed to save database partner record:", innerErr);
+          setUploading(false);
+        }
+      };
+
+      reader.onerror = () => {
+        console.error("Local file reading failed.");
+        setUploading(false);
+      };
+
+      reader.readAsDataURL(file);
+
+    } catch (err) {
+      console.error("CORS bypass upload wrapper failure:", err);
+      setUploading(false);
+    }
   };
 
   const deletePartner = async (id) => {
@@ -654,7 +772,10 @@ function PartnersPanel({ cardStyle, mutedStyle }) {
   );
 }
 
-function AIUsagePanel({ cardStyle, mutedStyle }) {
+import React, { useState, useEffect } from "react";
+import { Loader2 } from "lucide-react";
+
+export default function AIUsagePanel({ cardStyle, mutedStyle }) {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -683,37 +804,45 @@ function AIUsagePanel({ cardStyle, mutedStyle }) {
   const cohereTotal = logs.filter(l => l.provider === "cohere").length;
   const claudeTotal = logs.filter(l => l.provider === "claude").length;
   const firebaseTotal = logs.filter(l => l.provider === "firebase").length;
+  const openrouterTotal = logs.filter(l => l.provider === "openrouter").length;
   const total = logs.length;
+
   const lynxSuccess = logs.filter(l => l.provider === "lynx" && l.success !== false).length;
   const geminiSuccess = logs.filter(l => l.provider === "gemini" && l.success !== false).length;
   const cohereSuccess = logs.filter(l => l.provider === "cohere" && l.success !== false).length;
   const firebaseSuccess = logs.filter(l => l.provider === "firebase" && l.success !== false).length;
   const claudeSuccess = logs.filter(l => l.provider === "claude" && l.success !== false).length;
+  const openrouterSuccess = logs.filter(l => l.provider === "openrouter" && l.success !== false).length;
 
-  // Feature breakdown
+  // Feature breakdown mapping
   const featureCounts = {};
   logs.forEach(l => {
     const k = l.feature || "unknown";
-    if (!featureCounts[k]) featureCounts[k] = { lynx: 0, gemini: 0, cohere: 0, claude: 0, firebase: 0 };
+    if (!featureCounts[k]) featureCounts[k] = { lynx: 0, gemini: 0, cohere: 0, claude: 0, firebase: 0, openrouter: 0 };
     featureCounts[k][l.provider] = (featureCounts[k][l.provider] || 0) + 1;
   });
-  const features = Object.entries(featureCounts).sort((a, b) => (b[1].lynx + b[1].gemini + b[1].cohere + b[1].claude + (b[1].firebase || 0)) - (a[1].lynx + a[1].gemini + a[1].cohere + a[1].claude + (a[1].firebase || 0)));
+  
+  const features = Object.entries(featureCounts).sort((a, b) => 
+    (b[1].lynx + b[1].gemini + b[1].cohere + b[1].claude + (b[1].firebase || 0) + (b[1].openrouter || 0)) - 
+    (a[1].lynx + a[1].gemini + a[1].cohere + a[1].claude + (a[1].firebase || 0) + (a[1].openrouter || 0))
+  );
 
   // Recent 50 logs
   const recent = logs.slice(0, 50);
 
   return (
     <div className="space-y-5">
-      {/* Totals */}
+      {/* Totals Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-            { label: "Total AI Calls", value: total, color: "text-white", success: null },
-            { label: "⚡ Lynx API", value: lynxTotal, color: "text-amber-400", success: lynxSuccess },
-            { label: "🔵 Gemini API", value: geminiTotal, color: "text-blue-400", success: geminiSuccess },
-            { label: "🟢 Cohere API", value: cohereTotal, color: "text-teal-400", success: cohereSuccess },
-            { label: "🟠 Claude API", value: claudeTotal, color: "text-orange-400", success: claudeSuccess },
-            { label: "🔥 Firebase AI", value: firebaseTotal, color: "text-violet-400", success: firebaseSuccess },
-          ].map(stat => (
+          { label: "Total AI Calls", value: total, color: "text-white", success: null },
+          { label: "⚡ Lynx API", value: lynxTotal, color: "text-amber-400", success: lynxSuccess },
+          { label: "🔵 Gemini API", value: geminiTotal, color: "text-blue-400", success: geminiSuccess },
+          { label: "🟢 Cohere API", value: cohereTotal, color: "text-teal-400", success: cohereSuccess },
+          { label: "🟠 Claude API", value: claudeTotal, color: "text-orange-400", success: claudeSuccess },
+          { label: "🔥 Firebase AI", value: firebaseTotal, color: "text-violet-400", success: firebaseSuccess },
+          { label: "🧠 OpenRouter", value: openrouterTotal, color: "text-pink-400", success: openrouterSuccess },
+        ].map(stat => (
           <div key={stat.label} className="rounded-2xl p-5 text-center" style={cardStyle}>
             <div className={`text-3xl font-black mb-1 ${stat.color}`}>{stat.value}</div>
             <div className="text-xs font-semibold" style={mutedStyle}>{stat.label}</div>
@@ -724,7 +853,7 @@ function AIUsagePanel({ cardStyle, mutedStyle }) {
         ))}
       </div>
 
-      {/* Provider bar */}
+      {/* Provider Split Visual Bar */}
       {total > 0 && (
         <div className="rounded-2xl p-5" style={cardStyle}>
           <h3 className="font-bold text-sm mb-3">Provider Split</h3>
@@ -734,6 +863,7 @@ function AIUsagePanel({ cardStyle, mutedStyle }) {
             <div className="bg-teal-500 transition-all" style={{ width: `${(cohereTotal / total) * 100}%` }} />
             <div className="bg-orange-500 transition-all" style={{ width: `${(claudeTotal / total) * 100}%` }} />
             <div className="bg-violet-600 transition-all" style={{ width: `${(firebaseTotal / total) * 100}%` }} />
+            <div className="bg-pink-500 transition-all" style={{ width: `${(openrouterTotal / total) * 100}%` }} />
           </div>
           <div className="flex gap-4 text-xs flex-wrap">
             <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-amber-500 inline-block" /><span style={mutedStyle}>Lynx {Math.round((lynxTotal / total) * 100)}%</span></div>
@@ -741,17 +871,18 @@ function AIUsagePanel({ cardStyle, mutedStyle }) {
             <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-teal-500 inline-block" /><span style={mutedStyle}>Cohere {Math.round((cohereTotal / total) * 100)}%</span></div>
             <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-orange-500 inline-block" /><span style={mutedStyle}>Claude {Math.round((claudeTotal / total) * 100)}%</span></div>
             <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-violet-600 inline-block" /><span style={mutedStyle}>Firebase {Math.round((firebaseTotal / total) * 100)}%</span></div>
+            <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-pink-500 inline-block" /><span style={mutedStyle}>OpenRouter {Math.round((openrouterTotal / total) * 100)}%</span></div>
           </div>
         </div>
       )}
 
-      {/* Feature breakdown */}
+      {/* Feature Breakdown Chart Rows */}
       {features.length > 0 && (
         <div className="rounded-2xl p-5" style={cardStyle}>
           <h3 className="font-bold text-sm mb-3">Usage by Feature</h3>
           <div className="space-y-2">
             {features.map(([feature, counts]) => {
-              const ft = (counts.lynx || 0) + (counts.gemini || 0) + (counts.cohere || 0) + (counts.claude || 0) + (counts.firebase || 0);
+              const ft = (counts.lynx || 0) + (counts.gemini || 0) + (counts.cohere || 0) + (counts.claude || 0) + (counts.firebase || 0) + (counts.openrouter || 0);
               return (
                 <div key={feature} className="flex items-center gap-3">
                   <span className="text-xs font-mono w-36 truncate" style={mutedStyle}>{feature}</span>
@@ -761,9 +892,10 @@ function AIUsagePanel({ cardStyle, mutedStyle }) {
                     {counts.cohere > 0 && <div className="bg-teal-500/80" style={{ width: `${(counts.cohere / ft) * 100}%` }} />}
                     {counts.claude > 0 && <div className="bg-orange-500/80" style={{ width: `${(counts.claude / ft) * 100}%` }} />}
                     {counts.firebase > 0 && <div className="bg-violet-600/80" style={{ width: `${(counts.firebase / ft) * 100}%` }} />}
+                    {counts.openrouter > 0 && <div className="bg-pink-500/80" style={{ width: `${(counts.openrouter / ft) * 100}%` }} />}
                   </div>
                   <span className="text-xs font-black w-8 text-right">{ft}</span>
-                  <span className="text-[10px] opacity-60 w-48 text-right">⚡{counts.lynx || 0} 🔵{counts.gemini || 0} 🟢{counts.cohere || 0} 🟠{counts.claude || 0} 🔥{counts.firebase || 0}</span>
+                  <span className="text-[10px] opacity-60 w-56 text-right">⚡{counts.lynx || 0} 🔵{counts.gemini || 0} 🟢{counts.cohere || 0} 🟠{counts.claude || 0} 🔥{counts.firebase || 0} 🧠{counts.openrouter || 0}</span>
                 </div>
               );
             })}
@@ -771,7 +903,7 @@ function AIUsagePanel({ cardStyle, mutedStyle }) {
         </div>
       )}
 
-      {/* Recent logs */}
+      {/* Recent Logs Table Wrapper */}
       <div className="rounded-2xl overflow-hidden" style={cardStyle}>
         <div className="px-5 py-3 border-b font-bold text-sm" style={{ borderColor: "var(--app-border)" }}>
           Recent AI Calls (last 50)
@@ -791,8 +923,20 @@ function AIUsagePanel({ cardStyle, mutedStyle }) {
                 <td className="px-4 py-2 truncate max-w-[120px]" style={mutedStyle}>{log.user_email?.split("@")[0] || "—"}</td>
                 <td className="px-4 py-2 font-mono">{log.feature || "—"}</td>
                 <td className="px-4 py-2">
-                  <span className={`px-2 py-0.5 rounded-lg font-bold ${log.provider === "lynx" ? "bg-amber-500/15 text-amber-400" : log.provider === "gemini" ? "bg-blue-500/15 text-blue-400" : log.provider === "cohere" ? "bg-teal-500/15 text-teal-400" : log.provider === "claude" ? "bg-orange-500/15 text-orange-400" : "bg-violet-500/15 text-violet-400"}`}>
-                    {log.provider === "lynx" ? "⚡ Lynx" : log.provider === "gemini" ? "🔵 Gemini" : log.provider === "cohere" ? "🟢 Cohere" : log.provider === "claude" ? "🟠 Claude" : "🧠 Base44"}
+                  <span className={`px-2 py-0.5 rounded-lg font-bold ${
+                    log.provider === "lynx" ? "bg-amber-500/15 text-amber-400" : 
+                    log.provider === "gemini" ? "bg-blue-500/15 text-blue-400" : 
+                    log.provider === "cohere" ? "bg-teal-500/15 text-teal-400" : 
+                    log.provider === "claude" ? "bg-orange-500/15 text-orange-400" : 
+                    log.provider === "openrouter" ? "bg-pink-500/15 text-pink-400" : 
+                    "bg-violet-500/15 text-violet-400"
+                  }`}>
+                    {log.provider === "lynx" ? "⚡ Lynx" : 
+                     log.provider === "gemini" ? "🔵 Gemini" : 
+                     log.provider === "cohere" ? "🟢 Cohere" : 
+                     log.provider === "claude" ? "🟠 Claude" : 
+                     log.provider === "openrouter" ? "🧠 OpenRouter" : 
+                     "🔥 Firebase"}
                   </span>
                 </td>
                 <td className="px-4 py-2">
@@ -1059,6 +1203,7 @@ export default function DevDashboard() {
   const [tab, setTab] = useState("overview");
   const [data, setData] = useState({});
   const [loading, setLoading] = useState(true);
+  const initialLoadRef = useRef(false);
 
   const bgStyle = { background: "var(--app-bg)", color: "var(--app-text)" };
   const cardStyle = { background: "var(--app-surface)", border: "1px solid var(--app-border)" };
@@ -1085,38 +1230,89 @@ export default function DevDashboard() {
   };
 
   useEffect(() => {
+    // 1. StrictMode / Fast-refresh structural guard to prevent double-firing queries
+    if (initialLoadRef.current) return;
+    initialLoadRef.current = true;
+
+    let isMounted = true;
+
     db.auth.me().then(async (me) => {
+      if (!isMounted) return;
       setUser(me);
-      if (!DEV_EMAILS.includes(me.email)) { setLoading(false); return; }
+      
+      // Authorization Check: Bails out early if the logged-in email is not allowed
+      if (!me || !DEV_EMAILS.includes(me.email)) { 
+        setLoading(false); 
+        return; 
+      }
 
-      // Fetch in parallel batches with safe limits
-      const [feedback, sessions, decks, users, ratings] = await Promise.all([
-        db.entities.Feedback.list("-created_date", 200).catch(() => []),
-        db.entities.StudySession.list("-created_date", 2000).catch(() => []),
-        db.entities.Deck.list("-updated_date", 2000).catch(() => []),
-        db.entities.User.list("-created_date", 1000).catch(() => []),
-        db.entities.DeckRating.list("-created_date", 500).catch(() => []),
-      ]);
-      const [suspensions, apps, friendships, apSessions, loginEvents, verifyRequests] = await Promise.all([
-        db.entities.SuspendedUser.list("-created_date", 200).catch(() => []),
-        db.entities.CourseApplication.list("-created_date", 100).catch(() => []),
-        db.entities.Friendship.list("-created_date", 500).catch(() => []),
-        db.entities.APSession.list("-created_date", 500).catch(() => []),
-        db.entities.UserLoginEvent.list("-created_date", 1000).catch(() => []),
-        db.entities.PendingApproval.list("-created_date", 200).catch(() => []),
-      ]);
-      setData({ feedback, sessions, decks, users, ratings, suspensions, apps, friendships, apSessions, loginEvents, verifyRequests });
-      setLoading(false);
+      // 🛡️ SELF-HEALING GUARD: Verify the logged-in admin's own profile document exists
+      try {
+        const myProfile = await db.entities.User.get(me.id || me.uid);
+        if (!myProfile) {
+          console.warn("⚠️ Admin authenticated but profile document was missing! Auto-generating entry.");
+          const baseName = (me.email || "Admin").split('@')[0];
+          const formattedName = baseName.charAt(0).toUpperCase() + baseName.slice(1);
+          
+          await db.entities.User.create({
+            id: me.id || me.uid,
+            email: me.email,
+            full_name: formattedName,
+            role: 'admin',
+            is_public: true,
+            bio: 'Profile automatically recovered during dashboard load.',
+            created_date: new Date().toISOString(),
+            updated_date: new Date().toISOString()
+          });
+        }
+      } catch (err) {
+        console.error("Self-healing check failed on initialization:", err);
+      }
 
-      // Send browser notifications for pending actions (once per session)
-      if (!notifCheckRef.current) {
-        notifCheckRef.current = true;
-        const pendingApps = apps.filter(a => a.status === "pending").length;
-        const pendingSus = suspensions.filter(s => s.status === "suspended").length;
-        if (pendingApps > 0 || pendingSus > 0) requestAndNotify(pendingApps, pendingSus);
+      try {
+        // Parallel Batch Fetch 1
+        const [feedback, sessions, decks, users, ratings] = await Promise.all([
+          db.entities.Feedback.list("-created_date", 200).catch(() => []),
+          db.entities.StudySession.list("-created_date", 2000).catch(() => []),
+          db.entities.Deck.list("-updated_date", 2000).catch(() => []),
+          db.entities.User.list("-created_date", 2000).catch(() => []), // <-- Safely reads the user directory
+          db.entities.DeckRating.list("-created_date", 500).catch(() => []),
+        ]);
+
+        // Parallel Batch Fetch 2
+        const [suspensions, apps, friendships, apSessions, loginEvents, verifyRequests] = await Promise.all([
+          db.entities.SuspendedUser.list("-created_date", 200).catch(() => []),
+          db.entities.CourseApplication.list("-created_date", 100).catch(() => []),
+          db.entities.Friendship.list("-created_date", 500).catch(() => []),
+          db.entities.APSession.list("-created_date", 500).catch(() => []),
+          db.entities.UserLoginEvent.list("-created_date", 1000).catch(() => []),
+          db.entities.PendingApproval.list("-created_date", 200).catch(() => []),
+        ]);
+
+        // Only apply state updates if the user hasn't already closed or switched tabs
+        if (isMounted) {
+          setData({ feedback, sessions, decks, users, ratings, suspensions, apps, friendships, apSessions, loginEvents, verifyRequests });
+          setLoading(false);
+
+          // Send browser system notifications for pending actions (runs once per session)
+          if (!notifCheckRef.current) {
+            notifCheckRef.current = true;
+            const pendingApps = (apps || []).filter(a => a.status === "pending").length;
+            const pendingSus = (suspensions || []).filter(s => s.status === "suspended").length;
+            if (pendingApps > 0 || pendingSus > 0) requestAndNotify(pendingApps, pendingSus);
+          }
+        }
+      } catch (error) {
+        console.error("Dashboard parallel read failure:", error);
+        if (isMounted) setLoading(false);
       }
     });
-  }, []);
+
+    // Cleanup block handles unmounting instances gracefully
+    return () => {
+      isMounted = false;
+    };
+  }, []); // Keep explicitly tied to mount lifecycle
 
   if (loading) return <div className="min-h-screen flex items-center justify-center" style={bgStyle}><Loader2 className="w-8 h-8 text-violet-500 animate-spin" /></div>;
 
@@ -1147,6 +1343,7 @@ export default function DevDashboard() {
   const tabs = [
     { id: "overview", label: "📊 Overview" },
     { id: "analytics", label: "📈 Analytics" },
+    { id: "vercel-analytics", label: "🔺 Vercel Analytics" },
     { id: "usage", label: "⚡ Usage & AI" },
     { id: "feedback", label: "💬 Feedback" },
     { id: "users", label: `👤 Users (${users.length})` },
@@ -1456,91 +1653,175 @@ export default function DevDashboard() {
           </div>
         )}
 
+        {tab === "vercel-analytics" && (
+          <div 
+            className="rounded-2xl p-8 text-center flex flex-col items-center justify-center border h-[50vh]" 
+            style={{ ...cardStyle, borderColor: 'var(--app-border)' }}
+          >
+            <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center text-xl mb-4">
+              🔺
+            </div>
+            <h3 className="text-sm font-bold text-zinc-100 mb-2">Vercel Analytics Console</h3>
+            <p className="text-xs max-w-sm mb-6" style={mutedStyle}>
+              Vercel security parameters prevent embedding the live admin console directly. Click below to launch your analytics stream in a secure window.
+            </p>
+            <a
+              href="https://vercel.com/yohanyinyuchang-4896s-projects/cognitastudyfirebase/analytics"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-2 bg-white text-black hover:bg-zinc-200 text-xs font-bold rounded-xl transition-all inline-flex items-center gap-2"
+            >
+              Launch Dashboard ↗
+            </a>
+          </div>
+        )}
+
         {tab === "feedback" && (
-          <div className="space-y-3">
-            {feedback.length === 0 && <p style={mutedStyle}>No feedback yet.</p>}
-            {feedback.map(fb => (
-              <div key={fb.id} className="rounded-2xl p-4" style={cardStyle}>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xs font-bold text-violet-400">{fb.user_email || fb.user_name || "Anonymous"}</span>
-                  <span className="text-xs" style={mutedStyle}>{new Date(fb.created_date).toLocaleDateString()}</span>
-                  {fb.page && <span className="px-2 py-0.5 rounded-lg text-xs" style={{ background: "var(--app-bg)" }}>{fb.page}</span>}
-                  {fb.rating && <span className="text-xs">{"⭐".repeat(fb.rating)}</span>}
+          <div className="space-y-4">
+            {(feedback || []).slice(0, 100).map(f => (
+              <div key={f.id || f.created_date || Math.random()} className="rounded-2xl p-4 space-y-2 text-xs border" style={{ ...cardStyle, borderColor: 'var(--app-border)' }}>
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-indigo-400">{f.user_email || f.email || "Anonymous User"}</span>
+                  <span style={mutedStyle}>
+                    {f.created_date ? new Date(f.created_date).toLocaleDateString() : "—"}
+                  </span>
                 </div>
-                <p className="text-sm">{fb.message}</p>
+                <p className="text-zinc-200 bg-black/10 p-2.5 rounded-xl border border-zinc-800/40 whitespace-pre-wrap">{f.content || f.message || "No content provided."}</p>
+                {f.category && (
+                  <span className="inline-block px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-400 font-mono text-[10px]">
+                    {f.category}
+                  </span>
+                )}
               </div>
             ))}
+            {feedback.length === 0 && (
+              <p className="text-center py-6" style={mutedStyle}>No feedback submissions found.</p>
+            )}
           </div>
         )}
 
         {tab === "users" && (
           <div className="space-y-2">
-            {users.map(u => (
-              <div key={u.id} className="rounded-2xl px-4 py-3 flex items-center gap-3" style={cardStyle}>
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-600/30 to-blue-600/30 flex items-center justify-center text-sm font-bold shrink-0 overflow-hidden">
-                  {u.profile_picture_url
-                    ? <img src={u.profile_picture_url} alt="" className="w-full h-full object-cover" />
-                    : (u.full_name || u.email)?.[0]?.toUpperCase()}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold truncate">{u.display_name || u.full_name || "—"}</p>
-                  <p className="text-xs truncate" style={mutedStyle}>{u.email}</p>
-                  {u.bio && <p className="text-xs truncate opacity-40">{u.bio}</p>}
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className={`px-2 py-0.5 rounded-lg text-xs ${u.is_public ? "bg-emerald-500/15 text-emerald-400" : "opacity-30 text-xs"}`}>{u.is_public ? "public" : "private"}</span>
-                  <span className={`px-2 py-0.5 rounded-lg text-xs ${u.role === "admin" ? "bg-violet-500/20 text-violet-400" : "bg-blue-500/10 text-blue-400"}`}>{u.role || "user"}</span>
-                  {u.profile_picture_url && (
+            {/* FIXED: Reading from the dynamic state tracker variable if 'users' comes from 'data.users' */}
+            {(users || []).map(u => {
+              // Safe fallback computation for the text avatar letter icon
+              const userString = u.full_name || u.email || "U";
+              const initialLetter = userString[0]?.toUpperCase() || "U";
+              
+              return (
+                <div key={u.id || u.email || Math.random()} className="rounded-2xl px-4 py-3 flex items-center gap-3" style={cardStyle}>
+                  
+                  {/* Profile Picture Frame */}
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-600/30 to-blue-600/30 flex items-center justify-center text-sm font-bold shrink-0 overflow-hidden">
+                    {u.profile_picture_url
+                      ? <img src={u.profile_picture_url} alt="" className="w-full h-full object-cover" />
+                      : initialLetter}
+                  </div>
+
+                  {/* User Account Info Segment */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold truncate">{u.display_name || u.full_name || u.email?.split('@')[0] || "—"}</p>
+                    <p className="text-xs truncate" style={mutedStyle}>{u.email || "No email uploaded"}</p>
+                    {u.bio && <p className="text-xs truncate opacity-40">{u.bio}</p>}
+                  </div>
+
+                  {/* Action Controls Column */}
+                  <div className="flex items-center gap-2 shrink-0">
+                    {/* Public / Private Badge */}
+                    <span className={`px-2 py-0.5 rounded-lg text-xs font-medium ${u.is_public ? "bg-emerald-500/15 text-emerald-400" : "bg-white/[0.04] text-slate-400"}`}>
+                      {u.is_public ? "public" : "private"}
+                    </span>
+                    
+                    {/* Account Role Badge */}
+                    <span className={`px-2 py-0.5 rounded-lg text-xs font-medium ${u.role === "admin" ? "bg-violet-500/20 text-violet-400" : "bg-blue-500/10 text-blue-400"}`}>
+                      {u.role || "user"}
+                    </span>
+
+                    {/* Moderate Profile Picture Action Button */}
+                    {u.profile_picture_url && (
+                      <button
+                        onClick={async () => {
+                          if (window.confirm(`Remove profile picture for ${u.email || 'this user'}?`)) {
+                            await db.entities.User.update(u.id, { profile_picture_url: null });
+                            // Assures your state container handles the collection updates cleanly
+                            if (typeof setData === "function") {
+                              setData(d => {
+                                const baseList = d.users || (Array.isArray(d) ? d : []);
+                                const updatedList = baseList.map(x => x.id === u.id ? { ...x, profile_picture_url: null } : x);
+                                return d.users ? { ...d, users: updatedList } : updatedList;
+                              });
+                            }
+                          }
+                        }}
+                        className="text-xs px-2 py-1 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all font-semibold"
+                        title="Remove profile picture"
+                      >
+                        🚫 Pic
+                      </button>
+                    )}
+
+                    {/* Toggle Public / Private Overrides (Shows lock control option for all visibility modes) */}
                     <button
                       onClick={async () => {
-                        if (window.confirm(`Remove profile picture for ${u.email}?`)) {
-                          await db.entities.User.update(u.id, { profile_picture_url: null });
-                          setData(d => ({ ...d, users: d.users.map(x => x.id === u.id ? { ...x, profile_picture_url: null } : x) }));
+                        const targetPublicState = !u.is_public;
+                        await db.entities.User.update(u.id, { is_public: targetPublicState });
+                        if (typeof setData === "function") {
+                          setData(d => {
+                            const baseList = d.users || (Array.isArray(d) ? d : []);
+                            const updatedList = baseList.map(x => x.id === u.id ? { ...x, is_public: targetPublicState } : x);
+                            return d.users ? { ...d, users: updatedList } : updatedList;
+                          });
                         }
                       }}
-                      className="text-xs px-2 py-1 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all"
-                      title="Remove profile picture"
+                      className={`text-xs px-2 py-1 rounded-lg transition-all font-semibold ${
+                        u.is_public 
+                          ? "bg-amber-500/10 text-amber-400 hover:bg-amber-500/20" 
+                          : "bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
+                      }`}
+                      title={u.is_public ? "Make profile private" : "Make profile public"}
                     >
-                      🚫 Pic
+                      {u.is_public ? "🔒 Hide" : "🔓 Expose"}
                     </button>
-                  )}
-                  {u.is_public && (
-                    <button
-                      onClick={async () => {
-                        await db.entities.User.update(u.id, { is_public: false });
-                        setData(d => ({ ...d, users: d.users.map(x => x.id === u.id ? { ...x, is_public: false } : x) }));
-                      }}
-                      className="text-xs px-2 py-1 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 transition-all"
-                      title="Make profile private"
-                    >
-                      🔒 Hide
-                    </button>
-                  )}
+                  </div>
+
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
         {tab === "decks" && (
           <div className="space-y-2">
-            {decks.map(d => (
-              <div key={d.id} className="flex items-center gap-3 px-4 py-3 rounded-2xl" style={cardStyle}>
+            {(decks || []).slice(0, 100).map(d => (
+              <div key={d.id || d.title || Math.random()} className="flex items-center gap-3 px-4 py-3 rounded-2xl" style={cardStyle}>
                 <div className="w-4 h-4 rounded shrink-0" style={{ background: d.color || "#4F46E5" }} />
+                
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <p className="text-sm font-bold truncate">{d.title}</p>
+                    <p className="text-sm font-bold truncate">{d.title || "Untitled Deck"}</p>
                     {d.is_verified && <VerifiedBadge size={13} />}
                   </div>
-                  <p className="text-xs" style={mutedStyle}>{d.author_email || d.created_by} · {d.subject || "—"}</p>
+                  <p className="text-xs truncate" style={mutedStyle}>
+                    {d.author_email || d.created_by || "System"} · {d.subject || "—"}
+                  </p>
                 </div>
-                <span className="text-xs font-bold">{d.card_count || 0} cards</span>
-                {d.is_public && <span className="text-xs px-2 py-0.5 rounded-lg bg-emerald-500/15 text-emerald-400">public</span>}
+                
+                <span className="text-xs font-bold shrink-0">{d.card_count || 0} cards</span>
+                {d.is_public && <span className="text-xs px-2 py-0.5 rounded-lg bg-emerald-500/15 text-emerald-400 shrink-0">public</span>}
+                
                 <button
                   onClick={async () => {
                     const newVal = !d.is_verified;
-                    await db.entities.Deck.update(d.id, { is_verified: newVal, verified_by: newVal ? user.email : null });
-                    setData(prev => ({ ...prev, decks: prev.decks.map(x => x.id === d.id ? { ...x, is_verified: newVal, verified_by: newVal ? user.email : null } : x) }));
+                    const currentAdminEmail = user?.email || "admin";
+                    await db.entities.Deck.update(d.id, { is_verified: newVal, verified_by: newVal ? currentAdminEmail : null });
+                    
+                    if (typeof setData === "function") {
+                      setData(prev => {
+                        const baseList = prev?.decks || (Array.isArray(prev) ? prev : []);
+                        const updatedList = baseList.map(x => x.id === d.id ? { ...x, is_verified: newVal, verified_by: newVal ? currentAdminEmail : null } : x);
+                        return prev?.decks ? { ...prev, decks: updatedList } : updatedList;
+                      });
+                    }
                   }}
                   className={`text-xs px-2 py-1 rounded-lg font-bold transition-all shrink-0 ${d.is_verified ? "bg-blue-500/20 text-blue-400 hover:bg-blue-500/30" : "bg-white/5 opacity-40 hover:opacity-80"}`}
                   title={d.is_verified ? "Remove verified badge" : "Mark as verified"}
@@ -1549,6 +1830,9 @@ export default function DevDashboard() {
                 </button>
               </div>
             ))}
+            {(decks || []).length === 0 && (
+              <p className="text-center py-6 text-xs" style={mutedStyle}>No flashcard decks found.</p>
+            )}
           </div>
         )}
 
@@ -1622,7 +1906,10 @@ export default function DevDashboard() {
         )}
 
         {tab === "backup" && (
-          <DataBackupRestore cardStyle={cardStyle} mutedStyle={mutedStyle} />
+          <div className="space-y-4">
+            <UserSyncButton cardStyle={cardStyle} mutedStyle={mutedStyle} />
+            <DataBackupRestore cardStyle={cardStyle} mutedStyle={mutedStyle} />
+          </div>
         )}
 
         {tab === "questionnaires" && (
@@ -1779,7 +2066,9 @@ export default function DevDashboard() {
                     <td className="px-4 py-3">{s.session_type || "flashcards"}</td>
                     <td className="px-4 py-3 font-bold">{s.cards_reviewed || 0}</td>
                     <td className="px-4 py-3">{s.duration_minutes || 0}m</td>
-                    <td className="px-4 py-3" style={mutedStyle}>{new Date(s.created_date).toLocaleDateString()}</td>
+                    <td className="px-4 py-3" style={mutedStyle}>
+                      {s.created_date ? new Date(s.created_date).toLocaleDateString() : "—"}
+                    </td>
                   </tr>
                 ))}
               </tbody>
