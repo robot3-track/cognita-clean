@@ -47,6 +47,31 @@ function extractCardCount(text) {
   return 10; // default
 }
 
+/**
+ * Recursively cleans properties with undefined values from an object or array
+ * to prevent Firestore from crashing during updates.
+ */
+function sanitizeForFirestore(obj) {
+  if (obj === undefined) return null;
+  if (obj === null) return null;
+  
+  if (Array.isArray(obj)) {
+    return obj.map(sanitizeForFirestore);
+  }
+  
+  if (typeof obj === 'object') {
+    const cleaned = {};
+    for (const [key, value] of Object.entries(obj)) {
+      if (value !== undefined) {
+        cleaned[key] = sanitizeForFirestore(value);
+      }
+    }
+    return cleaned;
+  }
+  
+  return obj;
+}
+
 export default function Chat() {
   const { t } = useTranslation();
   const [sessions, setSessions] = useState([]);
@@ -195,7 +220,8 @@ export default function Chat() {
 
   const submitRename = async (session) => {
     if (!renameValue.trim()) return;
-    const updated = await db.entities.ChatSession.update(session.id, { title: renameValue.trim() });
+    const safePayload = sanitizeForFirestore({ title: renameValue.trim() });
+    const updated = await db.entities.ChatSession.update(session.id, safePayload);
     setSessions(prev => prev.map(s => s.id === session.id ? { ...s, title: renameValue.trim() } : s));
     if (activeSession?.id === session.id) setActiveSession(prev => ({ ...prev, title: renameValue.trim() }));
     setRenamingId(null);
@@ -341,7 +367,8 @@ export default function Chat() {
       else if (detected?.video) handleSmartNavigate("video", userMsg.content);
 
       const updatedTitle = session.title === "New Chat" ? userMsg.content.slice(0, 40) : session.title;
-      const updated = await db.entities.ChatSession.update(session.id, { messages: finalMessages, title: updatedTitle });
+      const safePayload = sanitizeForFirestore({ messages: finalMessages, title: updatedTitle });
+      const updated = await db.entities.ChatSession.update(session.id, safePayload);
       setSessions(prev => prev.map(s => s.id === updated.id ? updated : s));
       setActiveSession(updated);
     } catch (err) {
@@ -659,10 +686,11 @@ export default function Chat() {
         speakFallback(response);
       }
 
-      await db.entities.ChatSession.update(session.id, {
+      const safePayload = sanitizeForFirestore({
         messages: finalMsgs,
         title: session.title === "New Chat" || session.title === "Voice Chat" ? finalTranscript.slice(0, 40) : session.title,
       });
+      await db.entities.ChatSession.update(session.id, safePayload);
       setSessions(prev => prev.map(s => s.id === session.id ? { ...s, messages: finalMsgs } : s));
     } catch (err) {
       if (err.name !== 'AbortError' && !abortController.signal.aborted) {
