@@ -22,6 +22,9 @@ export const LYNX_MODEL = import.meta.env.VITE_LYNX_MODEL || "lynx-5.2-scout";
 export const LYNX_FALLBACK_MODELS = ["lynx-4.1-scout"];
 export const LYNX_ENABLED_KEY = "cognita_use_lynx_api";
 
+export const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || "";
+export const OPENROUTER_MODEL = import.meta.env.VITE_OPENROUTER_MODEL || "openrouter/free";
+
 export const BIG_PICKLE_API_KEY = import.meta.env.VITE_BIG_PICKLE_API_KEY || "";
 export const BIG_PICKLE_BASE_URL = import.meta.env.VITE_BIG_PICKLE_BASE_URL || "https://opencode.ai/zen/v1";
 export const BIG_PICKLE_MODEL = import.meta.env.VITE_BIG_PICKLE_MODEL || "opencode/big-pickle";
@@ -67,10 +70,11 @@ const COGNITA_SYSTEM_PROMPT =
   "You adapt your teaching style to each student: breaking down complex ideas into simple steps, using analogies, real-world examples, and encouraging questions. " +
   "You celebrate progress, provide motivational support, and guide students to think critically rather than just giving them answers. " +
   "You are powered by the Cognita AI engine. You are Cognita — never claim to be ChatGPT, GPT, OpenAI, Claude, Gemini, Cohere, or any other AI. " +
+  "If you aren't given the proper resources or information to answer a prompt, you should clearly let the user know instead of making up answers or a prompt respones. " +
   "Always be warm, encouraging, concise, and academically rigorous.\n\n" +
   "CAPABILITIES: You have broad knowledge across all academic subjects. When asked about current events, recent data, or real-time information, state clearly what you know up to your training cutoff and note if information may have changed. " +
   "For web searches: if a user explicitly asks you to 'search the web' or 'look up' something, do your best with your existing knowledge and note that live internet access varies by session — but provide the best possible answer from your training. " +
-  "For flashcard creation: when a user asks to 'create N flashcards', always create exactly that number of flashcards as requested. Default is 10 if no number specified. " +
+  "For flashcard creation: when a user asks to 'create N flashcards', always create exactly that number of flashcards as requested. Default is 10 if no number specified. if you don't see the resource the user wants to provide you, tell the user to clarify or use a different source instead of making up information. Never make up information. " +
   "For quiz creation: generate exactly the number of questions asked. " +
   "For study plans: create specific, actionable day-by-day plans with concrete tasks. " +
   "For code: always use proper markdown fenced code blocks.\n\n" +
@@ -214,6 +218,77 @@ async function tryLynx({ enhancedPrompt, systemPrompt, response_json_schema, fea
   return null;
 }
 
+async function tryOpenRouter({ enhancedPrompt, systemPrompt, response_json_schema, feature }) {
+  if (!OPENROUTER_API_KEY) return null;
+
+  const userContent = response_json_schema
+    ? `${enhancedPrompt}\n\nIMPORTANT: Respond with ONLY valid JSON. No markdown fences, no explanation, no text before or after the JSON object.`
+    : enhancedPrompt;
+
+  let res;
+  try {
+    res = await fetch("[https://openrouter.ai/api/v1/chat/completions](https://openrouter.ai/api/v1/chat/completions)", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+        "HTTP-Referer": window.location.origin || "http://localhost:5173",
+        "X-Title": "Cognita Study Platform",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: OPENROUTER_MODEL,
+        response_format: response_json_schema ? { type: "json_object" } : undefined,
+        messages: [
+          { role: "system", content: systemPrompt || "You are Cognita, a friendly and smart AI learning assistant." },
+          { role: "user", content: userContent },
+        ],
+      }),
+    });
+  } catch (err) {
+    logAIUsage("openrouter", feature, enhancedPrompt?.length, false);
+    return null; // Network error fallback
+  }
+
+  if (!res.ok) {
+    logAIUsage("openrouter", feature, enhancedPrompt?.length, false);
+    return null;
+  }
+
+  const data = await res.json();
+  const content = data?.choices?.[0]?.message?.content;
+  if (!content) {
+    logAIUsage("openrouter", feature, enhancedPrompt?.length, false);
+    return null;
+  }
+
+  if (response_json_schema) {
+    try {
+      // Safely using hex codes (\x60) for backticks to prevent markdown glitches
+      const cleanRegexStart = new RegExp("^\\x60\\x60\\x60(?:json)?\\s*", "im");
+      const cleanRegexEnd = new RegExp("\\s*\\x60\\x60\\x60\\s*$", "im");
+      let cleaned = content.replace(cleanRegexStart, "").replace(cleanRegexEnd, "").trim();
+      
+      try { 
+        logAIUsage("openrouter", feature, enhancedPrompt?.length, true); 
+        return JSON.parse(cleaned); 
+      } catch {}
+      
+      const jsonMatch = cleaned.match(/(\{[\s\S]*\})/);
+      if (jsonMatch) { 
+        logAIUsage("openrouter", feature, enhancedPrompt?.length, true); 
+        return JSON.parse(jsonMatch[1]); 
+      }
+      logAIUsage("openrouter", feature, enhancedPrompt?.length, false); 
+      return null;
+    } catch { 
+      logAIUsage("openrouter", feature, enhancedPrompt?.length, false); 
+      return null; 
+    }
+  }
+
+  logAIUsage("openrouter", feature, enhancedPrompt?.length, true);
+  return content;
+}
 /**
  * Call Big Pickle API via InvokeLLM proxy (direct browser fetch blocked by CORS).
  * Uses Base44 as a server-side proxy to reach opencode.ai/zen/v1.
@@ -378,42 +453,82 @@ export async function callAI({ prompt, response_json_schema, add_context_from_in
   const needsInternet = !!add_context_from_internet;
   const needsVision = !!(file_urls && file_urls.length > 0);
 
-  // If internet search or vision → Gemini first, then Base44
-  if ((needsInternet || needsVision) && GEMINI_API_KEY) {
-    try {
-      const visionModel = needsVision ? GEMINI_VISION_MODEL : GEMINI_MODEL;
-      const bodyParts = [{ text: `${systemPrompt || COGNITA_SYSTEM_PROMPT}\n\n${enhancedPrompt}` }];
-      if (needsVision) {
-        for (const url of file_urls) {
-          try {
-            const b64 = await fetchImageAsBase64(url);
-            bodyParts.push({ inlineData: { mimeType: "image/jpeg", data: b64 } });
-          } catch {}
+  // If internet search or vision → Gemini first
+  // If internet search or vision, Gemini first then fall back to other providers like Lynx etc.
+  if (needsInternet || needsVision) {
+    // 1. Try Gemini first (Best natively for both web search and vision)
+    if (GEMINI_API_KEY) {
+      try {
+        const visionModel = needsVision ? GEMINI_VISION_MODEL : GEMINI_MODEL;
+        const bodyParts = [{ text: `${systemPrompt || COGNITA_SYSTEM_PROMPT}\n\n${enhancedPrompt}` }];
+        if (needsVision) {
+          for (const url of file_urls) {
+            try {
+              const b64 = await fetchImageAsBase64(url);
+              bodyParts.push({ inlineData: { mimeType: "image/jpeg", data: b64 } });
+            } catch {}
+          }
         }
-      }
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${visionModel}:generateContent?key=${GEMINI_API_KEY}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ role: "user", parts: bodyParts }],
-          ...(needsInternet ? { tools: [{ googleSearch: {} }] } : {}),
-          generationConfig: { candidateCount: 1, maxOutputTokens: 8192, temperature: 0.7, ...(response_json_schema ? { responseMimeType: "application/json" } : {}) },
-        }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const content = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (content) {
-          logAIUsage("gemini", feature, enhancedPrompt?.length, true);
-          if (response_json_schema) { try { return JSON.parse(content); } catch {} }
-          else return content;
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${visionModel}:generateContent?key=${GEMINI_API_KEY}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ role: "user", parts: bodyParts }],
+            ...(needsInternet ? { tools: [{ googleSearch: {} }] } : {}),
+            generationConfig: { candidateCount: 1, maxOutputTokens: 8192, temperature: 0.7, ...(response_json_schema ? { responseMimeType: "application/json" } : {}) },
+          }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const content = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (content) {
+            logAIUsage("gemini", feature, enhancedPrompt?.length, true);
+            if (response_json_schema) { try { return JSON.parse(content); } catch {} }
+            else return content;
+          }
         }
+        logAIUsage("gemini", feature, enhancedPrompt?.length, false);
+      } catch (err) {
+        console.warn("Gemini search/vision failed:", err?.message);
+        logAIUsage("gemini", feature, enhancedPrompt?.length, false);
       }
-      logAIUsage("gemini", feature, enhancedPrompt?.length, false);
-    } catch (err) {
-      console.warn("Gemini search/vision failed:", err?.message);
-      logAIUsage("gemini", feature, enhancedPrompt?.length, false);
     }
+
+    // ─── GEMINI FAILED OR DISABLED ───
+    // Fallback pipeline for Vision/Internet tasks using your other providers:
+    const args = { enhancedPrompt, systemPrompt, response_json_schema, feature };
+
+    // 2. Try Lynx
+    try {
+      const rLynx = await tryLynx(args);
+      if (rLynx != null) return rLynx;
+    } catch (e) { console.warn("Lynx fallback failed for vision/internet:", e?.message); }
+
+    // 2.5 Try OpenRouter
+    try {
+      const rOR = await tryOpenRouter(args);
+      if (rOR != null) return rOR;
+    } catch (e) { console.warn("OpenRouter fallback failed:", e?.message); }
+
+    // 3. Try Cohere
+    try {
+      const rCohere = await tryCohere(args);
+      if (rCohere != null) return rCohere;
+    } catch (e) { console.warn("Cohere fallback failed for vision/internet:", e?.message); }
+
+    // 4. Try Big Pickle
+    try {
+      const rPickle = await tryBigPickle(args);
+      if (rPickle != null) return rPickle;
+    } catch (e) { console.warn("Big Pickle fallback failed for vision/internet:", e?.message); }
+
+    // 5. Try Claude
+    try {
+      const rClaude = await tryClaude(args);
+      if (rClaude != null) return rClaude;
+    } catch (e) { console.warn("Claude fallback failed for vision/internet:", e?.message); }
+
+    // 6. Base44 Final Absolute Fallback
     const result = await db.integrations.Core.InvokeLLM({
       prompt: enhancedPrompt,
       ...(response_json_schema ? { response_json_schema } : {}),
@@ -421,7 +536,7 @@ export async function callAI({ prompt, response_json_schema, add_context_from_in
       ...(file_urls ? { file_urls } : {}),
       ...(model ? { model } : {}),
     });
-    logAIUsage("gemini", feature, enhancedPrompt?.length, true);
+    logAIUsage("base44_fallback", feature, enhancedPrompt?.length, true);
     return result;
   }
 
@@ -436,12 +551,16 @@ export async function callAI({ prompt, response_json_schema, add_context_from_in
     if (r1 != null) return r1;
     const r2 = await tryLynx(args).catch(() => null);
     if (r2 != null) return r2;
+    const rOR = await tryOpenRouter(args).catch(() => null);
+    if (rOR != null) return rOR;
     const r3 = await tryGemini(args).catch(() => null);
     if (r3 != null) return r3;
   } else {
     // Standard: Lynx → Gemini → Cohere → Big Pickle → Claude → Base44
     const r1 = await tryLynx(args).catch(() => null);
     if (r1 != null) return r1;
+    const rOR = await tryOpenRouter(args).catch(() => null);
+    if (rOR != null) return rOR;
     const r2 = await tryGemini(args).catch(() => null);
     if (r2 != null) return r2;
     const r3 = await tryCohere(args).catch(() => null);
@@ -1061,6 +1180,16 @@ export async function callAIForMedia({ prompt, response_json_schema, feature } =
     return isVideo ? extractJSON(content) : content;
   };
 
+  const tryClaudeMedia = async () => {
+    const result = await db.integrations.Core.InvokeLLM({
+      prompt: `${MEDIA_SYSTEM_PROMPT}\n\n${prompt}`,
+      model: "claude_sonnet_4_6",
+      ...(isVideo ? { response_json_schema: { type: "object", properties: { title: { type: "string" }, narration: { type: "string" }, scenes: { type: "array" } } } } : {}),
+    });
+    if (!result) throw new Error("No content");
+    return isVideo ? (typeof result === "object" ? result : extractJSON(result)) : result;
+  };
+
   const tryCohereMedia = async () => {
     const coherePrompt = isVideo
       ? `${prompt}\n\nIMPORTANT: Respond with ONLY valid JSON. No markdown fences, no explanation. Start with { and end with }.`
@@ -1075,16 +1204,6 @@ export async function callAIForMedia({ prompt, response_json_schema, feature } =
     const content = data?.message?.content?.[0]?.text;
     if (!content) throw new Error("No content");
     return isVideo ? extractJSON(content) : content;
-  };
-
-  const tryClaudeMedia = async () => {
-    const result = await db.integrations.Core.InvokeLLM({
-      prompt: `${MEDIA_SYSTEM_PROMPT}\n\n${prompt}`,
-      model: "claude_sonnet_4_6",
-      ...(isVideo ? { response_json_schema: { type: "object", properties: { title: { type: "string" }, narration: { type: "string" }, scenes: { type: "array" } } } } : {}),
-    });
-    if (!result) throw new Error("No content");
-    return isVideo ? (typeof result === "object" ? result : extractJSON(result)) : result;
   };
 
   // Order: video → Gemini first; audio → Lynx first
