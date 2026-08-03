@@ -227,13 +227,13 @@ async function tryOpenRouter({ enhancedPrompt, systemPrompt, response_json_schem
 
   let res;
   try {
-    res = await fetch("[https://openrouter.ai/api/v1/chat/completions](https://openrouter.ai/api/v1/chat/completions)", {
+    res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-        "HTTP-Referer": window.location.origin || "http://localhost:5173",
-        "X-Title": "Cognita Study Platform",
         "Content-Type": "application/json",
+        "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+        "HTTP-Referer": typeof window !== "undefined" ? window.location.origin : "http://localhost:5173",
+        "X-Title": "Cognita Study Platform"
       },
       body: JSON.stringify({
         model: OPENROUTER_MODEL,
@@ -245,49 +245,57 @@ async function tryOpenRouter({ enhancedPrompt, systemPrompt, response_json_schem
       }),
     });
   } catch (err) {
+    // Network or preflight CORS error
     logAIUsage("openrouter", feature, enhancedPrompt?.length, false);
-    return null; // Network error fallback
+    return null;
   }
 
   if (!res.ok) {
+    // 429, 405, or other HTTP error codes
     logAIUsage("openrouter", feature, enhancedPrompt?.length, false);
     return null;
   }
 
-  const data = await res.json();
-  const content = data?.choices?.[0]?.message?.content;
-  if (!content) {
-    logAIUsage("openrouter", feature, enhancedPrompt?.length, false);
-    return null;
-  }
-
-  if (response_json_schema) {
-    try {
-      // Safely using hex codes (\x60) for backticks to prevent markdown glitches
-      const cleanRegexStart = new RegExp("^\\x60\\x60\\x60(?:json)?\\s*", "im");
-      const cleanRegexEnd = new RegExp("\\s*\\x60\\x60\\x60\\s*$", "im");
-      let cleaned = content.replace(cleanRegexStart, "").replace(cleanRegexEnd, "").trim();
-      
-      try { 
-        logAIUsage("openrouter", feature, enhancedPrompt?.length, true); 
-        return JSON.parse(cleaned); 
-      } catch {}
-      
-      const jsonMatch = cleaned.match(/(\{[\s\S]*\})/);
-      if (jsonMatch) { 
-        logAIUsage("openrouter", feature, enhancedPrompt?.length, true); 
-        return JSON.parse(jsonMatch[1]); 
-      }
-      logAIUsage("openrouter", feature, enhancedPrompt?.length, false); 
+  try {
+    const data = await res.json();
+    const content = data?.choices?.[0]?.message?.content;
+    if (!content) {
+      logAIUsage("openrouter", feature, enhancedPrompt?.length, false);
       return null;
-    } catch { 
-      logAIUsage("openrouter", feature, enhancedPrompt?.length, false); 
-      return null; 
     }
-  }
 
-  logAIUsage("openrouter", feature, enhancedPrompt?.length, true);
-  return content;
+    if (response_json_schema) {
+      try {
+        // Safely using hex codes (\x60) for backticks to prevent markdown glitches
+        const cleanRegexStart = new RegExp("^\\x60\\x60\\x60(?:json)?\\s*", "im");
+        const cleanRegexEnd = new RegExp("\\s*\\x60\\x60\\x60\\s*$", "im");
+        let cleaned = content.replace(cleanRegexStart, "").replace(cleanRegexEnd, "").trim();
+        
+        try { 
+          logAIUsage("openrouter", feature, enhancedPrompt?.length, true); 
+          return JSON.parse(cleaned); 
+        } catch {}
+        
+        const jsonMatch = cleaned.match(/(\{[\s\S]*\})/);
+        if (jsonMatch) { 
+          logAIUsage("openrouter", feature, enhancedPrompt?.length, true); 
+          return JSON.parse(jsonMatch[1]); 
+        }
+        logAIUsage("openrouter", feature, enhancedPrompt?.length, false); 
+        return null;
+      } catch { 
+        logAIUsage("openrouter", feature, enhancedPrompt?.length, false); 
+        return null; 
+      }
+    }
+
+    logAIUsage("openrouter", feature, enhancedPrompt?.length, true);
+    return content;
+  } catch (err) {
+    // Handles unexpected response JSON formatting or parsing exceptions safely
+    logAIUsage("openrouter", feature, enhancedPrompt?.length, false);
+    return null;
+  }
 }
 /**
  * Call Big Pickle API via InvokeLLM proxy (direct browser fetch blocked by CORS).
