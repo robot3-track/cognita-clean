@@ -1273,20 +1273,20 @@ export default function DevDashboard() {
         // Parallel Batch Fetch 1
         const [feedback, sessions, decks, users, ratings] = await Promise.all([
           db.entities.Feedback.list("-created_date", 200).catch(() => []),
-          db.entities.StudySession.list("-created_date", 2000).catch(() => []),
-          db.entities.Deck.list("-updated_date", 2000).catch(() => []),
-          db.entities.User.list("-created_date", 2000).catch(() => []), // <-- Safely reads the user directory
-          db.entities.DeckRating.list("-created_date", 500).catch(() => []),
+          db.entities.StudySession.list("-created_date", 10000).catch(() => []),
+          db.entities.Deck.list("-updated_date", 10000).catch(() => []),
+          db.entities.User.list("-created_date", 10000).catch(() => []), // <-- Safely reads the user directory
+          db.entities.DeckRating.list("-created_date", 5000).catch(() => []),
         ]);
 
         // Parallel Batch Fetch 2
         const [suspensions, apps, friendships, apSessions, loginEvents, verifyRequests] = await Promise.all([
-          db.entities.SuspendedUser.list("-created_date", 200).catch(() => []),
-          db.entities.CourseApplication.list("-created_date", 100).catch(() => []),
-          db.entities.Friendship.list("-created_date", 500).catch(() => []),
-          db.entities.APSession.list("-created_date", 500).catch(() => []),
-          db.entities.UserLoginEvent.list("-created_date", 1000).catch(() => []),
-          db.entities.PendingApproval.list("-created_date", 200).catch(() => []),
+          db.entities.SuspendedUser.list("-created_date", 2000).catch(() => []),
+          db.entities.CourseApplication.list("-created_date", 1000).catch(() => []),
+          db.entities.Friendship.list("-created_date", 5000).catch(() => []),
+          db.entities.APSession.list("-created_date", 5000).catch(() => []),
+          db.entities.UserLoginEvent.list("-created_date", 10000).catch(() => []),
+          db.entities.PendingApproval.list("-created_date", 2000).catch(() => []),
         ]);
 
         // Only apply state updates if the user hasn't already closed or switched tabs
