@@ -164,6 +164,32 @@ export const AP_HUMAN_GEO_V4 = {
       explanation: "Omran's Epidemiological Transition Model parallels the DTM: Stage 2 = high mortality from infectious/parasitic diseases (cholera, malaria, plague) as CDR begins falling. Stage 3 = declining infectious disease, emerging chronic conditions. Stage 4 = degenerative and man-made diseases (cardiovascular disease, cancer) dominate as infectious disease is controlled through vaccines, antibiotics, and sanitation.",
       skill: "Unit 2: Population & Migration Patterns",
       difficulty: "hard"
+    },
+    {
+      question: "According to Johann Heinrich von Thünen’s model of agricultural land use, which crop or agricultural activity is located closest to the central market city, and why?",
+      options: [
+        "Grains and wheat, because they require flat land adjacent to urban grain mills",
+        "Dairy farming and market gardening, because produce spoils quickly and incurs high transport costs",
+        "Livestock ranching, because animals require urban slaughterhouses nearby",
+        "Forestry and fuelwood, because timber must be harvested near city construction zones"
+      ],
+      correct: 1,
+      explanation: "Von Thünen's model places intensive dairy farming and market gardening in the innermost ring surrounding the market city. Because milk, eggs, and fresh vegetables are highly perishable and costly to transport without refrigeration, farmers pay higher land rents close to the market to minimize transit times and spoilage.",
+      skill: "Unit 5: Agriculture and Rural Land Use",
+      difficulty: "medium"
+    },
+    {
+      question: "A multinational enterprise shifts its call center operations from Chicago to Bengaluru, India, while maintaining its corporate headquarters in Illinois. This economic spatial arrangement is BEST described as an example of:",
+      options: [
+        "Ecotourism and regional sustainable development",
+        "The global division of labor and business process outsourcing (BPO)",
+        "Import substitution industrialization (ISI)",
+        "Fordist assembly-line manufacturing and agglomeration"
+      ],
+      correct: 1,
+      explanation: "Outsourcing tertiary and quaternary business operations (like call centers or IT service desks) to countries with lower labor costs and large English-speaking educated populations illustrates the new international division of labor and business process outsourcing (BPO).",
+      skill: "Unit 6: Industrial and Economic Development Patterns",
+      difficulty: "easy"
     }
   ],
   frq: [
@@ -175,6 +201,15 @@ export const AP_HUMAN_GEO_V4 = {
         { label: "a", question: "Using Wallerstein's World-Systems Theory, classify each of the four countries as core, semi-periphery, or periphery. Justify each classification using specific data from the table.", points: 4, rubric: "1 pt per correct classification (USA=core, Mexico=semi-periphery, Nigeria=periphery or semi-periphery, Niger=periphery) with data justification. Accept Nigeria as semi-periphery if justified by its oil export economy." },
         { label: "b", question: "Explain TWO reasons why infant mortality rate is considered a more reliable development indicator than GNI per capita alone.", points: 4, rubric: "2 pts each: (1 pt reason; 1 pt explanation). Reasons: GNI/capita masks inequality (Gini coefficient); IMR reflects actual access to healthcare, sanitation, nutrition — not just average income; GNI doesn't capture informal economy accurately; IMR is harder to manipulate politically than GDP data." },
         { label: "c", question: "A development organization is considering which country to prioritize for aid investment. Using the data and geographic concepts, explain why Niger presents a more challenging development context than Nigeria despite both being classified as peripheral or semi-peripheral.", points: 2, rubric: "1 pt: Specific data comparison (Niger HDI 0.394 vs Nigeria 0.539; GNI $1,200 vs $5,400; IMR near identical but urban % much lower at 17%). 1 pt: Geographic reasoning — landlocked status, Sahelian climate, extremely low urbanization limiting agglomeration economies, or lack of oil wealth." }
+      ]
+    },
+    {
+      title: "AP Human Geography FRQ — Urban Hierarchy and Spatial Development",
+      prompt: "Urban systems exhibit distinct structural patterns globally based on history, economics, and infrastructure.",
+      stimulus: "Consider primate city patterns versus rank-size rule distributions across developing and developed nations.",
+      parts: [
+        { label: "a", question: "Define the term 'primate city' and identify ONE economic disadvantage a state faces when its urban network is dominated by a single primate city.", points: 2, rubric: "1 pt: Definition (a city that is more than twice as large as the second-largest city and overwhelmingly dominant politically/economically). 1 pt: Disadvantage (uneven regional investment, brain drain from rural areas, traffic congestion, hyper-urbanization strain on infrastructure)." },
+        { label: "b", question: "Describe how edge cities differ from traditional Central Business Districts (CBDs) in terms of location and land use.", points: 2, rubric: "1 pt: Edge cities are located along outer suburban beltways/freeway intersections rather than downtown centers. 1 pt: Land use includes suburban office parks, retail complexes, and modern car-dependent infrastructure." }
       ]
     }
   ]
@@ -323,6 +358,32 @@ export const AP_HUMAN_GEO_V5 = {
       explanation: "Hoyt's Sector Model (1939) modified Burgess by showing that land use extends outward from the CBD in wedge-shaped sectors along transportation corridors (railways, highways). High-rent residential areas cluster in one sector, low-rent in another, industrial in another — all radiating from the center. Burgess shows concentric rings. The Multiple Nuclei Model (Harris & Ullman) is the third major model arguing for multiple independent nodes.",
       skill: "Unit 7: Urban Geography",
       difficulty: "medium"
+    },
+    {
+      question: "Which boundary type is created by human decision after a cultural landscape has already been established, often leading to territorial disputes among cultural groups?",
+      options: [
+        "Antecedent boundary — drawn prior to widespread human settlement",
+        "Subsequent boundary — drawn after settlement to accommodate existing cultural divisions",
+        "Superimposed boundary — imposed by outside powers without regard to existing cultural patterns",
+        "Relic boundary — no longer functions politically but remains visible on the landscape"
+      ],
+      correct: 2,
+      explanation: "Superimposed boundaries are forced upon a region by external colonial or imperial powers ignoring established ethnic or cultural groupings. A classic example is the 1884 Berlin Conference partitioning Africa.",
+      skill: "Unit 4: Political Patterns and Processes",
+      difficulty: "medium"
+    },
+    {
+      question: "In the context of political geography, which of the following serves as a classic CENTRIFUGAL force within a multinational state?",
+      options: [
+        "A well-maintained national highway and high-speed rail infrastructure",
+        "Strong regional ethnic nationalism demanding political autonomy or devolution",
+        "A national sports team competing in international tournaments",
+        "A unified national educational curriculum taught in a single common language"
+      ],
+      correct: 1,
+      explanation: "Centrifugal forces pull states apart and fragment unity. Subnational ethnic movements demanding regional autonomy (such as Catalans in Spain or Kurds in Iraq/Turkey) are strong centrifugal drivers.",
+      skill: "Unit 4: Political Patterns and Processes",
+      difficulty: "easy"
     }
   ],
   frq: [
@@ -333,6 +394,15 @@ export const AP_HUMAN_GEO_V5 = {
       parts: [
         { label: "a", question: "Identify TWO push factors and ONE pull factor that explain Guatemalan emigration to the United States. Use specific evidence or context from the scenario.", points: 6, rubric: "2 pts each push factor: (1 pt identification; 1 pt explanation). Push: poverty (HDI 0.627, low wages), gang violence and insecurity, lack of economic opportunity, land inequality, climate-related agricultural failure. Pull: higher wages in the US, rule of law/physical security, established Guatemalan diaspora communities (chain migration), family reunification. 2 pts pull factor." },
         { label: "b", question: "Explain how remittances can BOTH help AND harm long-term development in Guatemala. Use the data provided.", points: 4, rubric: "2 pts benefits: remittances raise household incomes ($18.1B = 19.8% GDP), reduce poverty, fund education and health costs, stabilize exchange rate. 2 pts harms: dependency on remittances substitutes for government development investment; brain drain as skilled workers emigrate; Dutch Disease — remittance inflows can raise local prices and hurt agricultural competitiveness; cyclical vulnerability to US economic downturns." }
+      ]
+    },
+    {
+      title: "AP Human Geography FRQ — Cultural Diffusion and Globalization",
+      prompt: "Cultural traits diffuse globally through varied mechanisms, reshaping regional landscapes.",
+      stimulus: "Analyze the global expansion of fast-food franchises and popular media across East and Southeast Asia.",
+      parts: [
+        { label: "a", question: "Define 'stimulus diffusion' and provide ONE real-world cultural example of this phenomenon.", points: 2, rubric: "1 pt: Definition (the spread of an underlying concept or idea even though a specific trait fails or is modified). 1 pt: Example (e.g., McDonald's offering vegetarian or specialized non-beef menus in India)." },
+        { label: "b", question: "Explain how globalization can contribute to cultural homogenization while simultaneously sparking cultural divergence.", points: 2, rubric: "1 pt for homogenization (spread of global brands/media reduces regional landscape distinctiveness). 1 pt for divergence (local groups reasserting traditional religious or regional identity in opposition to Western media)." }
       ]
     }
   ]
@@ -516,6 +586,32 @@ export const AP_CHEMISTRY_V3 = {
       explanation: "SF₄: S has 6 valence electrons, forms 4 bonds with F, leaving 1 lone pair on S. Total electron domains = 5 (4 bonded + 1 lone pair). VSEPR predicts trigonal bipyramidal electron geometry. The lone pair occupies an equatorial position (larger equatorial angles). With 4 bonded atoms and 1 lone pair: molecular geometry = see-saw (also called disphenoidal). Examples: SF₄, XeF₂ analogy helps remember the pattern.",
       skill: "Unit 2: Molecular Geometry — VSEPR",
       difficulty: "medium"
+    },
+    {
+      question: "A reaction mechanism consists of two elementary steps:\nStep 1: A + B ⇌ AB (fast equilibrium)\nStep 2: AB + A → C + D (slow)\nWhich rate law is consistent with this mechanism?",
+      options: [
+        "Rate = k[A][B]",
+        "Rate = k[A]²[B]",
+        "Rate = k[AB][A]",
+        "Rate = k[A][B]²"
+      ],
+      correct: 1,
+      explanation: "The rate-determining step is Step 2: Rate = k₂[AB][A]. Since AB is an intermediate, we express its concentration from Step 1 equilibrium: Keq = [AB] / ([A][B]) → [AB] = Keq[A][B]. Substituting gives Rate = k₂ Keq [A]²[B] = k[A]²[B].",
+      skill: "Unit 5: Kinetics",
+      difficulty: "hard"
+    },
+    {
+      question: "Which of the following element pairs will form a chemical bond with the HIGHEST degree of ionic character?",
+      options: [
+        "C and O",
+        "Na and Cl",
+        "Cs and F",
+        "H and F"
+      ],
+      correct: 2,
+      explanation: "Ionic character increases with a greater electronegativity difference between bonded atoms. Cesium (Cs) has the lowest electronegativity in this group, and Fluorine (F) has the highest electronegativity, yielding the largest electronegativity difference.",
+      skill: "Unit 2: Molecular and Ionic Compound Structure and Properties",
+      difficulty: "easy"
     }
   ],
   frq: [
@@ -527,6 +623,15 @@ export const AP_CHEMISTRY_V3 = {
         { label: "a", question: "Calculate ΔH° and ΔS° for this reaction at 298 K. Show all work.", points: 4, rubric: "2 pts ΔH°: products − reactants = (−635.1 + −393.5) − (−1206.9) = −1028.6 + 1206.9 = +178.3 kJ. 2 pts ΔS°: (39.7 + 213.8) − 91.7 = 253.5 − 91.7 = +161.8 J/mol·K (+0.1618 kJ/mol·K)." },
         { label: "b", question: "Calculate ΔG° at 298 K. Is this reaction spontaneous at room temperature? Explain.", points: 3, rubric: "1 pt: ΔG° = ΔH° − TΔS° = 178.3 − (298 × 0.1618) = 178.3 − 48.2 = +130.1 kJ/mol. 1 pt: Not spontaneous at 298 K (ΔG° > 0). 1 pt: The positive ΔH° (endothermic) dominates over the small TΔS° at room temperature." },
         { label: "c", question: "Calculate the minimum temperature at which this reaction becomes spontaneous. Explain what this temperature represents chemically.", points: 3, rubric: "1 pt: Set ΔG° = 0: T = ΔH°/ΔS° = 178,300 J ÷ 161.8 J/K = 1,102 K ≈ 829°C. 1 pt: Above 1102 K, the TΔS° term exceeds ΔH°, making ΔG° negative (spontaneous). 1 pt: Practically — this is the temperature needed for limestone decomposition in lime kilns (industrial CaO production)." }
+      ]
+    },
+    {
+      title: "AP Chemistry FRQ — Electrochemistry and Galvanic Cells",
+      prompt: "A galvanic cell is constructed using a standard Zn/Zn²⁺ half-cell and a standard Cu/Cu²⁺ half-cell at 298 K.",
+      stimulus: "E°(Zn²⁺/Zn) = −0.76 V; E°(Cu²⁺/Cu) = +0.34 V",
+      parts: [
+        { label: "a", question: "Write the balanced overall cell reaction and calculate E°cell for this galvanic cell.", points: 2, rubric: "1 pt: Reaction: Zn(s) + Cu²⁺(aq) → Zn²⁺(aq) + Cu(s). 1 pt: E°cell = E°cat − E°an = 0.34 V − (−0.76 V) = +1.10 V." },
+        { label: "b", question: "Predict the effect on cell potential (Ecell) if [Zn²⁺] is increased to 2.0 M while [Cu²⁺] remains at 1.0 M. Justify using Le Châtelier's principle or the Nernst equation.", points: 2, rubric: "1 pt: Ecell decreases below 1.10 V. 1 pt: According to Nernst (E = E° − (RT/nF)ln Q), increasing product concentration [Zn²⁺] increases Q (Q = [Zn²⁺]/[Cu²⁺] > 1), which decreases Ecell." }
       ]
     }
   ]
@@ -715,6 +820,32 @@ export const AP_WORLD_HISTORY_V3 = {
       explanation: "Decolonization resulted from converging factors: WWII devastated European economies and moral authority (How could colonial powers claim democratic values while maintaining colonies?). Nationalist movements strengthened — Indian National Congress, Kwame Nkrumah's CPP in Ghana, Algerian FLN. The Cold War pressured both superpowers to oppose formal colonialism (for different reasons: US anti-colonialism ideology; USSR encouraging anti-colonial movements). UN Charter Article 1 affirmed self-determination as a fundamental right.",
       skill: "Unit 8: Decolonization",
       difficulty: "medium"
+    },
+    {
+      question: "Which of the following BEST describes the primary ideological motivation behind the Non-Aligned Movement established during the 1955 Bandung Conference?",
+      options: [
+        "To promote economic integration through regional free-trade zones in South America and Africa",
+        "To maintain neutrality and autonomy from both US-led capitalist and Soviet-led communist blocs during the Cold War",
+        "To demand the re-establishment of colonial administrative boundaries across post-colonial borders",
+        "To establish a worldwide military alliance aimed at containing European imperial revival"
+      ],
+      correct: 1,
+      explanation: "The Non-Aligned Movement (NAM), spearheaded by leaders like Nehru (India), Sukarno (Indonesia), and Nkrumah (Ghana) at Bandung in 1955, sought to chart an independent course for newly independent nations rather than joining NATO or the Warsaw Pact.",
+      skill: "Unit 8: Cold War and Decolonization",
+      difficulty: "medium"
+    },
+    {
+      question: "The Columbian Exchange introduced American staple crops like potatoes, maize, and cassava to Afro-Eurasia. The MOST direct global demographic outcome of this biological exchange was:",
+      options: [
+        "A sudden collapse of urban populations across Asia due to agricultural displacement",
+        "Significant long-term global population growth due to higher caloric yields per acre of land",
+        "Immediate widespread famines across Western Europe caused by invasive plant diseases",
+        "An absolute decline in African agricultural output as traditional grains were abandoned"
+      ],
+      correct: 1,
+      explanation: "American crops like potatoes, maize, and cassava yielded significantly higher calories per acre than native Eurasian/African grains, fueling sustained demographic expansion across Europe, China, and Africa during the early modern era.",
+      skill: "Unit 4: Transoceanic Interconnections",
+      difficulty: "easy"
     }
   ],
   frq: [
@@ -726,6 +857,15 @@ export const AP_WORLD_HISTORY_V3 = {
         { label: "a", question: "Describe TWO specific goods or commodities traded along the Silk Road and explain the significance of each to at least one society involved in the exchange.", points: 4, rubric: "2 pts each: (1 pt: names specific good; 1 pt: explains significance). Silk (China → West: status symbol, diplomatic gift, currency equivalent in Byzantine trade); spices (Southeast Asia/India → Middle East/Europe: food preservation, medical use, high value per weight); paper/printing (China → Islam/Europe: intellectual revolution, enabled book production, administration); plague (disease pathway 1340s, devastating mortality from Central Asia to Europe via Mongol postal system)." },
         { label: "b", question: "Explain how the Mongol Empire (1206–1368) BOTH facilitated AND disrupted Silk Road trade. Use specific evidence.", points: 4, rubric: "2 pts facilitated: Pax Mongolica — secured overland routes; reduced tolls within empire; Yam postal relay system; safe-conduct passes; encouraged merchant travel (Marco Polo, Ibn Battuta enabled). 2 pts disrupted: Mongol conquests destroyed Baghdad (1258), Samarkand, and agricultural infrastructure; bubonic plague spread via Mongol networks; fragmentation after 1350 disrupted security." },
         { label: "c", question: "To what extent was the Silk Road a 'road of religions'? Explain how at least TWO religions spread via trade networks.", points: 2, rubric: "1 pt each religion: Buddhism: spread from India to Central Asia, China, Japan via merchant networks and Buddhist monasteries along trade routes; Islam: Arab Muslim merchants spread Islam to Southeast Asia, West Africa via Indian Ocean and Trans-Saharan routes; Christianity (Nestorian): spread to Central Asia and China; each should explain the mechanism (merchant travel, diaspora communities, patronage)." }
+      ]
+    },
+    {
+      title: "AP World History FRQ — State Building and Land-Based Empires (1450–1750)",
+      prompt: "Evaluate the extent to which land-based empires utilized bureaucratic methods and military elites to consolidate power between 1450 and 1750 CE.",
+      stimulus: "Consider examples such as the Ottoman Empire, Safavid Empire, Mughal Empire, or Qing Dynasty China.",
+      parts: [
+        { label: "a", question: "Describe ONE specific administrative method or institution used by a land-based empire between 1450 and 1750 to collect revenue or maintain centralized control.", points: 2, rubric: "1 pt: Identifies institution (e.g., Ottoman Devshirme system / Janissaries, Mughal Zamindar system, Qing civil service exams). 1 pt: Explains how it strengthened central imperial authority." },
+        { label: "b", question: "Explain ONE way in which rulers used monumental architecture or religious patronage to legitimize their imperial rule between 1450 and 1750.", points: 2, rubric: "1 pt: Identifies example (e.g., Mughal Taj Mahal, Ottoman Suleymaniye Mosque, Qing Temple of Heaven). 1 pt: Explains how the structure projected divine sanction, wealth, or imperial power." }
       ]
     }
   ]
