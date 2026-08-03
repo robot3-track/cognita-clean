@@ -1,6 +1,6 @@
 import { db } from '@/lib/firebase';
 import { useState, useEffect } from "react";
-import { Crown, Mail, CheckCircle, ShieldAlert, FileText, ArrowUpRight } from "lucide-react";
+import { Crown, Mail, CheckCircle, ShieldAlert, FileText, ArrowUpRight, Sparkles } from "lucide-react";
 import FeedbackWidget from "./FeedbackWidget";
 import { useTranslation } from "../hooks/useTranslation";
 import { Link } from "react-router-dom";
@@ -52,87 +52,102 @@ export default function Footer({ userEmail }) {
   const isPending = upgradeStatus?.payment_status === "pending";
 
   return (
-    <div className="w-full space-y-6 mt-12 pb-6">
+    <footer className="w-full space-y-6 mt-14 pb-8">
       
-      {/* Premium Unlimited Section */}
+      {/* Unlimited Upgrade / Status Banner */}
       {!isUnlimited ? (
-        <div className="rounded-2xl p-4 border bg-gradient-to-r from-violet-600/[0.03] to-transparent shadow-sm transition-all" style={cardStyle}>
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3.5">
-              <div className="w-9 h-9 rounded-xl bg-violet-500/10 text-violet-500 flex items-center justify-center shrink-0 border border-violet-500/10">
-                <Crown className="w-4 h-4 fill-violet-500/10" />
+        <div 
+          className="relative overflow-hidden rounded-2xl p-5 border bg-gradient-to-r from-violet-600/[0.06] via-indigo-500/[0.03] to-transparent shadow-sm backdrop-blur-sm transition-all hover:border-violet-500/30"
+          style={cardStyle}
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+            <div className="flex items-center gap-4">
+              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-500/20 to-indigo-500/20 text-violet-400 flex items-center justify-center shrink-0 border border-violet-500/20 shadow-inner">
+                <Crown className="w-5 h-5 text-violet-400" />
               </div>
               <div>
-                <h4 className="font-bold text-xs text-[var(--app-text)]">{t('donateForUnlimited')}</h4>
-                <p className="text-[11px] opacity-75 mt-0.5" style={mutedStyle}>Remove all operational caps and unlock immediate access thresholds.</p>
+                <div className="flex items-center gap-2">
+                  <h4 className="font-extrabold text-sm text-[var(--app-text)]">
+                    {t('donateForUnlimited') || "Get Unlimited Access"}
+                  </h4>
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-400 border border-violet-500/20">
+                    <Sparkles className="w-2.5 h-2.5" /> Pro
+                  </span>
+                </div>
+                <p className="text-xs mt-0.5" style={mutedStyle}>
+                  Remove daily limits and study without interruptions.
+                </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 self-end sm:self-center">
+            <div className="flex items-center gap-3 self-end sm:self-center">
               {isPending && (
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-500/10 text-amber-500 text-[10px] font-bold border border-amber-500/20 shadow-sm animate-pulse">
-                  <ShieldAlert className="w-3 h-3" />
-                  <span>Verifying Transaction...</span>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 text-amber-500 text-xs font-semibold border border-amber-500/20 shadow-sm animate-pulse">
+                  <ShieldAlert className="w-3.5 h-3.5" />
+                  <span>Checking payment...</span>
                 </div>
               )}
               <button
                 onClick={handleUpgradeClick}
-                className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white px-4 py-2 rounded-xl text-[11px] font-bold transition-all shadow-md active:scale-[0.98]"
+                className="inline-flex items-center gap-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md shadow-violet-600/20 hover:shadow-violet-600/30 active:scale-[0.98]"
               >
-                <PayPalLogo className="w-3 h-3 fill-white" />
-                <span>Support Platform</span>
+                <PayPalLogo className="w-3.5 h-3.5 fill-white" />
+                <span>Support Cognita</span>
               </button>
             </div>
           </div>
         </div>
       ) : (
-        <div className="rounded-2xl p-4 border bg-emerald-500/[0.03] border-emerald-500/20 flex items-center gap-3 shadow-sm">
-          <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
-            <CheckCircle className="w-4 h-4" />
+        <div className="rounded-2xl p-4 border bg-emerald-500/[0.04] border-emerald-500/20 flex items-center justify-between shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/20">
+              <CheckCircle className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-emerald-400">Unlimited Tier Active</p>
+              <p className="text-[11px] opacity-75" style={mutedStyle}>Thank you for supporting Cognita!</p>
+            </div>
           </div>
-          <p className="text-xs font-bold text-emerald-500">System Verified: Unlimited Academic Tier Active</p>
+          <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
         </div>
       )}
 
-      {/* Re-formatted Bottom Row Links Panel */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-5 border-t border-dashed" style={{ borderColor: "var(--app-border)" }}>
+      {/* Footer Navigation & Links */}
+      <div className="flex flex-col md:flex-row items-center justify-between gap-5 pt-6 border-t border-dashed" style={{ borderColor: "var(--app-border)" }}>
         
-        {/* Left Elements Layer */}
-        <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 text-[11px] w-full md:w-auto justify-center md:justify-start">
-          <div className="flex items-center gap-2 opacity-75" style={mutedStyle}>
-            <Mail className="w-3.5 h-3.5 shrink-0 text-violet-500" />
+        {/* Support Email & Documentation Link */}
+        <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 sm:gap-6 text-xs w-full md:w-auto">
+          <div className="flex items-center gap-2 opacity-80 hover:opacity-100 transition-opacity" style={mutedStyle}>
+            <Mail className="w-4 h-4 shrink-0 text-violet-400" />
             <span>
-              {t('paymentQuestionsOnly')}{" "}
-              <a href="mailto:yohanychang@gmail.com" className="text-violet-500 font-bold hover:underline">
+              Payment questions?{" "}
+              <a href="mailto:yohanychang@gmail.com" className="text-violet-400 font-bold hover:underline">
                 Contact support
               </a>
             </span>
           </div>
 
-          <span className="hidden sm:inline text-slate-700">|</span>
+          <span className="hidden sm:inline text-gray-600/40">•</span>
 
-          {/* Documentation Route Connection */}
           <Link 
             to="/documentation" 
-            className="inline-flex items-center gap-1.5 font-bold text-violet-500 hover:text-violet-400 group transition-colors"
+            className="inline-flex items-center gap-1.5 font-bold text-violet-400 hover:text-violet-300 group transition-colors"
           >
-            <FileText className="w-3.5 h-3.5 opacity-80" />
-            <span>View Terms & Documentation</span>
-            <ArrowUpRight className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-all -translate-y-0.5" />
+            <FileText className="w-4 h-4 opacity-80" />
+            <span>Terms & Docs</span>
+            <ArrowUpRight className="w-3 h-3 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
           </Link>
         </div>
 
-        {/* Right Side Controls & Scaled Copyright */}
-        <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto justify-center md:justify-end">
-          <div className="scale-95 origin-center">
-            <FeedbackWidget />
-          </div>
-          <span className="text-[11px] opacity-40 font-medium tracking-tight text-center sm:text-right shrink-0" style={mutedStyle}>
-            &copy; {new Date().getFullYear()} {t('copyrightText')}
+        {/* Feedback Widget & Copyright */}
+        <div className="flex flex-wrap items-center justify-center md:justify-end gap-5 w-full md:w-auto">
+          <FeedbackWidget />
+          <span className="text-xs opacity-50 font-medium tracking-tight text-center sm:text-right shrink-0" style={mutedStyle}>
+            &copy; {new Date().getFullYear()} {t('copyrightText') || "Cognita. All rights reserved."}
           </span>
         </div>
 
       </div>
-    </div>
+    </footer>
   );
 }
