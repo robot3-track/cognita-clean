@@ -17,34 +17,51 @@ export default function FriendsAndUsers() {
 
   useEffect(() => {
     const load = async () => {
-      const user = await db.auth.me();
-      setMe(user);
-      const [users, friends] = await Promise.all([
-        db.entities.User.list("-created_date", 1000), // Increased pull limit to fetch the full student index
-        db.entities.Friendship.filter({ $or: [{ requester_email: user.email }, { recipient_email: user.email }] }),
-      ]);
-      setAllUsers(users.filter(u => u.email !== user.email));
-      setFriendships(friends);
-      loading(false);
+      try {
+        const user = await db.auth.me();
+        setMe(user);
+        if (user?.email) {
+          const myEmail = user.email.toLowerCase();
+          const [users, friends] = await Promise.all([
+            db.entities.User.list("-created_date", 1000),
+            db.entities.Friendship.filter({
+              $or: [{ requester_email: myEmail }, { recipient_email: myEmail }]
+            }),
+          ]);
+          setAllUsers(users.filter(u => u.email?.toLowerCase() !== myEmail));
+          setFriendships(friends || []);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
     };
-    load().catch(() => setLoading(false));
+    load();
   }, []);
 
   const isDev = me && DEV_EMAILS.includes(me.email);
 
+  // Normalizes emails to lower-case so comparisons never fail due to capitalization differences
   const getFriendship = (userEmail) => {
-    return friendships.find(f =>
-      (f.requester_email === me?.email && f.recipient_email === userEmail) ||
-      (f.recipient_email === me?.email && f.requester_email === userEmail)
-    );
+    if (!me?.email || !userEmail) return null;
+    const myEmail = me.email.toLowerCase();
+    const targetEmail = userEmail.toLowerCase();
+
+    return friendships.find(f => {
+      const req = (f.requester_email || f.requesterEmail || "").toLowerCase();
+      const rec = (f.recipient_email || f.recipientEmail || "").toLowerCase();
+      return (req === myEmail && rec === targetEmail) || (rec === myEmail && req === targetEmail);
+    });
   };
 
   const sendFriendRequest = async (targetUser) => {
+    if (!me?.email) return;
     setPendingActions(p => ({ ...p, [targetUser.id]: "sending" }));
     const f = await db.entities.Friendship.create({
-      requester_email: me.email,
+      requester_email: me.email.toLowerCase(),
       requester_name: me.full_name || me.email,
-      recipient_email: targetUser.email,
+      recipient_email: targetUser.email.toLowerCase(),
       recipient_name: targetUser.full_name || targetUser.email,
       status: "pending",
     });
@@ -64,21 +81,22 @@ export default function FriendsAndUsers() {
     setFriendships(prev => prev.filter(f => f.id !== friendship.id));
   };
 
-  // FIXED: Removed the `.slice(0, 50)` truncation block so that the whole directory displays by default
   const filteredUsers = search.trim()
     ? allUsers.filter(u =>
         (u.full_name || "").toLowerCase().includes(search.toLowerCase()) ||
         (u.display_name || "").toLowerCase().includes(search.toLowerCase()) ||
         ((u.is_public || isDev) && (u.bio || "").toLowerCase().includes(search.toLowerCase()))
       )
-    : allUsers; // Displays everyone fully when search is empty
+    : allUsers;
 
   const friends = allUsers.filter(u => {
     const f = getFriendship(u.email);
     return f?.status === "accepted";
   });
 
-  const pendingIncoming = friendships.filter(f => f.recipient_email === me?.email && f.status === "pending");
+  const pendingIncoming = friendships.filter(f => 
+    (f.recipient_email || f.recipientEmail)?.toLowerCase() === me?.email?.toLowerCase() && f.status === "pending"
+  );
 
   const bgStyle = { background: "var(--app-bg)", color: "var(--app-text)" };
   const cardStyle = { background: "var(--app-surface)", border: "1px solid var(--app-border)" };
@@ -87,7 +105,10 @@ export default function FriendsAndUsers() {
   const UserCard = ({ u, compact = false }) => {
     const friendship = getFriendship(u.email);
     const isPublic = u.is_public || isDev;
-    const displayName = u.display_name || u.full_name || u.email.split("@")[0];
+    const displayName = u.display_name || u.full_name || u.email?.split("@")[0];
+    const isMyEmail = me?.email?.toLowerCase() === u.email?.toLowerCase();
+    const isAccepted = friendship?.status === "accepted";
+    const isPending = friendship?.status === "pending";
 
     return (
       <div
@@ -96,11 +117,10 @@ export default function FriendsAndUsers() {
         onClick={() => setViewingUser(u)}
       >
         <div className="flex items-center gap-3">
-          {/* Profile Picture masked if account is private */}
           <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-600/30 to-blue-600/30 flex items-center justify-center text-sm font-bold shrink-0 overflow-hidden">
             {isPublic && u.profile_picture_url
               ? <img src={u.profile_picture_url} alt="" className="w-full h-full object-cover" />
-              : displayName[0]?.toUpperCase()}
+              : displayName?.[0]?.toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5">
@@ -113,7 +133,8 @@ export default function FriendsAndUsers() {
               : <p className="text-xs opacity-30">No bio</p>}
           </div>
           <div onClick={e => e.stopPropagation()}>
-            {!friendship && (
+            {/* Show Add button ONLY if not myself AND no friendship record exists at all */}
+            {!isMyEmail && !friendship && (
               <button
                 onClick={() => sendFriendRequest(u)}
                 disabled={!!pendingActions[u.id]}
@@ -123,10 +144,12 @@ export default function FriendsAndUsers() {
                 Add
               </button>
             )}
-            {friendship?.status === "pending" && friendship.requester_email === me?.email && (
+
+            {/* Pending states */}
+            {isPending && (friendship.requester_email || friendship.requesterEmail)?.toLowerCase() === me?.email?.toLowerCase() && (
               <span className="text-xs px-2.5 py-1 rounded-xl opacity-50" style={cardStyle}>Pending</span>
             )}
-            {friendship?.status === "pending" && friendship.recipient_email === me?.email && (
+            {isPending && (friendship.recipient_email || friendship.recipientEmail)?.toLowerCase() === me?.email?.toLowerCase() && (
               <div className="flex gap-1">
                 <button onClick={() => respondToRequest(friendship, true)} className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white transition-all">
                   {pendingActions[friendship.id] === "accepting" ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
@@ -136,9 +159,13 @@ export default function FriendsAndUsers() {
                 </button>
               </div>
             )}
-            {friendship?.status === "accepted" && (
+
+            {/* Friends state */}
+            {isAccepted && (
               <span className="text-xs px-2.5 py-1.5 rounded-xl text-emerald-400 bg-emerald-500/15 font-semibold">Friends</span>
             )}
+
+            {/* Declined state */}
             {friendship?.status === "declined" && (
               <button onClick={() => sendFriendRequest(u)} className="text-xs px-2.5 py-1.5 rounded-xl opacity-40 hover:opacity-80 transition-all" style={cardStyle}>
                 Re-add
@@ -150,12 +177,13 @@ export default function FriendsAndUsers() {
     );
   };
 
-  // User detail modal
   const UserModal = ({ u, onClose }) => {
     if (!u) return null;
     const isPublic = u.is_public || isDev;
     const friendship = getFriendship(u.email);
-    const displayName = u.display_name || u.full_name || u.email.split("@")[0];
+    const displayName = u.display_name || u.full_name || u.email?.split("@")[0];
+    const isAccepted = friendship?.status === "accepted";
+    const isPending = friendship?.status === "pending";
 
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
@@ -169,7 +197,7 @@ export default function FriendsAndUsers() {
             <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-violet-600/30 to-blue-600/30 flex items-center justify-center text-2xl font-black mb-3 overflow-hidden">
               {isPublic && u.profile_picture_url
                 ? <img src={u.profile_picture_url} alt="" className="w-full h-full object-cover" />
-                : displayName[0]?.toUpperCase()}
+                : displayName?.[0]?.toUpperCase()}
             </div>
             <h2 className="text-xl font-black">{displayName}</h2>
             <div className="flex items-center gap-1.5 mt-1">
@@ -194,10 +222,10 @@ export default function FriendsAndUsers() {
                 <UserPlus className="w-4 h-4" /> Add Friend
               </button>
             )}
-            {friendship?.status === "pending" && friendship.requester_email === me?.email && (
+            {isPending && (friendship.requester_email || friendship.requesterEmail)?.toLowerCase() === me?.email?.toLowerCase() && (
               <span className="text-sm px-5 py-2.5 rounded-xl opacity-50" style={cardStyle}>Request Sent</span>
             )}
-            {friendship?.status === "pending" && friendship.recipient_email === me?.email && (
+            {isPending && (friendship.recipient_email || friendship.recipientEmail)?.toLowerCase() === me?.email?.toLowerCase() && (
               <div className="flex gap-2">
                 <button onClick={() => { respondToRequest(friendship, true); setViewingUser(null); }} className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-emerald-600 hover:bg-emerald-500 text-white transition-all">
                   <Check className="w-4 h-4" /> Accept
@@ -207,7 +235,7 @@ export default function FriendsAndUsers() {
                 </button>
               </div>
             )}
-            {friendship?.status === "accepted" && (
+            {isAccepted && (
               <div className="flex flex-col items-center gap-2">
                 <span className="text-sm px-5 py-2 rounded-xl text-emerald-400 bg-emerald-500/15 font-semibold">✓ Friends</span>
                 <button onClick={() => { removeFriend(friendship); setViewingUser(null); }} className="text-xs opacity-30 hover:opacity-60 transition-all">Remove friend</button>
@@ -264,7 +292,8 @@ export default function FriendsAndUsers() {
                 <p className="text-xs font-bold uppercase tracking-widest opacity-40 mb-3">Friend Requests ({pendingIncoming.length})</p>
                 <div className="space-y-2">
                   {pendingIncoming.map(f => {
-                    const u = allUsers.find(u => u.email === f.requester_email);
+                    const reqEmail = (f.requester_email || f.requesterEmail)?.toLowerCase();
+                    const u = allUsers.find(u => u.email?.toLowerCase() === reqEmail);
                     if (!u) return null;
                     return <UserCard key={u.id} u={u} />;
                   })}
