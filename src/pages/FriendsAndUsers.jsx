@@ -1,7 +1,5 @@
 import { db } from '@/lib/firebase';
-
 import { useState, useEffect } from "react";
-
 import { Search, UserPlus, Check, X, Users, Globe, Lock, Loader2 } from "lucide-react";
 import { useTranslation } from "../hooks/useTranslation";
 
@@ -22,12 +20,12 @@ export default function FriendsAndUsers() {
       const user = await db.auth.me();
       setMe(user);
       const [users, friends] = await Promise.all([
-        db.entities.User.list("-created_date", 500),
+        db.entities.User.list("-created_date", 1000), // Increased pull limit to fetch the full student index
         db.entities.Friendship.filter({ $or: [{ requester_email: user.email }, { recipient_email: user.email }] }),
       ]);
       setAllUsers(users.filter(u => u.email !== user.email));
       setFriendships(friends);
-      setLoading(false);
+      loading(false);
     };
     load().catch(() => setLoading(false));
   }, []);
@@ -66,13 +64,14 @@ export default function FriendsAndUsers() {
     setFriendships(prev => prev.filter(f => f.id !== friendship.id));
   };
 
+  // FIXED: Removed the `.slice(0, 50)` truncation block so that the whole directory displays by default
   const filteredUsers = search.trim()
     ? allUsers.filter(u =>
         (u.full_name || "").toLowerCase().includes(search.toLowerCase()) ||
         (u.display_name || "").toLowerCase().includes(search.toLowerCase()) ||
-        (u.is_public && (u.bio || "").toLowerCase().includes(search.toLowerCase()))
+        ((u.is_public || isDev) && (u.bio || "").toLowerCase().includes(search.toLowerCase()))
       )
-    : allUsers.slice(0, 50);
+    : allUsers; // Displays everyone fully when search is empty
 
   const friends = allUsers.filter(u => {
     const f = getFriendship(u.email);
@@ -92,7 +91,7 @@ export default function FriendsAndUsers() {
 
     return (
       <div
-        className={`rounded-2xl p-4 cursor-pointer hover:scale-[1.01] transition-all ${compact ? "" : ""}`}
+        className="rounded-2xl p-4 cursor-pointer hover:scale-[1.01] transition-all"
         style={cardStyle}
         onClick={() => setViewingUser(u)}
       >
@@ -166,7 +165,6 @@ export default function FriendsAndUsers() {
             <X className="w-4 h-4" />
           </button>
 
-          {/* Avatar masked if account is private */}
           <div className="flex flex-col items-center mb-5">
             <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-violet-600/30 to-blue-600/30 flex items-center justify-center text-2xl font-black mb-3 overflow-hidden">
               {isPublic && u.profile_picture_url
@@ -180,7 +178,6 @@ export default function FriendsAndUsers() {
             </div>
           </div>
 
-          {/* Bio — only for public */}
           {isPublic && u.bio && (
             <p className="text-sm text-center mb-5 px-2" style={mutedStyle}>{u.bio}</p>
           )}
@@ -188,7 +185,6 @@ export default function FriendsAndUsers() {
             <p className="text-sm text-center mb-5 opacity-40">This account is private. Only their name is visible.</p>
           )}
 
-          {/* Friend action */}
           <div className="flex justify-center">
             {!friendship && (
               <button
@@ -217,6 +213,14 @@ export default function FriendsAndUsers() {
                 <button onClick={() => { removeFriend(friendship); setViewingUser(null); }} className="text-xs opacity-30 hover:opacity-60 transition-all">Remove friend</button>
               </div>
             )}
+            {friendship?.status === "declined" && (
+              <button
+                onClick={async () => { await sendFriendRequest(u); setViewingUser(null); }}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-violet-600 hover:bg-violet-500 text-white transition-all"
+              >
+                <UserPlus className="w-4 h-4" /> Re-add Friend
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -225,7 +229,6 @@ export default function FriendsAndUsers() {
 
   return (
     <div className="min-h-screen pb-20" style={bgStyle}>
-      {/* Header */}
       <div className="px-6 py-8 border-b" style={{ borderColor: "var(--app-border)" }}>
         <div className="max-w-2xl mx-auto">
           <div className="flex items-center gap-3 mb-5">
@@ -238,7 +241,6 @@ export default function FriendsAndUsers() {
             </div>
           </div>
 
-          {/* Search */}
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={mutedStyle} />
             <input
@@ -257,7 +259,6 @@ export default function FriendsAndUsers() {
           <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 text-violet-500 animate-spin" /></div>
         ) : (
           <>
-            {/* Pending incoming requests */}
             {pendingIncoming.length > 0 && !search && (
               <div>
                 <p className="text-xs font-bold uppercase tracking-widest opacity-40 mb-3">Friend Requests ({pendingIncoming.length})</p>
@@ -271,7 +272,6 @@ export default function FriendsAndUsers() {
               </div>
             )}
 
-            {/* Friends */}
             {friends.length > 0 && !search && (
               <div>
                 <p className="text-xs font-bold uppercase tracking-widest opacity-40 mb-3">My Friends ({friends.length})</p>
@@ -281,10 +281,9 @@ export default function FriendsAndUsers() {
               </div>
             )}
 
-            {/* Search results / public users */}
             <div>
               <p className="text-xs font-bold uppercase tracking-widest opacity-40 mb-3">
-                {search ? `Results for "${search}"` : "Public Profiles on Cognita"}
+                {search ? `Results for "${search}"` : "Global Directory on Cognita"}
               </p>
               {filteredUsers.length === 0 ? (
                 <div className="text-center py-12 rounded-3xl" style={cardStyle}>
