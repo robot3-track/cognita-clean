@@ -772,15 +772,12 @@ function PartnersPanel({ cardStyle, mutedStyle }) {
   );
 }
 
-import React, { useState, useEffect } from "react";
-import { Loader2 } from "lucide-react";
-
-export default function AIUsagePanel({ cardStyle, mutedStyle }) {
+function AIUsagePanel({ cardStyle, mutedStyle }) {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    db.entities.AIUsageLog.list("-created_date", 2000).then(data => {
+    db.entities.AIUsageLog.list("-created_date", 20000).then(data => {
       setLogs(data);
       setLoading(false);
     });
@@ -814,7 +811,7 @@ export default function AIUsagePanel({ cardStyle, mutedStyle }) {
   const claudeSuccess = logs.filter(l => l.provider === "claude" && l.success !== false).length;
   const openrouterSuccess = logs.filter(l => l.provider === "openrouter" && l.success !== false).length;
 
-  // Feature breakdown mapping
+  // Feature breakdown mapping keys
   const featureCounts = {};
   logs.forEach(l => {
     const k = l.feature || "unknown";
@@ -853,7 +850,7 @@ export default function AIUsagePanel({ cardStyle, mutedStyle }) {
         ))}
       </div>
 
-      {/* Provider Split Visual Bar */}
+      {/* Provider split chart */}
       {total > 0 && (
         <div className="rounded-2xl p-5" style={cardStyle}>
           <h3 className="font-bold text-sm mb-3">Provider Split</h3>
@@ -876,7 +873,7 @@ export default function AIUsagePanel({ cardStyle, mutedStyle }) {
         </div>
       )}
 
-      {/* Feature Breakdown Chart Rows */}
+      {/* Feature breakdown list */}
       {features.length > 0 && (
         <div className="rounded-2xl p-5" style={cardStyle}>
           <h3 className="font-bold text-sm mb-3">Usage by Feature</h3>
@@ -903,7 +900,7 @@ export default function AIUsagePanel({ cardStyle, mutedStyle }) {
         </div>
       )}
 
-      {/* Recent Logs Table Wrapper */}
+      {/* Recent logs data row elements */}
       <div className="rounded-2xl overflow-hidden" style={cardStyle}>
         <div className="px-5 py-3 border-b font-bold text-sm" style={{ borderColor: "var(--app-border)" }}>
           Recent AI Calls (last 50)
@@ -1272,10 +1269,10 @@ export default function DevDashboard() {
       try {
         // Parallel Batch Fetch 1
         const [feedback, sessions, decks, users, ratings] = await Promise.all([
-          db.entities.Feedback.list("-created_date", 200).catch(() => []),
-          db.entities.StudySession.list("-created_date", 10000).catch(() => []),
-          db.entities.Deck.list("-updated_date", 10000).catch(() => []),
-          db.entities.User.list("-created_date", 10000).catch(() => []), // <-- Safely reads the user directory
+          db.entities.Feedback.list("-created_date", 2000).catch(() => []),
+          db.entities.StudySession.list("-created_date", 20000).catch(() => []),
+          db.entities.Deck.list("-updated_date", 20000).catch(() => []),
+          db.entities.User.list("-created_date", 20000).catch(() => []), // <-- Safely reads the user directory
           db.entities.DeckRating.list("-created_date", 5000).catch(() => []),
         ]);
 
