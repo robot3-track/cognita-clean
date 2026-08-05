@@ -256,10 +256,10 @@ function UserSyncButton({ cardStyle, mutedStyle }) {
     setSyncStatus('Starting deep synchronization scan...');
     try {
       setSyncStatus('Scanning Study Sessions...');
-      const sessions = await db.entities.StudySession.list("-created_date", 3000).catch(() => []);
+      const sessions = await db.entities.StudySession.list("-created_date", 30000).catch(() => []);
       
       setSyncStatus('Scanning User Login Events...');
-      const loginEvents = await db.entities.UserLoginEvent.list("-created_date", 3000).catch(() => []);
+      const loginEvents = await db.entities.UserLoginEvent.list("-created_date", 30000).catch(() => []);
 
       // Aggregate all unique active emails found across activity logs
       const activeEmails = new Set([
@@ -267,47 +267,86 @@ function UserSyncButton({ cardStyle, mutedStyle }) {
         ...loginEvents.map(e => e.user_email || e.email || e.userEmail)
       ].filter(Boolean));
 
-      if (activeEmails.size === 0) {
-        setSyncStatus('✅ Scan complete: No active emails found in logs.');
-        setIsSyncing(false);
-        return;
-      }
+      setSyncStatus('Fetching master user directory...');
+      const existingProfiles = await db.entities.User.list(null, 20000).catch(() => []);
 
-      setSyncStatus(`Found ${activeEmails.size} active log references. Fetching master directory...`);
-      const existingProfiles = await db.entities.User.list(null, 5000).catch(() => []);
-      const profileEmails = new Set(existingProfiles.map(u => String(u.email).toLowerCase().trim()));
+      // Create a map grouping existing profiles by normalized email
+      const profilesByEmail = new Map();
+      existingProfiles.forEach(u => {
+        if (!u.email) return;
+        const normalizedEmail = String(u.email).toLowerCase().trim();
+        if (!profilesByEmail.has(normalizedEmail)) {
+          profilesByEmail.set(normalizedEmail, []);
+        }
+        profilesByEmail.get(normalizedEmail).push(u);
+      });
 
       let healedCount = 0;
+      let mergedCount = 0;
+
       for (const rawEmail of activeEmails) {
         const cleanEmail = String(rawEmail).toLowerCase().trim();
-        
-        // If an active user has logged records but doesn't have a profile doc, fix it!
-        if (!profileEmails.has(cleanEmail)) {
-          setSyncStatus(`Healing missing profile: ${cleanEmail}...`);
-          const baseName = cleanEmail.split('@')[0];
-          const formattedName = baseName.charAt(0).toUpperCase() + baseName.slice(1);
+        const baseName = cleanEmail.split('@')[0];
+        const formattedName = baseName.charAt(0).toUpperCase() + baseName.slice(1);
 
-          const matchedSession = sessions.find(s => String(s.user_email || s.email).toLowerCase().trim() === cleanEmail);
-          const matchedEvent = loginEvents.find(e => String(e.user_email || e.email || e.userEmail).toLowerCase().trim() === cleanEmail);
-          const potentialUserId = matchedSession?.userId || matchedSession?.user_id || matchedEvent?.userId || matchedEvent?.user_id || null;
+        const matchedSession = sessions.find(s => String(s.user_email || s.email).toLowerCase().trim() === cleanEmail);
+        const matchedEvent = loginEvents.find(e => String(e.user_email || e.email || e.userEmail).toLowerCase().trim() === cleanEmail);
+        const potentialUserId = matchedSession?.userId || matchedSession?.user_id || matchedEvent?.userId || matchedEvent?.user_id || null;
+
+        const matchingProfiles = profilesByEmail.get(cleanEmail) || [];
+
+        if (matchingProfiles.length > 0) {
+          // --- PROFILE ALREADY EXISTS: MERGE DATA ---
+          setSyncStatus(`Merging data for existing user: ${cleanEmail}...`);
+          const primaryProfile = matchingProfiles[0];
+
+          // Check for missing fields that need filling or merging
+          const mergePayload = {};
+          if (!primaryProfile.full_name || primaryProfile.full_name === cleanEmail) {
+            mergePayload.full_name = formattedName;
+          }
+          if (!primaryProfile.created_date && (matchedSession?.created_date || matchedEvent?.created_date)) {
+            mergePayload.created_date = matchedSession?.created_date || matchedEvent?.created_date;
+          }
+          mergePayload.updated_date = new Date().toISOString();
+
+          // Merge updates into existing user document
+          await db.entities.User.update(primaryProfile.id, {
+            ...primaryProfile,
+            ...mergePayload,
+          });
+          mergedCount++;
+
+          // Clean up extraneous duplicate profile records for the same email if present
+          if (matchingProfiles.length > 1) {
+            for (let i = 1; i < matchingProfiles.length; i++) {
+              await db.entities.User.delete(matchingProfiles[i].id).catch(() => {});
+            }
+          }
+        } else {
+          // --- NO PROFILE EXISTS: CREATE NEW RECOVERED PROFILE ---
+          setSyncStatus(`Healing missing profile: ${cleanEmail}...`);
 
           const newProfilePayload = {
             email: cleanEmail,
             full_name: formattedName,
             role: 'user',
-            bio: 'Profile automatically recovered via activity logs check.',
+            bio: '',
             created_date: matchedSession?.created_date || matchedEvent?.created_date || new Date().toISOString(),
             updated_date: new Date().toISOString()
           };
 
-          // Keep consistent with Firebase Authentication UUID mapping
-          if (potentialUserId) newProfilePayload.id = potentialUserId;
-          
-          await db.entities.User.create(newProfilePayload);
+          if (potentialUserId) {
+            newProfilePayload.id = potentialUserId;
+          }
+
+          const createdUser = await db.entities.User.create(newProfilePayload);
+          profilesByEmail.set(cleanEmail, [createdUser]);
           healedCount++;
         }
       }
-      setSyncStatus(`✅ Complete! Successfully recovered ${healedCount} missing user profiles.`);
+
+      setSyncStatus(`✅ Complete! Recovered ${healedCount} missing profiles and merged ${mergedCount} existing profiles.`);
     } catch (err) {
       console.error(err);
       setSyncStatus(`❌ Sync failed: ${err.message || err}`);
@@ -320,7 +359,7 @@ function UserSyncButton({ cardStyle, mutedStyle }) {
     <div className="rounded-2xl p-4 mb-4 border border-dashed text-xs" style={{ ...cardStyle, borderColor: 'var(--app-border)' }}>
       <h3 className="text-sm font-bold text-indigo-400 mb-1">🔄 User Profile Synchronization</h3>
       <p className="text-xs mb-3" style={mutedStyle}>
-        Scans background operational logs (Sessions, Logins) to find active users missing profile records, automatically healing them.
+        Scans background operational logs (Sessions, Logins) to find active users, merging existing matching profiles or recovering missing ones without creating duplicates.
       </p>
       <button
         onClick={runUserSync}
@@ -802,6 +841,8 @@ function AIUsagePanel({ cardStyle, mutedStyle }) {
   const claudeTotal = logs.filter(l => l.provider === "claude").length;
   const firebaseTotal = logs.filter(l => l.provider === "firebase").length;
   const openrouterTotal = logs.filter(l => l.provider === "openrouter").length;
+  const nvidiaTotal = logs.filter(l => l.provider === "nvidia").length;
+  const groqTotal = logs.filter(l => l.provider === "groq").length;
   const total = logs.length;
 
   const lynxSuccess = logs.filter(l => l.provider === "lynx" && l.success !== false).length;
@@ -810,18 +851,20 @@ function AIUsagePanel({ cardStyle, mutedStyle }) {
   const firebaseSuccess = logs.filter(l => l.provider === "firebase" && l.success !== false).length;
   const claudeSuccess = logs.filter(l => l.provider === "claude" && l.success !== false).length;
   const openrouterSuccess = logs.filter(l => l.provider === "openrouter" && l.success !== false).length;
+  const nvidiaSuccess = logs.filter(l => l.provider === "nvidia" && l.success !== false).length;
+  const groqSuccess = logs.filter(l => l.provider === "groq" && l.success !== false).length;
 
   // Feature breakdown mapping keys
   const featureCounts = {};
   logs.forEach(l => {
     const k = l.feature || "unknown";
-    if (!featureCounts[k]) featureCounts[k] = { lynx: 0, gemini: 0, cohere: 0, claude: 0, firebase: 0, openrouter: 0 };
+    if (!featureCounts[k]) featureCounts[k] = { lynx: 0, gemini: 0, cohere: 0, claude: 0, firebase: 0, openrouter: 0, nvidia: 0, groq: 0 };
     featureCounts[k][l.provider] = (featureCounts[k][l.provider] || 0) + 1;
   });
   
   const features = Object.entries(featureCounts).sort((a, b) => 
-    (b[1].lynx + b[1].gemini + b[1].cohere + b[1].claude + (b[1].firebase || 0) + (b[1].openrouter || 0)) - 
-    (a[1].lynx + a[1].gemini + a[1].cohere + a[1].claude + (a[1].firebase || 0) + (a[1].openrouter || 0))
+    (b[1].lynx + b[1].gemini + b[1].cohere + b[1].claude + (b[1].firebase || 0) + (b[1].openrouter || 0) + (b[1].nvidia || 0) + (b[1].groq || 0)) - 
+    (a[1].lynx + a[1].gemini + a[1].cohere + a[1].claude + (a[1].firebase || 0) + (a[1].openrouter || 0) + (a[1].nvidia || 0) + (a[1].groq || 0))
   );
 
   // Recent 50 logs
@@ -839,6 +882,8 @@ function AIUsagePanel({ cardStyle, mutedStyle }) {
           { label: "🟠 Claude API", value: claudeTotal, color: "text-orange-400", success: claudeSuccess },
           { label: "🔥 Firebase AI", value: firebaseTotal, color: "text-violet-400", success: firebaseSuccess },
           { label: "🧠 OpenRouter", value: openrouterTotal, color: "text-pink-400", success: openrouterSuccess },
+          { label: "🟩 NVIDIA API", value: nvidiaTotal, color: "text-green-500", success: nvidiaSuccess },
+          { label: "🚀 Groq API", value: groqTotal, color: "text-red-400", success: groqSuccess },
         ].map(stat => (
           <div key={stat.label} className="rounded-2xl p-5 text-center" style={cardStyle}>
             <div className={`text-3xl font-black mb-1 ${stat.color}`}>{stat.value}</div>
@@ -861,6 +906,8 @@ function AIUsagePanel({ cardStyle, mutedStyle }) {
             <div className="bg-orange-500 transition-all" style={{ width: `${(claudeTotal / total) * 100}%` }} />
             <div className="bg-violet-600 transition-all" style={{ width: `${(firebaseTotal / total) * 100}%` }} />
             <div className="bg-pink-500 transition-all" style={{ width: `${(openrouterTotal / total) * 100}%` }} />
+            <div className="bg-green-600 transition-all" style={{ width: `${(nvidiaTotal / total) * 100}%` }} />
+            <div className="bg-red-500 transition-all" style={{ width: `${(groqTotal / total) * 100}%` }} />
           </div>
           <div className="flex gap-4 text-xs flex-wrap">
             <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-amber-500 inline-block" /><span style={mutedStyle}>Lynx {Math.round((lynxTotal / total) * 100)}%</span></div>
@@ -869,6 +916,8 @@ function AIUsagePanel({ cardStyle, mutedStyle }) {
             <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-orange-500 inline-block" /><span style={mutedStyle}>Claude {Math.round((claudeTotal / total) * 100)}%</span></div>
             <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-violet-600 inline-block" /><span style={mutedStyle}>Firebase {Math.round((firebaseTotal / total) * 100)}%</span></div>
             <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-pink-500 inline-block" /><span style={mutedStyle}>OpenRouter {Math.round((openrouterTotal / total) * 100)}%</span></div>
+            <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-green-600 inline-block" /><span style={mutedStyle}>Nvidia {Math.round((nvidiaTotal / total) * 100)}%</span></div>
+            <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-red-500 inline-block" /><span style={mutedStyle}>Groq {Math.round((groqTotal / total) * 100)}%</span></div>
           </div>
         </div>
       )}
@@ -879,7 +928,7 @@ function AIUsagePanel({ cardStyle, mutedStyle }) {
           <h3 className="font-bold text-sm mb-3">Usage by Feature</h3>
           <div className="space-y-2">
             {features.map(([feature, counts]) => {
-              const ft = (counts.lynx || 0) + (counts.gemini || 0) + (counts.cohere || 0) + (counts.claude || 0) + (counts.firebase || 0) + (counts.openrouter || 0);
+              const ft = (counts.lynx || 0) + (counts.gemini || 0) + (counts.cohere || 0) + (counts.claude || 0) + (counts.firebase || 0) + (counts.openrouter || 0) + (counts.nvidia || 0) + (counts.groq || 0);
               return (
                 <div key={feature} className="flex items-center gap-3">
                   <span className="text-xs font-mono w-36 truncate" style={mutedStyle}>{feature}</span>
@@ -890,9 +939,11 @@ function AIUsagePanel({ cardStyle, mutedStyle }) {
                     {counts.claude > 0 && <div className="bg-orange-500/80" style={{ width: `${(counts.claude / ft) * 100}%` }} />}
                     {counts.firebase > 0 && <div className="bg-violet-600/80" style={{ width: `${(counts.firebase / ft) * 100}%` }} />}
                     {counts.openrouter > 0 && <div className="bg-pink-500/80" style={{ width: `${(counts.openrouter / ft) * 100}%` }} />}
+                    {counts.nvidia > 0 && <div className="bg-green-600/80" style={{ width: `${(counts.nvidia / ft) * 100}%` }} />}
+                    {counts.groq > 0 && <div className="bg-red-500/80" style={{ width: `${(counts.groq / ft) * 100}%` }} />}
                   </div>
                   <span className="text-xs font-black w-8 text-right">{ft}</span>
-                  <span className="text-[10px] opacity-60 w-56 text-right">⚡{counts.lynx || 0} 🔵{counts.gemini || 0} 🟢{counts.cohere || 0} 🟠{counts.claude || 0} 🔥{counts.firebase || 0} 🧠{counts.openrouter || 0}</span>
+                  <span className="text-[10px] opacity-60 w-72 text-right">⚡{counts.lynx || 0} 🔵{counts.gemini || 0} 🟢{counts.cohere || 0} 🟠{counts.claude || 0} 🔥{counts.firebase || 0} 🧠{counts.openrouter || 0} 🟩{counts.nvidia || 0} 🚀{counts.groq || 0}</span>
                 </div>
               );
             })}
@@ -926,6 +977,8 @@ function AIUsagePanel({ cardStyle, mutedStyle }) {
                     log.provider === "cohere" ? "bg-teal-500/15 text-teal-400" : 
                     log.provider === "claude" ? "bg-orange-500/15 text-orange-400" : 
                     log.provider === "openrouter" ? "bg-pink-500/15 text-pink-400" : 
+                    log.provider === "nvidia" ? "bg-green-500/15 text-green-400" : 
+                    log.provider === "groq" ? "bg-red-500/15 text-red-400" :
                     "bg-violet-500/15 text-violet-400"
                   }`}>
                     {log.provider === "lynx" ? "⚡ Lynx" : 
@@ -933,6 +986,8 @@ function AIUsagePanel({ cardStyle, mutedStyle }) {
                      log.provider === "cohere" ? "🟢 Cohere" : 
                      log.provider === "claude" ? "🟠 Claude" : 
                      log.provider === "openrouter" ? "🧠 OpenRouter" : 
+                     log.provider === "nvidia" ? "🟩 Nvidia" : 
+                     log.provider === "groq" ? "🚀 Groq" :
                      "🔥 Firebase"}
                   </span>
                 </td>
