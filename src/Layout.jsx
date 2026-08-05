@@ -103,6 +103,7 @@ const buildNavGroups = (t, userEmail) => [
       { label: "Study Games", icon: Gamepad2, page: "TowerDefense" },
       { label: "Multilingual Dictionary", icon: BookMarked, page: "Dictionary" },
       { label: "Exam Prep", icon: ClipboardList, page: "ExamPrep" },
+      { label: "Grade Checker", icon: ClipboardList, page: "GradeChecker" },
     ],
   },
   {
@@ -152,6 +153,7 @@ const buildNavGroups = (t, userEmail) => [
       { label: "Exam Prep Hub", icon: ClipboardList, page: "ExamPrep" },
       { label: t('apTestPrep') || "AP Testing", icon: ClipboardList, page: "APTesting" },
       { label: t('apTips') || "AP Tips", icon: Lightbulb, page: "APTips" },
+      { label: "SAT Prep", icon: ClipboardList, page: "SATPrep" },
       { label: t('stateTestPrep') || "State Test Prep", icon: ClipboardList, page: "StateTestPrep" },
       { label: t('iReadyPrep') || "iReady Prep", icon: ClipboardList, page: "iReadyPrep" },
     ],
@@ -203,7 +205,7 @@ function SubGroupFlyout({ sg, currentPageName, onNavigate, parentOpenTimer }) {
     setFlyoutOpen(true);
   };
   const handleLeave = () => {
-    flyoutTimer.current = setTimeout(() => setFlyoutOpen(false), 80);
+    flyoutTimer.current = setTimeout(() => setFlyoutOpen(false), 150);
   };
 
   return (
@@ -223,19 +225,24 @@ function SubGroupFlyout({ sg, currentPageName, onNavigate, parentOpenTimer }) {
       </button>
       {flyoutOpen && (
         <div
-          className="absolute left-full top-0 ml-1 rounded-2xl shadow-2xl z-[100] py-2"
-          style={{ background: "var(--app-surface-solid)", border: "1px solid var(--app-border)", minWidth: 200 }}
+          className="absolute left-full top-0 pl-1 z-[110]"
+          style={{ minWidth: 200 }}
           onMouseEnter={handleEnter}
           onMouseLeave={handleLeave}
         >
-          {sg.pages.map(({ label, icon: Icon, page }) => (
-            <Link key={page} to={createPageUrl(page)} onClick={onNavigate}>
-              <div className={`flex items-center gap-3 px-4 py-2.5 transition-all cursor-pointer ${currentPageName === page ? "text-violet-400 bg-violet-500/10" : "opacity-70 hover:opacity-100 hover:bg-white/5"}`}>
-                <Icon className="w-4 h-4 shrink-0" />
-                <span className="text-sm font-medium">{label}</span>
-              </div>
-            </Link>
-          ))}
+          <div
+            className="rounded-2xl shadow-2xl py-2"
+            style={{ background: "var(--app-surface-solid)", border: "1px solid var(--app-border)" }}
+          >
+            {sg.pages.map(({ label, icon: Icon, page }) => (
+              <Link key={page} to={createPageUrl(page)} onClick={onNavigate}>
+                <div className={`flex items-center gap-3 px-4 py-2.5 transition-all cursor-pointer ${currentPageName === page ? "text-violet-400 bg-violet-500/10" : "opacity-70 hover:opacity-100 hover:bg-white/5"}`}>
+                  <Icon className="w-4 h-4 shrink-0" />
+                  <span className="text-sm font-medium">{label}</span>
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
       )}
     </div>
@@ -255,7 +262,7 @@ function DropdownNav({ currentPageName, userEmail }) {
   };
 
   const handleMouseLeave = () => {
-    closeTimer.current = setTimeout(() => setOpen(null), 80);
+    closeTimer.current = setTimeout(() => setOpen(null), 200);
   };
 
   const getAllPages = (group) => {
@@ -265,7 +272,7 @@ function DropdownNav({ currentPageName, userEmail }) {
   const isGroupActive = (group) => getAllPages(group).some(p => p.page === currentPageName);
 
   return (
-    <div ref={navRef} className="hidden md:flex items-center gap-1" style={{ position: "relative", zIndex: 50 }}>
+    <div ref={navRef} className="hidden md:flex items-center gap-1" style={{ position: "relative", zIndex: 999 }}>
       {NAV_GROUPS.map((group) => (
         <div
           key={group.label}
@@ -287,31 +294,38 @@ function DropdownNav({ currentPageName, userEmail }) {
           </button>
           {open === group.label && (
             <div
-              className="absolute top-full left-1/2 -translate-x-1/2 mt-1 rounded-2xl shadow-2xl z-50 py-2"
-              style={{ background: "var(--app-surface-solid)", border: "1px solid var(--app-border)", minWidth: 200 }}
+              className="absolute top-full left-1/2 -translate-x-1/2 pt-2 z-[999] before:content-[''] before:absolute before:-top-4 before:inset-x-0 before:h-4"
+              style={{ minWidth: 200 }}
+              onMouseEnter={() => handleMouseEnter(group.label)}
+              onMouseLeave={handleMouseLeave}
             >
-              {/* Render subGroups flyouts if present */}
-              {group.subGroups && group.subGroups.map(sg => (
-                <SubGroupFlyout
-                  key={sg.label}
-                  sg={sg}
-                  currentPageName={currentPageName}
-                  onNavigate={() => setOpen(null)}
-                  parentOpenTimer={closeTimer}
-                />
-              ))}
-              {/* Always render flat pages too */}
-              {(group.pages || []).length > 0 && group.subGroups && (
-                <div className="my-1 mx-3 border-t" style={{ borderColor: "var(--app-border)" }} />
-              )}
-              {(group.pages || []).map(({ label, icon: Icon, page }) => (
-                <Link key={page} to={createPageUrl(page)} onClick={() => setOpen(null)}>
-                  <div className={`flex items-center gap-3 px-4 py-2.5 transition-all cursor-pointer ${currentPageName === page ? "text-violet-400 bg-violet-500/10" : "opacity-70 hover:opacity-100 hover:bg-white/5"}`}>
-                    <Icon className="w-4 h-4 shrink-0" />
-                    <span className="text-sm font-medium">{label}</span>
-                  </div>
-                </Link>
-              ))}
+              <div
+                className="rounded-2xl shadow-2xl py-2 relative z-[999]"
+                style={{ background: "var(--app-surface-solid)", border: "1px solid var(--app-border)" }}
+              >
+                {/* Render subGroups flyouts if present */}
+                {group.subGroups && group.subGroups.map(sg => (
+                  <SubGroupFlyout
+                    key={sg.label}
+                    sg={sg}
+                    currentPageName={currentPageName}
+                    onNavigate={() => setOpen(null)}
+                    parentOpenTimer={closeTimer}
+                  />
+                ))}
+                {/* Always render flat pages too */}
+                {(group.pages || []).length > 0 && group.subGroups && (
+                  <div className="my-1 mx-3 border-t" style={{ borderColor: "var(--app-border)" }} />
+                )}
+                {(group.pages || []).map(({ label, icon: Icon, page }) => (
+                  <Link key={page} to={createPageUrl(page)} onClick={() => setOpen(null)}>
+                    <div className={`flex items-center gap-3 px-4 py-2.5 transition-all cursor-pointer ${currentPageName === page ? "text-violet-400 bg-violet-500/10" : "opacity-70 hover:opacity-100 hover:bg-white/5"}`}>
+                      <Icon className="w-4 h-4 shrink-0" />
+                      <span className="text-sm font-medium">{label}</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
             </div>
           )}
         </div>
@@ -427,7 +441,7 @@ export default function Layout({ children, currentPageName }) {
       {/* Top nav */}
       {showTopNav && (
         <nav
-          className="sticky top-0 z-50 flex items-center px-4 backdrop-blur-xl gap-4"
+          className="sticky top-0 z-[999] flex items-center px-4 backdrop-blur-xl gap-4"
           style={{ borderBottom: "1px solid var(--app-border)", background: "var(--app-nav-bg)", paddingTop: "calc(0.75rem + env(safe-area-inset-top))", paddingBottom: "0.75rem" }}
         >
           <div className="flex items-center gap-2 flex-1">
