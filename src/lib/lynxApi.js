@@ -34,6 +34,26 @@ export const GEMINI_MODEL = import.meta.env.VITE_GEMINI_MODEL || "gemini-3.6-fla
 export const GEMINI_VISION_MODEL = import.meta.env.VITE_GEMINI_VISION_MODEL || "gemini-3.6-flash";
 export const GEMINI_BASE_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
+export const NVIDIA_API_KEY = import.meta.env.VITE_NVIDIA_API_KEY || "";
+export const NVIDIA_BASE_URL = import.meta.env.VITE_NVIDIA_BASE_URL || "https://integrate.api.nvidia.com/v1";
+
+// Optimized lightweight, ultra-fast NVIDIA models
+const NVIDIA_GENERAL_MODELS = [
+  "meta/llama-3.1-8b-instruct",
+  "mistralai/mistral-7b-instruct-v0.3",
+  "meta/llama-3.3-70b-instruct" // Kept as a heavy fallback option at the end
+];
+
+const NVIDIA_CODE_MODELS = [
+  "qwen/qwen2.5-coder-7b-instruct",
+  "qwen/qwen2.5-coder-32b-instruct",
+  "meta/llama-3.1-8b-instruct"
+];
+
+export const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY || "";
+export const GROQ_BASE_URL = "https://api.groq.com/openai/v1/chat/completions";
+export const GROQ_MODEL = "llama-3.1-8b-instant"; // Blazing fast & reliable
+
 // Imagen 3 for scene image generation
 export const IMAGEN_MODEL = "imagen-3.0-generate-002";
 export const IMAGEN_BASE_URL = `https://generativelanguage.googleapis.com/v1beta/models/${IMAGEN_MODEL}:predict`;
@@ -71,6 +91,7 @@ const COGNITA_SYSTEM_PROMPT =
   "You celebrate progress, provide motivational support, and guide students to think critically rather than just giving them answers. " +
   "You are powered by the Cognita AI engine. You are Cognita — never claim to be ChatGPT, GPT, OpenAI, Claude, Gemini, Cohere, or any other AI. " +
   "If you aren't given the proper resources or information to answer a prompt, you should clearly let the user know instead of making up answers or a prompt respones. " +
+  "Never respond with incomplete responses or user checks such as user safety:safe . " +
   "Always be warm, encouraging, concise, and academically rigorous.\n\n" +
   "CAPABILITIES: You have broad knowledge across all academic subjects. When asked about current events, recent data, or real-time information, state clearly what you know up to your training cutoff and note if information may have changed. " +
   "For web searches: if a user explicitly asks you to 'search the web' or 'look up' something, do your best with your existing knowledge and note that live internet access varies by session — but provide the best possible answer from your training. " +
@@ -239,7 +260,7 @@ async function tryOpenRouter({ enhancedPrompt, systemPrompt, response_json_schem
         model: OPENROUTER_MODEL,
         response_format: response_json_schema ? { type: "json_object" } : undefined,
         messages: [
-          { role: "system", content: systemPrompt || "You are Cognita, a friendly and smart AI learning assistant." },
+          { role: "system", content: systemPrompt || COGNITA_SYSTEM_PROMPT },
           { role: "user", content: userContent },
         ],
       }),
@@ -294,6 +315,178 @@ async function tryOpenRouter({ enhancedPrompt, systemPrompt, response_json_schem
   } catch (err) {
     // Handles unexpected response JSON formatting or parsing exceptions safely
     logAIUsage("openrouter", feature, enhancedPrompt?.length, false);
+    return null;
+  }
+}
+
+async function tryNvidia({ enhancedPrompt, systemPrompt, response_json_schema, feature }) {
+  if (!NVIDIA_API_KEY) return null;
+
+  const isCode = feature === "code_sandbox_ai" || feature === "code_helper";
+  const candidateModels = isCode ? NVIDIA_CODE_MODELS : NVIDIA_GENERAL_MODELS;
+
+  const userContent = response_json_schema
+    ? `${enhancedPrompt}\n\nIMPORTANT: Respond with ONLY valid JSON. No markdown fences, no explanation, no text before or after the JSON object.`
+    : enhancedPrompt;
+
+  for (const model of candidateModels) {
+    try {
+      const res = await fetch(NVIDIA_BASE_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          // Note: Authorization header can also be handled on your serverless function, 
+          // but keeping it here matches your code setup if your API route reads req.headers.authorization
+          "Authorization": `Bearer ${NVIDIA_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: model,
+          temperature: 0.7,
+          ...(response_json_schema ? { response_format: { type: "json_object" } } : {}),
+          messages: [
+            { role: "system", content: systemPrompt || COGNITA_SYSTEM_PROMPT },
+            { role: "user", content: userContent },
+          ],
+        }),
+      });
+
+      if (!res.ok) continue;
+
+      const data = await res.json();
+      const content = data?.choices?.[0]?.message?.content;
+      if (!content) continue;
+
+      // ==========================================
+      // BULLETPROOF JSON PARSING (NO COMPLEX REGEX)
+      // ==========================================
+      if (response_json_schema) {
+        let cleaned = content.trim();
+        
+        // Safely strip starting markdown code blocks
+        if (cleaned.startsWith("```")) {
+          const firstNewline = cleaned.indexOf("\n");
+          if (firstNewline !== -1) {
+            cleaned = cleaned.substring(firstNewline + 1).trim();
+          }
+        }
+        
+        // Safely strip ending markdown code blocks
+        if (cleaned.endsWith("```")) {
+          cleaned = cleaned.substring(0, cleaned.length - 3).trim();
+        }
+
+        try { 
+          // Attempt 1: Direct Parse
+          const parsed = JSON.parse(cleaned);
+          logAIUsage("nvidia", feature, enhancedPrompt?.length, true); 
+          return parsed; 
+        } catch (e1) {
+          // Attempt 2: Fallback to finding the first { and last }
+          try {
+            const firstBrace = content.indexOf("{");
+            const lastBrace = content.lastIndexOf("}");
+            if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+              const jsonString = content.substring(firstBrace, lastBrace + 1);
+              const parsed = JSON.parse(jsonString);
+              logAIUsage("nvidia", feature, enhancedPrompt?.length, true);
+              return parsed;
+            }
+          } catch (e2) {
+            // Both attempts failed
+          }
+        }
+        
+        // hopefully doesn't reach here- means that Nvidia failed guys
+        continue;
+      }
+
+      // Standard text response
+      logAIUsage("nvidia", feature, enhancedPrompt?.length, true);
+      return content;
+    } catch {
+      // Network or fetch error, move to next model
+      continue;
+    }
+  }
+
+  logAIUsage("nvidia", feature, enhancedPrompt?.length, false);
+  return null;
+}
+
+/**
+ * Call Groq API — ultra-fast LPU open-source inference
+ */
+async function tryGroq({ enhancedPrompt, systemPrompt, response_json_schema, feature }) {
+  if (!GROQ_API_KEY) return null;
+
+  const userContent = response_json_schema
+    ? `${enhancedPrompt}\n\nIMPORTANT: Respond with ONLY valid JSON. No markdown fences, no explanation, no text before or after the JSON object.`
+    : enhancedPrompt;
+
+  let res;
+  try {
+    res = await fetch(GROQ_BASE_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${GROQ_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: GROQ_MODEL,
+        response_format: response_json_schema ? { type: "json_object" } : undefined,
+        messages: [
+          { role: "system", content: systemPrompt || COGNITA_SYSTEM_PROMPT },
+          { role: "user", content: userContent },
+        ],
+        temperature: 0.7,
+      }),
+    });
+  } catch (err) {
+    logAIUsage("groq", feature, enhancedPrompt?.length, false);
+    return null;
+  }
+
+  if (!res.ok) {
+    logAIUsage("groq", feature, enhancedPrompt?.length, false);
+    return null;
+  }
+
+  try {
+    const data = await res.json();
+    const content = data?.choices?.[0]?.message?.content;
+    if (!content) {
+      logAIUsage("groq", feature, enhancedPrompt?.length, false);
+      return null;
+    }
+
+    if (response_json_schema) {
+      try {
+        const cleanRegexStart = new RegExp("^\\x60\\x60\\x60(?:json)?\\s*", "im");
+        const cleanRegexEnd = new RegExp("\\s*\\x60\\x60\\x60\\s*$", "im");
+        let cleaned = content.replace(cleanRegexStart, "").replace(cleanRegexEnd, "").trim();
+        
+        try { 
+          logAIUsage("groq", feature, enhancedPrompt?.length, true); 
+          return JSON.parse(cleaned); 
+        } catch {}
+        
+        const jsonMatch = cleaned.match(/(\{[\s\S]*\})/);
+        if (jsonMatch) { 
+          logAIUsage("groq", feature, enhancedPrompt?.length, true); 
+          return JSON.parse(jsonMatch[1]); 
+        }
+        logAIUsage("groq", feature, enhancedPrompt?.length, false); 
+        return null;
+      } catch { 
+        logAIUsage("groq", feature, enhancedPrompt?.length, false); 
+        return null; 
+      }
+    }
+
+    logAIUsage("groq", feature, enhancedPrompt?.length, true);
+    return content;
+  } catch (err) {
+    logAIUsage("groq", feature, enhancedPrompt?.length, false);
     return null;
   }
 }
@@ -512,11 +705,22 @@ export async function callAI({ prompt, response_json_schema, add_context_from_in
       if (rLynx != null) return rLynx;
     } catch (e) { console.warn("Lynx fallback failed for vision/internet:", e?.message); }
 
+    // Try Nvidia
+    try {
+      const rNvidia = await tryNvidia(args);
+      if (rNvidia != null) return rNvidia;
+    } catch (e) { console.warn("Nvidia fallback failed:", e?.message); }
+
     // 2.5 Try OpenRouter
     try {
       const rOR = await tryOpenRouter(args);
       if (rOR != null) return rOR;
     } catch (e) { console.warn("OpenRouter fallback failed:", e?.message); }
+
+    try {
+      const rGroq = await tryGroq(args);
+      if (rGroq != null) return rGroq;
+    } catch (e) { console.warn("Groq fallback failed:", e?.message); }
 
     // 3. Try Cohere
     try {
@@ -554,25 +758,31 @@ export async function callAI({ prompt, response_json_schema, add_context_from_in
   const isCodeFeature = feature === "code_sandbox_ai" || feature === "code_helper";
   
   if (isCodeFeature) {
-    // Cohere → Lynx → Gemini → Big Pickle → Claude → Base44
+    // Cohere → Lynx → Nvidia → Gemini → Big Pickle → Claude → Base44
     const r1 = await tryCohere(args).catch(() => null);
     if (r1 != null) return r1;
     const r2 = await tryLynx(args).catch(() => null);
     if (r2 != null) return r2;
     const rOR = await tryOpenRouter(args).catch(() => null);
     if (rOR != null) return rOR;
+    const rNvidia = await tryNvidia(args).catch(() => null); // <-- ADD HERE
+    if (rNvidia != null) return rNvidia;
     const r3 = await tryGemini(args).catch(() => null);
     if (r3 != null) return r3;
   } else {
-    // Standard: Lynx → Gemini → Cohere → Big Pickle → Claude → Base44
+    // Standard: Lynx → OpenRouter → Groq → Gemini → Cohere → Big Pickle → Claude → Base44
     const r1 = await tryLynx(args).catch(() => null);
     if (r1 != null) return r1;
     const rOR = await tryOpenRouter(args).catch(() => null);
     if (rOR != null) return rOR;
-    const r2 = await tryGemini(args).catch(() => null);
-    if (r2 != null) return r2;
+    const rNvidia = await tryNvidia(args).catch(() => null); // Nvidia update! let's go
+    if (rNvidia != null) return rNvidia;
+    const rGroq = await tryGroq(args).catch(() => null); // <-- Added Groq 3rd in line
+    if (rGroq != null) return rGroq;
     const r3 = await tryCohere(args).catch(() => null);
     if (r3 != null) return r3;
+    const r2 = await tryGemini(args).catch(() => null);
+    if (r2 != null) return r2;
   }
 
   // Shared fallbacks: Big Pickle, Claude, Base44
@@ -887,13 +1097,6 @@ export async function getMonthlyVideoCount(userEmail) {
 }
 
 /**
- * Submit a video render job to JSON2Video and poll until done.
- * Routes API calls through Base44 InvokeLLM to avoid browser CORS restrictions.
- * Returns the CDN MP4 URL on success, throws on error.
- * @param {Object} payload - Full JSON2Video movie payload (from buildJson2VideoPayload)
- * @param {Function} onStatus - optional callback(message) for status updates
- */
-/**
  * Log a JSON2Video attempt to AIUsageLog for DevDashboard tracking.
  */
 async function logJson2VideoAttempt(status, details = "") {
@@ -902,78 +1105,91 @@ async function logJson2VideoAttempt(status, details = "") {
     try { userEmail = (await db.auth.me())?.email || ""; } catch {}
     await db.entities.AIUsageLog.create({
       user_email: userEmail,
-      provider: "gemini",
-      feature: `json2video_${status}`, // e.g. json2video_submitted, json2video_done, json2video_cors_error, json2video_failed
+      provider: "json2video",
+      feature: `json2video_${status}`,
       prompt_length: details.length,
       success: status === "done",
     });
   } catch {}
 }
 
+/**
+ * Submit a video render job to JSON2Video and poll until complete.
+ * Uses Base44 backend integration with internet context to bypass CORS restrictions.
+ * Returns the CDN MP4 URL on success, throws on error.
+ */
 export async function renderVideoWithJson2Video(payload, onStatus) {
   const notify = (msg) => { if (onStatus) onStatus(msg); };
 
-  notify("Submitting render job via AI proxy…");
+  if (!JSON2VIDEO_API_KEY) {
+    throw new Error("JSON2Video API key is missing in environment settings.");
+  }
+
+  notify("Submitting render job to JSON2Video…");
   const payloadStr = JSON.stringify(payload);
-  console.log("[JSON2Video] Submitting via InvokeLLM proxy, payload size:", payloadStr.length);
+  console.log("[JSON2Video] Submitting payload size:", payloadStr.length);
 
-  // ── Submit via InvokeLLM proxy (bypasses browser CORS) ───────────────────
+  // ── 1. Submit Render Job via Backend Integration Proxy ─────────────────────
   let projectId;
-  const submitPrompt = `You are a server-side HTTP proxy. Execute this exact HTTP request and return ONLY the raw JSON response body — no explanation, no markdown, no extra text.
-
-REQUEST:
-Method: POST
-URL: ${JSON2VIDEO_BASE_URL}
+  const submitPrompt = `Send an HTTP POST request to endpoint "${JSON2VIDEO_BASE_URL}".
 Headers:
   x-api-key: ${JSON2VIDEO_API_KEY}
   Content-Type: application/json
+
 Body:
 ${payloadStr}
 
-Return only the JSON response from the server.`;
+Return the exact JSON response returned by the JSON2Video endpoint.`;
 
-  const submitResult = await db.integrations.Core.InvokeLLM({
-    prompt: submitPrompt,
-    response_json_schema: {
-      type: "object",
-      properties: {
-        success: { type: "boolean" },
-        project: { type: "string" },
-        error: { type: "string" },
+  try {
+    const submitResult = await db.integrations.Core.InvokeLLM({
+      prompt: submitPrompt,
+      add_context_from_internet: true,
+      response_json_schema: {
+        type: "object",
+        properties: {
+          success: { type: "boolean" },
+          project: { type: "string" },
+          error: { type: "string" },
+          message: { type: "string" },
+        },
       },
-    },
-  });
+    });
 
-  console.log("[JSON2Video] Submit proxy result:", JSON.stringify(submitResult).slice(0, 300));
+    console.log("[JSON2Video] Submit response:", submitResult);
 
-  if (!submitResult?.success || !submitResult?.project) {
-    const errMsg = submitResult?.error || JSON.stringify(submitResult).slice(0, 200);
-    await logJson2VideoAttempt("submit_failed", errMsg);
-    throw new Error(`JSON2Video submit failed: ${errMsg}`);
+    // Parse response
+    const resObj = typeof submitResult === "string" ? JSON.parse(submitResult) : submitResult;
+    projectId = resObj?.project;
+
+    if (!resObj?.success || !projectId) {
+      const errMsg = resObj?.error || resObj?.message || JSON.stringify(resObj);
+      await logJson2VideoAttempt("submit_failed", errMsg);
+      throw new Error(`JSON2Video submission failed: ${errMsg}`);
+    }
+  } catch (err) {
+    await logJson2VideoAttempt("submit_error", err.message);
+    throw new Error(`Failed to submit video render job: ${err.message}`);
   }
 
-  projectId = submitResult.project;
   await logJson2VideoAttempt("submitted", `project=${projectId}`);
-  notify(`Render job submitted (ID: ${projectId}). Waiting for render…`);
+  notify(`Render job submitted (Project ID: ${projectId}). Waiting for render…`);
 
-  // ── Poll via InvokeLLM proxy every 8 seconds, up to 5 minutes ────────────
+  // ── 2. Poll Render Status Every 8 Seconds (Up to 5 Minutes) ───────────────
   for (let i = 0; i < 38; i++) {
     await new Promise(r => setTimeout(r, 8000));
-    notify(`Rendering… (${Math.round((i + 1) * 8)}s elapsed)`);
+    notify(`Rendering video… (${Math.round((i + 1) * 8)}s elapsed)`);
 
-    const pollPrompt = `You are a server-side HTTP proxy. Execute this exact HTTP request and return ONLY the raw JSON response body — no explanation, no markdown, no extra text.
-
-REQUEST:
-Method: GET
-URL: ${JSON2VIDEO_BASE_URL}?project=${projectId}
+    const pollPrompt = `Send an HTTP GET request to "${JSON2VIDEO_BASE_URL}?project=${projectId}".
 Headers:
   x-api-key: ${JSON2VIDEO_API_KEY}
 
-Return only the JSON response from the server.`;
+Return the exact JSON status response.`;
 
     try {
       const pollResult = await db.integrations.Core.InvokeLLM({
         prompt: pollPrompt,
+        add_context_from_internet: true,
         response_json_schema: {
           type: "object",
           properties: {
@@ -983,47 +1199,46 @@ Return only the JSON response from the server.`;
                 status: { type: "string" },
                 url: { type: "string" },
                 error: { type: "string" },
+                message: { type: "string" },
               },
             },
           },
         },
       });
 
-      const movie = pollResult?.movie;
-      console.log("[JSON2Video] Poll:", movie?.status, movie?.url);
+      const resObj = typeof pollResult === "string" ? JSON.parse(pollResult) : pollResult;
+      const movie = resObj?.movie;
+      console.log("[JSON2Video] Poll status:", movie?.status, movie?.url);
+
       if (!movie) continue;
 
       if (movie.status === "done") {
         const videoUrl = movie.url;
-        if (!videoUrl) throw new Error("Render done but no URL in response");
+        if (!videoUrl) throw new Error("Render complete, but no video URL returned.");
         await logJson2VideoAttempt("done", `project=${projectId} url=${videoUrl}`);
         notify("Video render complete!");
         return videoUrl;
       }
+
       if (movie.status === "error" || movie.status === "timeout") {
-        const errMsg = movie.error || movie.status;
+        const errMsg = movie.error || movie.message || movie.status;
         await logJson2VideoAttempt("render_failed", `project=${projectId} err=${errMsg}`);
-        throw new Error(`JSON2Video render failed: ${errMsg}`);
+        throw new Error(`JSON2Video rendering failed: ${errMsg}`);
       }
-      // Still rendering — keep polling
     } catch (e) {
-      if (e.message.includes("render failed") || e.message.includes("no URL")) throw e;
-      console.warn("[JSON2Video] Poll error (retrying):", e?.message);
+      if (e.message.includes("rendering failed") || e.message.includes("no video URL")) {
+        throw e;
+      }
+      console.warn("[JSON2Video] Retrying status check:", e?.message);
     }
   }
 
   await logJson2VideoAttempt("timeout", `project=${projectId}`);
-  throw new Error("JSON2Video timed out after ~5 minutes — the render may still complete.");
+  throw new Error("JSON2Video render timed out after 5 minutes.");
 }
 
 /**
- * Build a JSON2Video movie payload from an AI script + Imagen-generated image URLs.
- * Per JSON2Video v2 docs:
- * - image element: type="image", src=URL, duration=-2 (match scene), resize="cover"
- * - text element: type="text", text=string, settings={font-family, font-size, font-color, vertical-position, horizontal-position}
- * - voice element: type="voice", text=string, voice=string, model="azure" (free on all plans), duration defaults to -1 (auto)
- * - scene duration is driven by the voice element (duration: -1 = auto from TTS length)
- * Note: voice sets the scene duration when scene has no explicit duration.
+ * Build a JSON2Video movie payload matching JSON2Video v2 schema specifications.
  */
 export function buildJson2VideoPayload(scriptData, imageUrls = []) {
   const scenes = scriptData?.scenes || [];
@@ -1038,20 +1253,19 @@ export function buildJson2VideoPayload(scriptData, imageUrls = []) {
 
     const elements = [];
 
-    // Background image — fill the full canvas (1920x1080 for full-hd)
-    // Use width/height to stretch to fill per JSON2Video image docs
+    // Background image element
     if (imageUrl) {
       elements.push({
         type: "image",
         src: imageUrl,
-        duration: -2,     // match scene duration
+        duration: -2,
         width: 1920,
         height: 1080,
         "z-index": -1,
       });
     }
 
-    // Scene label — top-left
+    // Top-left Scene Counter Header
     elements.push({
       type: "text",
       text: `Scene ${sceneNum} / ${scenes.length}`,
@@ -1067,7 +1281,7 @@ export function buildJson2VideoPayload(scriptData, imageUrls = []) {
       },
     });
 
-    // Main headline — bottom center with dark backing for readability
+    // Main Headline Banner
     elements.push({
       type: "text",
       text: headline,
@@ -1085,15 +1299,14 @@ export function buildJson2VideoPayload(scriptData, imageUrls = []) {
       },
     });
 
-    // TTS narration voice — Azure is free on all plans; duration:-1 means auto from TTS length
-    // The voice element drives the scene duration
+    // TTS Voice Narration
     if (narration) {
       elements.push({
         type: "voice",
         text: narration,
         voice: "en-US-EmmaMultilingualNeural",
         model: "azure",
-        duration: -1,  // auto from TTS audio length
+        duration: -1,
       });
     }
 
