@@ -27,7 +27,7 @@ const ALL_FEATURES = [
   { label: "AI Studio", desc: "AI Video, audio, and tutoring", icon: Sparkles, page: "Media", iconColor: "text-violet-500", bgGlow: "from-violet-500/10 to-transparent" },
   { label: "AI Chat", desc: "Voice, files, and cards", icon: Brain, page: "Chat", iconColor: "text-blue-500", bgGlow: "from-blue-500/10 to-transparent" },
   { label: "Scan & Import", desc: "Photo text extractors", icon: Camera, page: "Scan", iconColor: "text-rose-500", bgGlow: "from-rose-500/10 to-transparent" },
-  { label: "Full Exam Prep", desc: "AP, State, iReady Exam Prep", icon: BookOpen, page: "ExamPrep", iconColor: "text-purple-500", bgGlow: "from-purple-500/10 to-transparent" },
+  { label: "Full Exam Prep", desc: "AP, State, SAT, iReady Exam Prep", icon: BookOpen, page: "ExamPrep", iconColor: "text-purple-500", bgGlow: "from-purple-500/10 to-transparent" },
   { label: "Study Games", desc: "Multiplayer active recall", icon: Gamepad2, page: "TowerDefense", iconColor: "text-emerald-500", bgGlow: "from-emerald-500/10 to-transparent" },
 ];
 
@@ -647,10 +647,21 @@ export default function Home() {
                   <h4 className="text-[10px] font-bold tracking-wide opacity-60" style={mutedStyle}>Your classes</h4>
                   <div className="space-y-1.5">
                     {myClasses.slice(0, 3).map(cls => (
-                      <div key={cls.id} className="text-[11px] font-semibold p-2.5 rounded-lg bg-white dark:bg-slate-950/40 border flex items-center justify-between text-[var(--app-text)]" style={{ borderColor: "var(--app-border)" }}>
-                        <span className="truncate pr-2">{cls.name}</span>
-                        <Play className="w-2.5 h-2.5 opacity-50 shrink-0 text-violet-500 dark:text-violet-400" />
-                      </div>
+                      <Link 
+                        key={cls.id} 
+                        to={createPageUrl("Classroom")} 
+                        className="block group"
+                      >
+                        <div 
+                          className="text-[11px] font-semibold p-2.5 rounded-lg bg-white dark:bg-slate-950/40 border flex items-center justify-between text-[var(--app-text)] hover:border-violet-500/50 hover:bg-violet-500/5 transition-all cursor-pointer" 
+                          style={{ borderColor: "var(--app-border)" }}
+                        >
+                          <span className="truncate pr-2 group-hover:text-violet-500 dark:group-hover:text-violet-400 transition-colors">
+                            {cls.name}
+                          </span>
+                          <Play className="w-2.5 h-2.5 opacity-50 shrink-0 text-violet-500 dark:text-violet-400 group-hover:translate-x-0.5 transition-transform" />
+                        </div>
+                      </Link>
                     ))}
                   </div>
                 </div>
