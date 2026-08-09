@@ -12,6 +12,7 @@ import ChatMessage from "../components/ChatMessage";
 import { createPageUrl } from "@/utils";
 import { canUseAi, incrementAiUsage, initAiCredits } from "../components/aiUsageLimit";
 import { callAI } from "@/lib/lynxApi";
+import { generateImageWithMistralFallbacks } from "@/lib/mistralAPI";
 
 const COGNITA_SYSTEM_PROMPT_VOICE =
   "You are Cognita, a friendly AI study assistant in voice conversation mode. " +
@@ -35,6 +36,22 @@ function getShuffledSuggestions() {
   }
   return arr.slice(0, 4);
 }
+
+// Helper to detect if prompt is asking for image generation
+const isImageGenerationRequest = (text) => {
+  const prompt = text.toLowerCase().trim();
+  const imageKeywords = [
+    "generate an image", "generate image", "generate an img", "generate img",
+    "create an image", "create image", "create an img", "create img",
+    "draw an image", "draw a picture", "draw", "draw a", "draw an",
+    "make an image", "make a picture", "make an img",
+    "paint a picture", "paint an image", "paint a",
+    "generate a picture", "create a picture",
+    "image of", "picture of", "photo of", "illustration of"
+  ];
+
+  return imageKeywords.some((keyword) => prompt.includes(keyword));
+};
 
 // Extract number of flashcards requested from user message
 function extractCardCount(text) {
@@ -221,7 +238,7 @@ export default function Chat() {
   const submitRename = async (session) => {
     if (!renameValue.trim()) return;
     const safePayload = sanitizeForFirestore({ title: renameValue.trim() });
-    const updated = await db.entities.ChatSession.update(session.id, safePayload);
+    await db.entities.ChatSession.update(session.id, safePayload);
     setSessions(prev => prev.map(s => s.id === session.id ? { ...s, title: renameValue.trim() } : s));
     if (activeSession?.id === session.id) setActiveSession(prev => ({ ...prev, title: renameValue.trim() }));
     setRenamingId(null);
@@ -231,12 +248,6 @@ export default function Chat() {
     const newF = { ...folders };
     if (!newF[folderName]) newF[folderName] = [];
     if (!newF[folderName].includes(sessionId)) newF[folderName] = [...newF[folderName], sessionId];
-    saveFolders(newF);
-  };
-
-  const removeFromFolder = (sessionId, folderName) => {
-    const newF = { ...folders };
-    if (newF[folderName]) newF[folderName] = newF[folderName].filter(id => id !== sessionId);
     saveFolders(newF);
   };
 
@@ -316,46 +327,58 @@ export default function Chat() {
       setActiveSession(session);
     }
 
-    const cardCount = extractCardCount(input);
-    const userMsg = { role: "user", content: input.trim(), files: attachedFiles.length > 0 ? attachedFiles : undefined };
+    const userPrompt = input.trim();
+    const userMsg = { role: "user", content: userPrompt, files: attachedFiles.length > 0 ? attachedFiles : undefined };
     const newMessages = [...messages, userMsg];
     setMessages(newMessages);
     setInput("");
 
     const currentFiles = [...attachedFiles];
-    const currentDecks = [...attachedDecks];
     setAttachedFiles([]);
     setAttachedDecks([]);
 
     try {
       incrementAiUsage(user?.email);
+
+      // --- Intercept image generation requests ---
+      if (isImageGenerationRequest(userPrompt)) {
+        const imageUrl = await generateImageWithMistralFallbacks({
+          prompt: userPrompt,
+          signal: abortController.signal
+        });
+
+        if (abortController.signal.aborted) return;
+
+        const aiMsg = {
+          role: "assistant",
+          content: `Here is the image you requested (might take a few seconds to load, don't scroll away!):\n\n![${userPrompt}](${imageUrl})`,
+          imageUrl: imageUrl,
+        };
+
+        const finalMessages = [...newMessages, aiMsg];
+        setMessages(finalMessages);
+
+        const updatedTitle = session.title === "New Chat" ? userMsg.content.slice(0, 40) : session.title;
+        const safePayload = sanitizeForFirestore({ messages: finalMessages, title: updatedTitle });
+        const updated = await db.entities.ChatSession.update(session.id, safePayload);
+        setSessions(prev => prev.map(s => s.id === updated.id ? updated : s));
+        setActiveSession(updated);
+        return;
+      }
+
+      // --- Standard Text / Chat Response ---
       const history = newMessages.map(m => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`).join("\n");
       const deckContext = buildAttachmentContext();
       const fileNote = currentFiles.length > 0 ? `\n\n[User attached ${currentFiles.length} file(s): ${currentFiles.map(f => f.name).join(", ")}]` : "";
-      const cardCountNote = `\n\n[If user asks to create flashcards, create exactly ${cardCount} cards unless specified otherwise in this message.]`;
 
       const response = await callAI({
-        prompt: `Conversation history:\n${history}${deckContext}${fileNote}${cardCountNote}\n\nProvide a helpful, concise response. Use LaTeX for math ($inline$ or $$block$$). Use fenced code blocks for code.\n\nIMPORTANT: If the user is asking you to CREATE or GENERATE flashcards (e.g. "create 10 flashcards", "generate flashcards about X", "make me flashcards"), respond with the flashcards in your message AND include a JSON block at the end formatted as:\n\`\`\`flashcards\n{"cards":[{"front":"...","back":"..."}]}\n\`\`\`\nThis JSON block will be automatically parsed to create a deck. Always include exactly the number of flashcards requested.`,
+        prompt: `Conversation history:\n${history}${deckContext}${fileNote}\n\nProvide a helpful, clear, and comprehensive response. Use standard LaTeX for math expressions ($...$ for inline or $$...$$ for block formulas). Use fenced code blocks for code snippets.`,
         feature: "chat",
         file_urls: currentFiles.length > 0 ? currentFiles.map(f => f.url) : undefined,
         signal: abortController.signal
       });
 
       if (abortController.signal.aborted) return;
-
-      // Auto-detect and create flashcards if AI embedded a flashcards JSON block
-      const flashcardMatch = response.match(/```flashcards\s*([\s\S]*?)```/);
-      if (flashcardMatch) {
-        try {
-          const parsed = JSON.parse(flashcardMatch[1].trim());
-          const cards = parsed?.cards || [];
-          if (cards.length > 0) {
-            const deck = await db.entities.Deck.create({ title: `Chat: ${session.title === "New Chat" ? userMsg.content.slice(0, 40) : session.title}`, card_count: cards.length, author_name: user?.full_name || "", author_email: user?.email || "" });
-            await db.entities.Flashcard.bulkCreate(cards.map(c => ({ ...c, deck_id: deck.id })));
-            navigate(createPageUrl(`Study?deck_id=${deck.id}`));
-          }
-        } catch {}
-      }
 
       const aiMsg = { role: "assistant", content: response };
       const finalMessages = [...newMessages, aiMsg];
@@ -399,7 +422,7 @@ export default function Chat() {
       const lastUserMsg = messages.filter(m => m.role === "user").slice(-1)[0]?.content || "";
       const count = extractCardCount(lastUserMsg) || requestedCount;
       const resp = await callAI({
-        prompt: `Based on this chat conversation, create exactly ${count} high-quality flashcards covering the key concepts discussed.\n\nConversation:\n${history}\n\nReturn JSON with a "cards" array, each card having "front" (question/term) and "back" (answer/explanation). Create exactly ${count} cards.`,
+        prompt: `Based on this chat conversation, create exactly ${count} high-quality flashcards covering the key concepts discussed.\n\nConversation:\n${history}\n\nReturn JSON with a "cards" array, each card having "front" (question/term) and "back" (answer/explanation). Format math formulas with $...$ or $$...$$. Create exactly ${count} cards.`,
         feature: "chat_to_flashcards",
         response_json_schema: { type: "object", properties: { cards: { type: "array", items: { type: "object", properties: { front: { type: "string" }, back: { type: "string" } } } } } },
         signal: abortController.signal
@@ -433,7 +456,7 @@ export default function Chat() {
       incrementAiUsage(user?.email);
       const history = messages.map(m => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`).join("\n");
       const resp = await callAI({
-        prompt: `Based on this chat conversation, create a 10-question multiple choice quiz.\n\nConversation:\n${history}\n\nReturn JSON with a "questions" array. Each question: "question", "options" (4 strings), "correct" (index 0-3), "explanation".`,
+        prompt: `Based on this chat conversation, create a 10-question multiple choice quiz.\n\nConversation:\n${history}\n\nReturn JSON with a "questions" array. Each question: "question", "options" (4 strings), "correct" (index 0-3), "explanation". Use $...$ or $$...$$ for LaTeX math.`,
         feature: "chat_to_quiz",
         response_json_schema: { type: "object", properties: { questions: { type: "array", items: { type: "object", properties: { question: { type: "string" }, options: { type: "array", items: { type: "string" } }, correct: { type: "number" }, explanation: { type: "string" } } } } } },
         signal: abortController.signal
@@ -488,8 +511,7 @@ export default function Chat() {
         setInput((baseInput ? baseInput + " " : "") + transcript.trim());
       };
 
-      recognition.onerror = (e) => {
-        console.warn("Dictation error:", e.error);
+      recognition.onerror = () => {
         setIsDictating(false);
       };
 
@@ -505,7 +527,7 @@ export default function Chat() {
     }
   };
 
-  // Voice mode — record audio, transcribe with native Web Speech API (or fallback), get AI voice reply
+  // Voice mode
   const startVoiceRecord = async () => {
     if (isRecording || isGeneratingRef.current) return;
     
@@ -542,19 +564,14 @@ export default function Chat() {
           }
         };
 
-        recognition.onerror = (e) => {
-          console.warn("Speech recognition error:", e.error);
-        };
-
         recognition.start();
         hasWebSpeech = true;
         setVoiceStatus("🔴 Listening… release to send");
       } catch (err) {
-        console.warn("Failed to start Web Speech API, falling back to audio blob:", err);
+        console.warn("Web Speech API fallback:", err);
       }
     }
 
-    // Simultaneously capture audio blob as fallback if Web Speech isn't available
     if (navigator.mediaDevices?.getUserMedia) {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
@@ -562,9 +579,7 @@ export default function Chat() {
 
         const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
           ? "audio/webm;codecs=opus"
-          : MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm"
-          : MediaRecorder.isTypeSupported("audio/ogg") ? "audio/ogg"
-          : "";
+          : MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "";
 
         const mr = new MediaRecorder(stream, mimeType ? { mimeType } : {});
         mediaRecorderRef.current = mr;
@@ -576,16 +591,12 @@ export default function Chat() {
         mr.start(100);
       } catch (err) {
         if (!hasWebSpeech) {
-          if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
-            setVoiceStatus("❌ Microphone permission denied. Please allow microphone access.");
-          } else {
-            setVoiceStatus("❌ Could not access microphone: " + err.message);
-          }
+          setVoiceStatus("❌ Microphone permission error: " + err.message);
           setIsRecording(false);
         }
       }
     } else if (!hasWebSpeech) {
-      setVoiceStatus("❌ Microphone not supported in this browser");
+      setVoiceStatus("❌ Microphone not supported");
       setIsRecording(false);
     }
   };
@@ -620,7 +631,6 @@ export default function Chat() {
 
     let finalTranscript = liveSpeechRef.current.trim();
 
-    // If Web Speech API didn't capture words or returned empty, fall back to backend transcription
     if (!finalTranscript && audioChunksRef.current.length > 0) {
       try {
         const blob = new Blob(audioChunksRef.current, { type: mimeType });
@@ -640,7 +650,7 @@ export default function Chat() {
     }
 
     if (!finalTranscript) {
-      setVoiceStatus("Couldn't understand speech. Please try speaking clearer or check mic permissions.");
+      setVoiceStatus("Couldn't understand speech. Try again.");
       setIsRecording(false);
       isGeneratingRef.current = false;
       setLoading(false);
@@ -728,36 +738,40 @@ export default function Chat() {
     <div
       key={s.id}
       onClick={() => { selectSession(s); if (inDrawer) setMobileDrawerOpen(false); }}
-      className={`group flex items-center justify-between gap-1 px-3 py-2 rounded-xl cursor-pointer transition-all mb-0.5 ${activeSession?.id === s.id ? "bg-gradient-to-r from-violet-500/20 to-indigo-500/20 text-violet-300 font-semibold border border-violet-500/30 shadow-sm" : "opacity-70 hover:opacity-100 hover:bg-white/[0.05]"}`}
+      className={`group flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl cursor-pointer transition-all mb-1 ${
+        activeSession?.id === s.id 
+          ? "bg-violet-600/20 text-violet-300 font-semibold border border-violet-500/30 shadow-sm" 
+          : "opacity-75 hover:opacity-100 hover:bg-white/[0.05]"
+      }`}
     >
       {renamingId === s.id ? (
         <div className="flex items-center gap-1 flex-1" onClick={e => e.stopPropagation()}>
           <input autoFocus value={renameValue} onChange={e => setRenameValue(e.target.value)} onKeyDown={e => e.key === "Enter" && submitRename(s)} className="flex-1 bg-transparent text-xs outline-none border-b border-violet-500 pb-0.5" />
-          <button onClick={() => submitRename(s)} className="text-violet-400"><Check className="w-3 h-3" /></button>
+          <button onClick={() => submitRename(s)} className="text-violet-400"><Check className="w-3.5 h-3.5" /></button>
         </div>
       ) : (
-        <p className="text-xs truncate flex-1">{s.title}</p>
+        <p className="text-xs truncate flex-1 leading-snug">{s.title}</p>
       )}
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
-        <button onClick={e => startRename(s, e)} className="text-violet-400/70 hover:text-violet-400"><Edit3 className="w-3 h-3" /></button>
-        <button onClick={e => deleteSession(s.id, e)} className="text-red-400/70 hover:text-red-400"><Trash2 className="w-3 h-3" /></button>
+        <button onClick={e => startRename(s, e)} className="text-violet-400/70 hover:text-violet-400 p-1"><Edit3 className="w-3 h-3" /></button>
+        <button onClick={e => deleteSession(s.id, e)} className="text-red-400/70 hover:text-red-400 p-1"><Trash2 className="w-3 h-3" /></button>
       </div>
     </div>
   );
 
   const sidebarContent = (inDrawer = false) => (
     <>
-      <div className="p-4 border-b space-y-3" style={{ borderColor: "var(--app-border)" }}>
+      <div className="p-4 border-b space-y-2.5" style={{ borderColor: "var(--app-border)" }}>
         {!inDrawer && (
           <Link to={createPageUrl("Home")}>
-            <button className="w-full flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium opacity-50 hover:opacity-90 transition-all" style={{ color: "var(--app-text)" }}>
+            <button className="w-full flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium opacity-60 hover:opacity-100 transition-all" style={{ color: "var(--app-text)" }}>
               <ChevronLeft className="w-3.5 h-3.5" /> Back to Home
             </button>
           </Link>
         )}
         <button onClick={() => { newChat(); if (inDrawer) setMobileDrawerOpen(false); }}
-          className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 hover:opacity-90 text-white px-4 py-3 rounded-2xl font-semibold text-sm transition-all shadow-lg shadow-violet-900/30">
-          <Plus className="w-4 h-4" /> {t('newChat')}
+          className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 hover:opacity-90 text-white px-4 py-3 rounded-2xl font-semibold text-sm transition-all shadow-md shadow-violet-900/20">
+          <Plus className="w-4 h-4" /> {t('newChat') || "New Chat"}
         </button>
         {showFolderInput ? (
           <div className="flex gap-1 bg-white/5 p-1 rounded-xl border border-white/10">
@@ -766,12 +780,12 @@ export default function Chat() {
             <button onClick={() => setShowFolderInput(false)} className="opacity-40 p-1 hover:bg-white/10 rounded-lg"><X className="w-3.5 h-3.5" /></button>
           </div>
         ) : (
-          <button onClick={() => setShowFolderInput(true)} className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs opacity-50 hover:opacity-90 hover:bg-white/5 transition-all">
+          <button onClick={() => setShowFolderInput(true)} className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs opacity-60 hover:opacity-100 hover:bg-white/5 transition-all">
             <FolderOpen className="w-3.5 h-3.5" /> New Folder
           </button>
         )}
       </div>
-      <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
+      <div className="flex-1 overflow-y-auto p-3 space-y-1">
         {loadingSessions ? (
           <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 text-violet-500 animate-spin" /></div>
         ) : (
@@ -781,22 +795,22 @@ export default function Chat() {
               return (
                 <div key={fname} className="space-y-0.5">
                   <div className="group/folder flex items-center gap-1">
-                    <button onClick={() => setExpandedFolders(prev => ({ ...prev, [fname]: !prev[fname] }))} className="flex-1 flex items-center gap-2 px-2.5 py-2 text-xs font-semibold opacity-70 hover:opacity-100 transition-all rounded-xl hover:bg-white/5">
+                    <button onClick={() => setExpandedFolders(prev => ({ ...prev, [fname]: !prev[fname] }))} className="flex-1 flex items-center gap-2 px-2.5 py-2 text-xs font-semibold opacity-80 hover:opacity-100 transition-all rounded-xl hover:bg-white/5">
                       <Folder className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                       <span className="flex-1 text-left truncate">{fname}</span>
-                      <span className="text-[10px] opacity-40 bg-white/10 px-1.5 py-0.5 rounded-full">{folderSessions.length}</span>
+                      <span className="text-[10px] opacity-50 bg-white/10 px-1.5 py-0.5 rounded-full">{folderSessions.length}</span>
                       {expandedFolders[fname] ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
                     </button>
                     <button onClick={() => { const newF = { ...folders }; delete newF[fname]; saveFolders(newF); }} className="opacity-0 group-hover/folder:opacity-60 hover:opacity-100 transition-all p-1 text-red-400">
                       <X className="w-3 h-3" />
                     </button>
                   </div>
-                  {expandedFolders[fname] && <div className="pl-2 border-l border-white/5 space-y-0.5 ml-2">{folderSessions.map(s => sessionItem(s, inDrawer))}</div>}
+                  {expandedFolders[fname] && <div className="pl-2 border-l border-white/10 space-y-0.5 ml-2">{folderSessions.map(s => sessionItem(s, inDrawer))}</div>}
                 </div>
               );
             })}
             {unfiledSessions.length === 0 && Object.keys(folders).length === 0 && (
-              <p className="text-xs text-center py-6 opacity-40">No chats yet</p>
+              <p className="text-xs text-center py-8 opacity-40 font-medium">No saved chats</p>
             )}
             {unfiledSessions.map(s => (
               <div key={s.id} className="group/item">
@@ -828,20 +842,20 @@ export default function Chat() {
         {sidebarContent(false)}
       </div>
 
-      {/* Chat area with Gemini-inspired ambient glow */}
+      {/* Chat area */}
       <div className="flex-1 flex flex-col min-w-0 relative overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] pointer-events-none opacity-20 blur-[100px]" style={{ background: "radial-gradient(circle, rgba(139,92,246,0.4) 0%, rgba(59,130,246,0.2) 50%, transparent 100%)" }} />
 
         {/* Mobile header */}
         <div className="md:hidden flex items-center justify-between px-4 py-3 border-b shrink-0 relative z-10" style={{ borderColor: "var(--app-border)", background: "var(--app-surface)" }}>
           <div className="flex items-center gap-2.5">
-            <button onClick={() => setMobileDrawerOpen(true)} className="flex items-center justify-center rounded-xl opacity-70 hover:opacity-100 transition-all p-2 bg-white/5 border border-white/10">
+            <button onClick={() => setMobileDrawerOpen(true)} className="flex items-center justify-center rounded-xl opacity-80 hover:opacity-100 transition-all p-2 bg-white/5 border border-white/10">
               <MessageSquare className="w-4 h-4" />
             </button>
             <p className="font-semibold text-sm truncate max-w-[160px]">{activeSession?.title || "New Chat"}</p>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={() => setMode(mode === "voice" ? "chat" : "voice")} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${mode === "voice" ? "bg-violet-600 text-white shadow-lg shadow-violet-900/40" : "bg-white/5 hover:bg-white/10 text-violet-400 border border-white/10"}`}>
+            <button onClick={() => setMode(mode === "voice" ? "chat" : "voice")} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${mode === "voice" ? "bg-violet-600 text-white shadow-md shadow-violet-900/40" : "bg-white/5 hover:bg-white/10 text-violet-400 border border-white/10"}`}>
               <Mic className="w-3.5 h-3.5" /> {mode === "voice" ? "Voice" : "Chat"}
             </button>
             <button onClick={newChat} className="flex items-center justify-center bg-gradient-to-r from-violet-600 to-indigo-600 hover:opacity-90 text-white p-2 rounded-full transition-all shadow-md">
@@ -860,7 +874,7 @@ export default function Chat() {
                 <button onClick={() => setMobileDrawerOpen(false)} className="opacity-50 hover:opacity-100 p-1.5 bg-white/5 rounded-full"><X className="w-4 h-4" /></button>
               </div>
               <Link to={createPageUrl("Home")} onClick={() => setMobileDrawerOpen(false)}>
-                <button className="mx-4 mb-2 w-[calc(100%-32px)] flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium opacity-50 hover:opacity-90 transition-all bg-white/5" style={{ color: "var(--app-text)" }}>
+                <button className="mx-4 mb-2 w-[calc(100%-32px)] flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium opacity-60 hover:opacity-100 transition-all bg-white/5" style={{ color: "var(--app-text)" }}>
                   <ChevronLeft className="w-3.5 h-3.5" /> Back to Home
                 </button>
               </Link>
@@ -872,14 +886,14 @@ export default function Chat() {
         {/* Voice Mode */}
         {mode === "voice" ? (
           <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4 relative z-10 max-w-4xl mx-auto w-full">
+            <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4 relative z-10 max-w-3xl mx-auto w-full">
               {messages.length === 0 && (
                 <div className="flex flex-col items-center justify-center h-full text-center py-12">
                   <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-violet-600 via-indigo-600 to-blue-500 flex items-center justify-center mb-6 shadow-2xl shadow-violet-900/50 animate-pulse">
                     <Mic className="w-12 h-12 text-white" />
                   </div>
                   <h2 className="text-2xl font-black mb-2 bg-gradient-to-r from-violet-400 to-blue-400 bg-clip-text text-transparent">Voice Conversation Mode</h2>
-                  <p className="text-sm max-w-xs opacity-60 leading-relaxed">Press and hold the mic to start speaking. Cognita will listen and reply with fluid audio.</p>
+                  <p className="text-sm max-w-xs opacity-60 leading-relaxed">Press and hold the mic to speak. Cognita will listen and answer smoothly.</p>
                 </div>
               )}
               {messages.map((msg, i) => (
@@ -925,19 +939,19 @@ export default function Chat() {
         ) : (
           <>
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-4 md:px-8 py-6 space-y-6 relative z-10 max-w-4xl mx-auto w-full">
+            <div className="flex-1 overflow-y-auto px-4 md:px-8 py-6 space-y-6 relative z-10 max-w-3xl mx-auto w-full">
               {messages.length === 0 && (
                 <div className="flex flex-col items-center justify-center h-full text-center py-16">
                   <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-violet-600 via-indigo-500 to-purple-500 flex items-center justify-center mb-6 shadow-2xl shadow-violet-900/40">
                     <Sparkles className="w-8 h-8 text-white animate-pulse" />
                   </div>
-                  <h2 className="text-3xl md:text-4xl font-extrabold mb-3 tracking-tight bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent">
-                    Hi {user?.full_name?.split(' ')[0] || 'there'}, what's on your mind?
+                  <h2 className="text-3xl md:text-4xl font-black mb-3 tracking-tight bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent">
+                    Hi {user?.full_name?.split(' ')[0] || 'there'}, what are we studying?
                   </h2>
                   <p className="text-sm md:text-base max-w-md opacity-60 mb-8 leading-relaxed">
-                    {t('askCognitaDesc') || "Ask anything, summarize complex topics, generate quizzes, or build instant flashcard study decks."}
+                    {t('askCognitaDesc') || "Ask complex questions, summarize notes, solve problems, or create custom flashcard decks."}
                   </p>
-                  <div className="flex flex-wrap gap-2.5 justify-center max-w-2xl">
+                  <div className="flex flex-wrap gap-2 justify-center max-w-xl">
                     {suggestions.map(s => (
                       <button key={s} onClick={() => setInput(s)}
                         className="px-4 py-2 rounded-full text-xs md:text-sm font-medium border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/20 transition-all shadow-sm">
@@ -948,13 +962,13 @@ export default function Chat() {
                 </div>
               )}
               {messages.map((msg, i) => (
-                <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} items-start gap-3.5`}>
+                <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} items-start gap-3`}>
                   {msg.role !== "user" && (
                     <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-violet-600 via-indigo-600 to-purple-600 flex items-center justify-center shrink-0 shadow-lg shadow-violet-900/30 mt-1">
                       <Sparkles className="w-4 h-4 text-white" />
                     </div>
                   )}
-                  <div className={`max-w-[85%] md:max-w-[78%] px-5 py-4 text-sm md:text-base leading-relaxed ${msg.role === "user" ? "bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 text-white rounded-3xl rounded-br-sm shadow-md" : "rounded-3xl rounded-bl-sm border shadow-sm"}`}
+                  <div className={`max-w-[85%] md:max-w-[80%] px-5 py-4 text-sm md:text-base leading-relaxed ${msg.role === "user" ? "bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 text-white rounded-3xl rounded-br-sm shadow-md" : "rounded-3xl rounded-bl-sm border shadow-sm"}`}
                     style={msg.role !== "user" ? { background: "var(--app-surface)", borderColor: "var(--app-border)" } : {}}>
                     {msg.files && msg.files.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 mb-3">
@@ -965,12 +979,29 @@ export default function Chat() {
                         ))}
                       </div>
                     )}
+                    {/* Render explicit image if msg.imageUrl exists */}
+                    {msg.imageUrl && (
+                      <div className="my-3 rounded-2xl overflow-hidden border border-white/10 shadow-lg bg-black/20">
+                        <img
+                          src={msg.imageUrl}
+                          alt="Generated AI"
+                          referrerPolicy="no-referrer"
+                          crossOrigin="anonymous"
+                          className="w-full h-auto max-h-[450px] object-contain rounded-2xl"
+                          onError={(e) => {
+                            // Fallback if image fails to load
+                            console.error("Image failed to load:", msg.imageUrl);
+                          }}
+                        />
+                      </div>
+                    )}
+
                     <ChatMessage content={msg.content} />
                   </div>
                 </div>
               ))}
               {loading && (
-                <div className="flex items-start gap-3.5">
+                <div className="flex items-start gap-3">
                   <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-violet-600 via-indigo-600 to-purple-600 flex items-center justify-center shrink-0 shadow-lg shadow-violet-900/30 mt-1">
                     <Sparkles className="w-4 h-4 text-white animate-spin" style={{ animationDuration: "3s" }} />
                   </div>
@@ -986,13 +1017,13 @@ export default function Chat() {
               <div ref={bottomRef} />
             </div>
 
-            {/* Input area (Gemini Floating Pill Style) */}
-            <div className="px-4 py-4 relative z-10 shrink-0 max-w-4xl mx-auto w-full">
-              {limitError && <p className="text-xs text-red-400 text-center mb-3 font-semibold bg-red-500/10 py-1.5 px-3 rounded-full border border-red-500/20 max-w-md mx-auto">{limitError}</p>}
+            {/* Input area */}
+            <div className="px-4 pb-4 pt-1 relative z-10 shrink-0 max-w-3xl mx-auto w-full">
+              {limitError && <p className="text-xs text-red-400 text-center mb-2 font-semibold bg-red-500/10 py-1.5 px-3 rounded-full border border-red-500/20 max-w-md mx-auto">{limitError}</p>}
 
               {/* Attachments preview */}
               {(attachedFiles.length > 0 || attachedDecks.length > 0) && (
-                <div className="flex flex-wrap gap-2 mb-2.5 px-2">
+                <div className="flex flex-wrap gap-2 mb-2 px-1">
                   {attachedFiles.map((f, i) => (
                     <div key={i} className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-violet-500/15 text-violet-300 border border-violet-500/30 shadow-sm">
                       <Paperclip className="w-3.5 h-3.5" /> {f.name}
@@ -1010,22 +1041,22 @@ export default function Chat() {
 
               {/* Smart action buttons */}
               {messages.length > 0 && (
-                <div className="flex flex-wrap items-center justify-between gap-2 mb-3 px-1">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5 px-1">
                   <div className="flex flex-wrap gap-1.5">
                     <button onClick={() => convertToFlashcards()} disabled={converting || loading}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-white/5 hover:bg-white/10 text-violet-300 border border-white/10 transition-all disabled:opacity-40 shadow-sm">
-                      {converting ? <Loader2 className="w-3.5 h-3.5 animate-spin text-violet-400" /> : <Layers className="w-3.5 h-3.5 text-violet-400" />} Flashcards
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-violet-600/20 hover:bg-violet-600/30 text-violet-300 border border-violet-500/30 transition-all disabled:opacity-40 shadow-sm">
+                      {converting ? <Loader2 className="w-3.5 h-3.5 animate-spin text-violet-400" /> : <Layers className="w-3.5 h-3.5 text-violet-400" />} Turn into Flashcard Deck
                     </button>
                     {smartActions?.quiz && (
                       <button onClick={convertToQuiz} disabled={converting || loading}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-blue-600/20 text-blue-300 hover:bg-blue-600/30 border border-blue-500/40 transition-all animate-pulse shadow-sm">
-                        <Target className="w-3.5 h-3.5 text-blue-400" /> Quiz
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-blue-600/20 text-blue-300 hover:bg-blue-600/30 border border-blue-500/40 transition-all shadow-sm">
+                        <Target className="w-3.5 h-3.5 text-blue-400" /> Make Quiz
                       </button>
                     )}
                     {smartActions?.code && (
                       <button onClick={() => handleSmartNavigate("code", smartActions.userPrompt)}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25 border border-emerald-500/30 transition-all shadow-sm">
-                        <Code2 className="w-3.5 h-3.5 text-emerald-400" /> Code Sandbox
+                        <Code2 className="w-3.5 h-3.5 text-emerald-400" /> Open Code Sandbox
                       </button>
                     )}
                   </div>
@@ -1049,7 +1080,7 @@ export default function Chat() {
                 </div>
               )}
 
-              {/* Gemini-style sleek pill prompt box */}
+              {/* Sleek prompt box */}
               <div className={`rounded-3xl border shadow-xl p-2 px-3 flex items-end gap-2 transition-all ${isDictating ? "border-red-500/50 ring-2 ring-red-500/10" : "focus-within:border-violet-500/50 focus-within:ring-2 focus-within:ring-violet-500/10"}`}
                 style={{ background: "var(--app-surface)", borderColor: isDictating ? undefined : "var(--app-border)" }}>
                 <input ref={fileInputRef} type="file" accept="image/*,.pdf,.txt,.docx" className="hidden" onChange={handleFileUpload} />
@@ -1074,7 +1105,7 @@ export default function Chat() {
                   value={input}
                   onChange={e => { setInput(e.target.value); setLimitError(null); }}
                   onKeyDown={e => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), sendMessage())}
-                  placeholder={isDictating ? "🔴 Dictating... speak your prompt now" : (t('askAnything') || "Ask Cognita anything...")}
+                  placeholder={isDictating ? "🔴 Ready... speak now" : (t('askAnything') || "Ask Cognita anything...")}
                   rows={1}
                   className="flex-1 bg-transparent text-sm md:text-base outline-none resize-none py-2.5 px-1 leading-relaxed max-h-32 placeholder:opacity-40 font-normal"
                   style={{ color: "var(--app-text)" }}
@@ -1085,7 +1116,7 @@ export default function Chat() {
                     <button
                       onClick={stopGeneration}
                       title="Stop generating"
-                      className="flex items-center gap-1.5 bg-red-500/15 hover:bg-red-500/25 text-red-400 border border-red-500/30 px-4 py-2.5 rounded-full text-xs font-semibold transition-all animate-pulse shrink-0"
+                      className="flex items-center gap-1.5 bg-red-500/15 hover:bg-red-500/25 text-red-400 border border-red-500/30 px-3.5 py-2 rounded-full text-xs font-semibold transition-all animate-pulse shrink-0"
                     >
                       <Square className="w-3.5 h-3.5 fill-current" /> Stop
                     </button>
@@ -1099,7 +1130,7 @@ export default function Chat() {
                   )}
                 </div>
               </div>
-              <p className="text-[11px] text-center opacity-40 mt-2 font-medium">Cognita may display inaccurate info, including about science or math equations. Double-check your results.</p>
+              <p className="text-[11px] text-center opacity-40 mt-2 font-medium">Cognita AI can make mistakes. Verify important study details.</p>
             </div>
           </>
         )}
