@@ -7,7 +7,6 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider } from '@/lib/AuthContext';
 import ProtectedRouteComponent from '@/components/ProtectedRoute';
-import { Loader2 } from "lucide-react";
 import { Analytics } from '@vercel/analytics/react';
 
 // Lazy load route components
@@ -23,6 +22,7 @@ const WriteMode = lazy(() => import('./pages/WriteMode'));
 const CheckpointMode = lazy(() => import('./pages/CheckpointMode'));
 const ResourceLibrary = lazy(() => import('./pages/ResourceLibrary'));
 const Classroom = lazy(() => import('./pages/Classroom'));
+const GradeChecker = lazy(() => import('./pages/GradeChecker'));
 const ClassroomGame = lazy(() => import('./pages/ClassroomGame'));
 const TowerDefense = lazy(() => import('./pages/TowerDefense'));
 const DevDashboard = lazy(() => import('./pages/DevDashboard'));
@@ -31,7 +31,7 @@ const Calculator = lazy(() => import('./pages/Calculator'));
 const Dictionary = lazy(() => import('./pages/Dictionary'));
 const ResourceHub = lazy(() => import('./pages/ResourceHub'));
 const TermsAndConditions = lazy(() => import('./pages/TermsAndConditions'));
-const Documentation = lazy(() => import('./pages/Documentation')); // Integrated New Core Route Target
+const Documentation = lazy(() => import('./pages/Documentation'));
 const APTesting = lazy(() => import('./pages/APTesting'));
 const SecurityPractices = lazy(() => import('./pages/SecurityPractices'));
 const ChemBalance = lazy(() => import('./pages/ChemBalance'));
@@ -43,6 +43,7 @@ const CodeSandbox = lazy(() => import('./pages/CodeSandbox'));
 const PeriodicTable = lazy(() => import('./pages/PeriodicTable'));
 const IReadyPrep = lazy(() => import('./pages/iReadyPrep'));
 const StateTestPrep = lazy(() => import('./pages/StateTestPrep'));
+const SATExamInterface = lazy(() => import('./pages/SATExamInterface'));
 const Partnership = lazy(() => import('./pages/Partnership'));
 const MLAFormatter = lazy(() => import('./pages/MLAFormatter'));
 const FriendsAndUsers = lazy(() => import('./pages/FriendsAndUsers'));
@@ -60,10 +61,34 @@ const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
 const MainPage = mainPageKey ? Pages[mainPageKey] : <></>;
 
+// Clean & Unique Page Fallback Loader
 const PageFallback = () => (
-  <div className="flex flex-col items-center justify-center min-h-[60vh] w-full p-8">
-    <Loader2 className="w-8 h-8 animate-spin text-indigo-500 mb-2" />
-    <span className="text-xs font-medium text-slate-400">Loading page...</span>
+  <div className="flex flex-col items-center justify-center min-h-[60vh] w-full p-8 text-center space-y-4">
+    {/* Logo Spinner Badge */}
+    <div className="relative w-16 h-16 flex items-center justify-center">
+      {/* Smooth Rotating Outer Ring */}
+      <div className="absolute inset-0 rounded-2xl border-2 border-violet-500/20 border-t-violet-500 animate-spin" />
+      
+      {/* Subtle Inner Glow */}
+      <div className="absolute inset-2 bg-violet-500/10 rounded-xl animate-pulse" />
+
+      {/* Cognita Logo */}
+      <div 
+        className="relative z-10 w-10 h-10 rounded-xl bg-[var(--app-surface)] border p-1.5 flex items-center justify-center shadow-sm"
+        style={{ borderColor: "var(--app-border)" }}
+      >
+        <img 
+          src="https://media.base44.com/images/public/69b097f35579053a78af47a3/43f8b728d_9e9c4097b_logo1.png" 
+          alt="Cognita" 
+          className="w-full h-full object-contain" 
+        />
+      </div>
+    </div>
+
+    {/* Subtitle */}
+    <span className="text-xs font-semibold tracking-wide text-neutral-400">
+      Loading page...
+    </span>
   </div>
 );
 
@@ -105,6 +130,7 @@ const AuthenticatedApp = () => {
           ))}
           <Route path="/PublicDecks" element={<LayoutWrapper currentPageName="PublicDecks"><PublicDecks /></LayoutWrapper>} />
           <Route path="/Surveys" element={<LayoutWrapper currentPageName="Surveys"><Surveys /></LayoutWrapper>} />
+          <Route path="/GradeChecker" element={<LayoutWrapper currentPageName="GradeChecker"><GradeChecker /></LayoutWrapper>} />
           <Route path="/RewardHistory" element={<LayoutWrapper currentPageName="RewardHistory"><RewardHistory /></LayoutWrapper>} />
           <Route path="/About" element={<LayoutWrapper currentPageName="About"><About /></LayoutWrapper>} />
           <Route path="/SpacedRepetition" element={<LayoutWrapper currentPageName="SpacedRepetition"><SpacedRepetition /></LayoutWrapper>} />
@@ -135,6 +161,10 @@ const AuthenticatedApp = () => {
           <Route path="/PeriodicTable" element={<LayoutWrapper currentPageName="PeriodicTable"><PeriodicTable /></LayoutWrapper>} />
           <Route path="/iReadyPrep" element={<LayoutWrapper currentPageName="iReadyPrep"><IReadyPrep /></LayoutWrapper>} />
           <Route path="/StateTestPrep" element={<LayoutWrapper currentPageName="StateTestPrep"><StateTestPrep /></LayoutWrapper>} />
+          
+          {/* Matches page: "SATPrep" in ExamPrep.jsx while rendering SATExamInterface */}
+          <Route path="/SATPrep" element={<LayoutWrapper currentPageName="SATPrep"><SATExamInterface /></LayoutWrapper>} />
+          
           <Route path="/Partnership" element={<LayoutWrapper currentPageName="Partnership"><Partnership /></LayoutWrapper>} />
           <Route path="/MLAFormatter" element={<LayoutWrapper currentPageName="MLAFormatter"><MLAFormatter /></LayoutWrapper>} />
           <Route path="/FriendsAndUsers" element={<LayoutWrapper currentPageName="FriendsAndUsers"><FriendsAndUsers /></LayoutWrapper>} />
