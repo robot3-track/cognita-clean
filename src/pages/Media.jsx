@@ -1,3 +1,4 @@
+// src/pages/Media.jsx
 import { db } from '@/lib/firebase';
 
 import { useState, useEffect, useRef } from "react";
@@ -6,13 +7,71 @@ import {
   Mic, Loader2, Play, Pause, Square, Trash2, Sparkles,
   Download, Search, Globe, Lock, Upload, Type, Layers,
   ChevronDown, ChevronUp, BookOpen, Wand2, X, CheckCircle2,
-  AudioLines, Clapperboard, Info, MessageSquare, GraduationCap
+  AudioLines, Clapperboard, Info, MessageSquare, GraduationCap, Image as ImageIcon
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { canUseAi, incrementAiUsage } from "../components/aiUsageLimit";
 import { callAIForMedia, generateSceneImage, buildJson2VideoPayload, renderVideoWithJson2Video } from "../lib/lynxApi";
+import { generateImageWithMistralFallbacks } from "../lib/mistralAPI";
 import VideoPlayer from "../components/VideoPlayer";
 import { useTranslation } from "../hooks/useTranslation";
+
+const ENCODED_RESTRICTED_WORDS = [
+  "bnNmdw==",     
+  "bmFrZWQ=",       
+  "bnVkZQ==",       
+  "ZXhwbGljaXQ=",   
+  "c2V4",         
+  "cG9ybg==",     
+  "Ymxvb2Q=",       
+  "Z29yZQ==",      
+  "a2lsbA==",      
+  "dmlvbGVuY2U=",   
+  "c3VpY2lkZQ==",  
+  "c2VsZi1oYXJt",   
+  "d2VhcG9u",       
+  "ZHJ1Zw==",       
+  "aWxsZWdhbA=="    
+];
+
+function checkPromptSafety(promptText) {
+  if (!promptText) return { isSafe: true, matchedKeywords: [] };
+  const normalized = promptText.toLowerCase();
+  const matched = [];
+
+  for (const encodedWord of ENCODED_RESTRICTED_WORDS) {
+    try {
+      const decodedWord = atob(encodedWord).toLowerCase();
+      if (decodedWord && normalized.includes(decodedWord)) {
+        matched.push(decodedWord);
+      }
+    } catch {}
+  }
+
+  return {
+    isSafe: matched.length === 0,
+    matchedKeywords: matched
+  };
+}
+
+async function logFlaggedPrompt(prompt, matchedKeywords) {
+  try {
+    let userEmail = "";
+    try { userEmail = (await db.auth.me())?.email || ""; } catch {}
+
+    await db.entities.AIUsageLog.create({
+      user_email: userEmail,
+      provider: "mistral",
+      feature: "image_generation_flagged",
+      prompt_length: prompt?.length || 0,
+      success: false,
+      error: `FLAGGED_INAPPROPRIATE: Matched [${matchedKeywords.join(", ")}] in prompt: "${prompt}"`,
+      created_date: new Date().toISOString()
+    });
+  } catch (err) {
+    console.warn("Failed to log flagged prompt:", err);
+  }
+}
 
 // ─── How It Works Steps ──────────────────────────────────────────────────────
 const HOW_IT_WORKS = [
@@ -26,7 +85,7 @@ const HOW_IT_WORKS = [
   {
     icon: Wand2,
     title: "AI builds your lesson",
-    desc: "Cognita writes a structured script and generates a polished audio or video lesson.",
+    desc: "Cognita writes a structured script and generates a polished audio, video, or image lesson.",
     color: "text-blue-400",
     bg: "bg-blue-500/10",
   },
@@ -53,6 +112,13 @@ const PROMPTS_VIDEO = [
   "Visual lesson on solving quadratic equations",
 ];
 
+const PROMPTS_IMAGE = [
+  "Generate an image of an apple",
+  "Generate an image of a car",
+  "Generate an image of a growing plant",
+  "Generate an image of a stool",
+];
+
 export default function Media() {
   const { t } = useTranslation();
   const [mediaList, setMediaList] = useState([]);
@@ -61,7 +127,7 @@ export default function Media() {
   const [creating, setCreating] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState("");
-  const [type, setType] = useState("audio");
+  const [type, setType] = useState("audio"); // "audio", "video", "image"
   const [sourceText, setSourceText] = useState("");
   const [playing, setPlaying] = useState(null);
   const [userEmail, setUserEmail] = useState(null);
@@ -92,7 +158,7 @@ export default function Media() {
       setShowForm(true);
       setSourceText(prompt);
       setTitle(prompt.slice(0, 60));
-      setType(mediaType === "video" ? "video" : "audio");
+      setType(mediaType === "video" ? "video" : mediaType === "image" ? "image" : "audio");
       window.history.replaceState({}, "", window.location.pathname);
     }
   }, []);
@@ -140,6 +206,19 @@ export default function Media() {
 
   const createMedia = async () => {
     if (!title.trim() || !sourceText.trim()) return;
+
+    // Moderate content for inappropriate keywords when generating images
+    if (type === "image") {
+      const combinedPrompt = `${title} ${sourceText}`;
+      const safety = checkPromptSafety(combinedPrompt);
+
+      if (!safety.isSafe) {
+        await logFlaggedPrompt(sourceText, safety.matchedKeywords);
+        setLimitError("Your prompt contains inappropriate or restricted keywords. This request has been flagged for review.");
+        return;
+      }
+    }
+
     if (!canUseAi(userEmail)) {
       setLimitError("You've reached your daily AI uses. Come back tomorrow!");
       return;
@@ -160,9 +239,31 @@ export default function Media() {
         });
         setMediaList(prev => [media, ...prev]);
         if (isPublic) setPublicMedia(prev => [media, ...prev]);
+
+      } else if (type === "image") {
+        // ── IMAGE GENERATION ──
+        setVideoGenStatus("🎨 Generating AI study diagram...");
+        const imageUrl = await generateImageWithMistralFallbacks({
+          prompt: `${title}: ${sourceText}`,
+          feature: "media_image",
+        });
+
+        setVideoGenStatus("");
+
+        const media = await db.entities.GeneratedMedia.create({
+          title: title.trim(),
+          type: "image",
+          status: "ready",
+          file_url: imageUrl,
+          source_text: sourceText.trim(),
+          script: `Prompt: ${sourceText.trim()}`,
+          is_public: isPublic,
+        });
+        setMediaList(prev => [media, ...prev]);
+        if (isPublic) setPublicMedia(prev => [media, ...prev]);
+
       } else {
         // ── VIDEO GENERATION ──
-        // Step 1: Generate AI script
         setVideoGenStatus("✍️ Writing video script with AI...");
         const scriptData = await callAIForMedia({
           prompt: `Create a detailed educational video script about the following topic. Structure it with exactly 5 scenes.\n\nReturn JSON with:\n- "title": video title\n- "narration": full narration text\n- "scenes": array of 5 objects each with: "scene_number" (1-5), "duration" ("~1 minute"), "visual_description" (detailed description for image generation, no text in scene), "narration_segment" (spoken text, max 400 chars), "on_screen_text" (key text under 60 chars)\n\nMaterial:\n${sourceText}`,
@@ -194,7 +295,6 @@ export default function Media() {
 
         const fullScript = `[VIDEO: ${scriptData?.title || title}]\n\n${sceneList.map(s => `=== SCENE ${s.scene_number} ===\n[ON-SCREEN]: ${s.on_screen_text}\n[NARRATION]: ${s.narration_segment}\n`).join("\n")}\n--- FULL NARRATION ---\n${scriptData?.narration || ""}`;
 
-        // Step 2: Try JSON2Video render for a real MP4 with voice narration
         let finalFileUrl = null;
         let imageResults = [];
         try {
@@ -204,7 +304,6 @@ export default function Media() {
         } catch (j2vErr) {
           console.warn("JSON2Video render failed:", j2vErr?.message);
           setVideoGenStatus("🎨 JSON2Video unavailable — generating scene images for slideshow...");
-          // Fallback: generate Imagen images for the slideshow player
           imageResults = await Promise.all(
             sceneList.map(async (s, i) => {
               try {
@@ -219,7 +318,6 @@ export default function Media() {
           await new Promise(r => setTimeout(r, 500));
         }
 
-        // Build slideshow scenes (used as fallback when no MP4)
         const slideshowScenes = sceneList.map((s, i) => ({
           scene_number: s.scene_number || i + 1,
           bg_color: bgColors[i % bgColors.length],
@@ -299,16 +397,19 @@ export default function Media() {
     <div key={item.id} className="rounded-3xl p-5" style={cardStyle}>
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="flex items-center gap-3">
-          <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 ${item.type === "audio" ? "bg-violet-500/15" : "bg-blue-500/15"}`}>
-            {item.type === "audio"
-              ? <AudioLines className="w-5 h-5 text-violet-400" />
-              : <Clapperboard className="w-5 h-5 text-blue-400" />
-            }
+          <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 ${item.type === "audio" ? "bg-violet-500/15" : item.type === "image" ? "bg-emerald-500/15" : "bg-blue-500/15"}`}>
+            {item.type === "audio" ? (
+              <AudioLines className="w-5 h-5 text-violet-400" />
+            ) : item.type === "image" ? (
+              <ImageIcon className="w-5 h-5 text-emerald-400" />
+            ) : (
+              <Clapperboard className="w-5 h-5 text-blue-400" />
+            )}
           </div>
           <div>
             <p className="font-bold text-sm leading-tight">{item.title}</p>
             <p className="text-xs mt-0.5" style={mutedStyle}>
-              {item.type === "audio" ? "Audio Lesson · ~5 min" : "Video Lesson · ~5 min"}
+              {item.type === "audio" ? "Audio Lesson · ~5 min" : item.type === "image" ? "AI Study Image" : "Video Lesson · ~5 min"}
               {!isOwner && item.created_by && <span> · {item.created_by.split("@")[0]}</span>}
             </p>
           </div>
@@ -321,7 +422,7 @@ export default function Media() {
               {item.is_public ? "Public" : "Private"}
             </button>
           )}
-          {isOwner && (
+          {isOwner && item.script && (
             <button onClick={() => downloadScript(item)} className="p-2 rounded-xl opacity-30 hover:opacity-80 transition-all" title="Download script">
               <Download className="w-4 h-4" />
             </button>
@@ -334,7 +435,18 @@ export default function Media() {
         </div>
       </div>
 
-      {/* Video player — real MP4 from JSON2Video takes priority over slideshow */}
+      {/* Render Image */}
+      {item.type === "image" && item.file_url && (
+        <div className="rounded-2xl overflow-hidden mb-4 border border-white/10 bg-black/40 flex justify-center">
+          <img
+            src={item.file_url}
+            alt={item.title}
+            className="max-h-96 w-full object-contain"
+          />
+        </div>
+      )}
+
+      {/* Video player */}
       {item.type === "video" && item.file_url ? (
         <div className="rounded-2xl overflow-hidden mb-4" style={{ background: "#000" }}>
           <video
@@ -350,7 +462,7 @@ export default function Media() {
       ) : null}
 
       {/* Script preview */}
-      {item.script && (
+      {item.type !== "image" && item.script && (
         <>
           <p className="text-xs leading-relaxed mb-4 line-clamp-3" style={mutedStyle}>
             {(item.full_narration || item.script).slice(0, 220)}…
@@ -387,12 +499,12 @@ export default function Media() {
             </div>
             <div>
               <h1 className="text-3xl font-black text-white tracking-tight">AI Studio</h1>
-              <p className="text-sm text-white/60">Turn your notes into audio & video lessons</p>
+              <p className="text-sm text-white/60">Turn your notes into audio, video, & image lessons</p>
             </div>
           </div>
 
           <p className="text-white/70 text-sm leading-relaxed mb-6 max-w-md">
-            Paste your study material, pick a deck, or upload a file — and Cognita generates a polished lesson you can listen to or watch anywhere.
+            Paste your study material, pick a deck, or upload a file — and Cognita generates polished media you can study anywhere.
           </p>
 
           <div className="flex flex-wrap gap-3">
@@ -408,14 +520,15 @@ export default function Media() {
             >
               <Clapperboard className="w-4 h-4" /> Create Video
             </button>
+            <button
+              onClick={() => { setShowForm(true); setType("image"); }}
+              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all"
+            >
+              <ImageIcon className="w-4 h-4" /> Generate Image
+            </button>
             <Link to="/Chat">
               <button className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2.5 rounded-xl font-semibold text-sm transition-all border border-white/20">
                 <MessageSquare className="w-4 h-4" /> AI Chat
-              </button>
-            </Link>
-            <Link to="/AITutors">
-              <button className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2.5 rounded-xl font-semibold text-sm transition-all border border-white/20">
-                <GraduationCap className="w-4 h-4" /> AI Tutors
               </button>
             </Link>
             <button
@@ -461,6 +574,7 @@ export default function Media() {
               {[
                 { id: "audio", label: "Audio Lesson", icon: AudioLines, color: "bg-violet-600" },
                 { id: "video", label: "Video Lesson", icon: Clapperboard, color: "bg-blue-600" },
+                { id: "image", label: "AI Image", icon: ImageIcon, color: "bg-emerald-600" },
               ].map(opt => (
                 <button key={opt.id} onClick={() => setType(opt.id)}
                   className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all ${type === opt.id ? `${opt.color} text-white` : "opacity-50 hover:opacity-80"}`}>
@@ -475,7 +589,7 @@ export default function Media() {
                 <Sparkles className="w-3 h-3" /> Try these prompts
               </p>
               <div className="flex flex-wrap gap-2">
-                {(type === "audio" ? PROMPTS_AUDIO : PROMPTS_VIDEO).map((p, i) => (
+                {(type === "audio" ? PROMPTS_AUDIO : type === "image" ? PROMPTS_IMAGE : PROMPTS_VIDEO).map((p, i) => (
                   <button key={i} onClick={() => applyPrompt(p)}
                     className="text-xs px-3 py-1.5 rounded-xl transition-all hover:opacity-90 font-medium"
                     style={{ background: "var(--app-bg)", border: "1px solid var(--app-border)" }}>
@@ -489,7 +603,7 @@ export default function Media() {
             <input
               value={title}
               onChange={e => setTitle(e.target.value)}
-              placeholder="Lesson title (e.g. 'The Water Cycle')"
+              placeholder={type === "image" ? "Image Title (e.g. 'Human Heart Diagram')" : "Lesson title (e.g. 'The Water Cycle')"}
               className="w-full px-4 py-3 rounded-2xl text-sm outline-none mb-3"
               style={{ background: "var(--app-bg)", border: "1px solid var(--app-border)", color: "var(--app-text)" }}
             />
@@ -516,6 +630,8 @@ export default function Media() {
                 onChange={e => setSourceText(e.target.value)}
                 placeholder={type === "audio"
                   ? "Paste your notes, a chapter summary, or describe what topic you want explained…"
+                  : type === "image"
+                  ? "Describe the diagram or image you want to generate in detail..."
                   : "Paste your study material, key concepts, or describe the video topic…"}
                 rows={6}
                 className="w-full px-4 py-3 rounded-2xl text-sm outline-none resize-none mb-3"
@@ -585,18 +701,13 @@ export default function Media() {
                 {isPublic ? <Globe className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
                 {isPublic ? "Public" : "Private"}
               </button>
-              <p className="text-xs" style={mutedStyle}>{isPublic ? "Others can discover & play this lesson" : "Only visible to you"}</p>
+              <p className="text-xs" style={mutedStyle}>{isPublic ? "Others can discover & view this item" : "Only visible to you"}</p>
             </div>
 
             {/* Status / limit notices */}
             {videoGenStatus && (
               <div className="flex items-center gap-2 px-4 py-3 rounded-xl mb-3 bg-blue-500/10 text-blue-400 text-sm font-medium">
                 <Loader2 className="w-4 h-4 animate-spin shrink-0" /> {videoGenStatus}
-              </div>
-            )}
-            {type === "video" && (
-              <div className="px-4 py-3 rounded-xl mb-3 text-xs" style={{ background: "var(--app-bg)", border: "1px solid var(--app-border)", color: "var(--app-text-muted)" }}>
-                🎬 <strong>Video lessons</strong>: AI script → Imagen 3 scene images → JSON2Video MP4 with voice narration. Takes ~2–3 min.
               </div>
             )}
             {limitError && <p className="text-red-400 text-sm font-medium mb-3">{limitError}</p>}
@@ -610,8 +721,8 @@ export default function Media() {
                 className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 disabled:opacity-40 text-white py-3 rounded-2xl text-sm font-bold transition-all"
               >
                 {creating
-                  ? <><Loader2 className="w-4 h-4 animate-spin" /> {type === "video" ? "Rendering…" : "Generating…"}</>
-                  : <><Sparkles className="w-4 h-4" /> Generate {type === "audio" ? "Audio" : "Video"}</>
+                  ? <><Loader2 className="w-4 h-4 animate-spin" /> {type === "image" ? "Generating..." : type === "video" ? "Rendering…" : "Generating…"}</>
+                  : <><Sparkles className="w-4 h-4" /> Generate {type === "audio" ? "Audio" : type === "image" ? "Image" : "Video"}</>
                 }
               </button>
             </div>
@@ -621,7 +732,7 @@ export default function Media() {
         {/* ── Tabs ── */}
         <div className="flex gap-2 mb-6">
           {[
-            { id: "mine", label: "My Lessons", icon: Lock },
+            { id: "mine", label: "My Studio", icon: Lock },
             { id: "community", label: "Community", icon: Globe },
           ].map(t2 => (
             <button key={t2.id} onClick={() => setTab(t2.id)}
@@ -639,7 +750,7 @@ export default function Media() {
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Search community lessons…"
+              placeholder="Search community lessons & study material…"
               className="w-full pl-10 pr-4 py-3 rounded-2xl text-sm outline-none"
               style={{ background: "var(--app-surface)", border: "1px solid var(--app-border)", color: "var(--app-text)" }}
             />
@@ -657,7 +768,7 @@ export default function Media() {
                   <Sparkles className="w-8 h-8 text-violet-400" />
                 </div>
                 <p className="font-black text-lg mb-2">Your studio is empty</p>
-                <p className="text-sm mb-6" style={mutedStyle}>Create your first audio or video lesson from any study material.</p>
+                <p className="text-sm mb-6" style={mutedStyle}>Create your first audio, video, or image lesson from any study material.</p>
                 <div className="flex gap-3 justify-center flex-wrap">
                   <button onClick={() => { setShowForm(true); setType("audio"); }}
                     className="flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all">
@@ -666,6 +777,10 @@ export default function Media() {
                   <button onClick={() => { setShowForm(true); setType("video"); }}
                     className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all">
                     <Clapperboard className="w-4 h-4" /> Create Video
+                  </button>
+                  <button onClick={() => { setShowForm(true); setType("image"); }}
+                    className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all">
+                    <ImageIcon className="w-4 h-4" /> Generate Image
                   </button>
                 </div>
               </>
