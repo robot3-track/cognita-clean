@@ -255,20 +255,19 @@ function UserSyncButton({ cardStyle, mutedStyle }) {
     setIsSyncing(true);
     setSyncStatus('Starting deep synchronization scan...');
     try {
-      setSyncStatus('Scanning Study Sessions...');
+      setSyncStatus('Scanning master user directory...');
+      const existingProfiles = await db.entities.User.list("-created_date", 20000).catch(() => []);
+
+      setSyncStatus('Scanning Study Sessions & Login Events...');
       const sessions = await db.entities.StudySession.list("-created_date", 30000).catch(() => []);
-      
-      setSyncStatus('Scanning User Login Events...');
       const loginEvents = await db.entities.UserLoginEvent.list("-created_date", 30000).catch(() => []);
 
-      // Aggregate all unique active emails found across activity logs
-      const activeEmails = new Set([
+      // Gather ALL unique emails: from User table AND activity logs
+      const allEmails = new Set([
+        ...existingProfiles.map(u => u.email),
         ...sessions.map(s => s.user_email || s.email),
         ...loginEvents.map(e => e.user_email || e.email || e.userEmail)
       ].filter(Boolean));
-
-      setSyncStatus('Fetching master user directory...');
-      const existingProfiles = await db.entities.User.list(null, 20000).catch(() => []);
 
       // Create a map grouping existing profiles by normalized email
       const profilesByEmail = new Map();
@@ -284,69 +283,70 @@ function UserSyncButton({ cardStyle, mutedStyle }) {
       let healedCount = 0;
       let mergedCount = 0;
 
-      for (const rawEmail of activeEmails) {
+      for (const rawEmail of allEmails) {
         const cleanEmail = String(rawEmail).toLowerCase().trim();
         const baseName = cleanEmail.split('@')[0];
         const formattedName = baseName.charAt(0).toUpperCase() + baseName.slice(1);
 
         const matchedSession = sessions.find(s => String(s.user_email || s.email).toLowerCase().trim() === cleanEmail);
         const matchedEvent = loginEvents.find(e => String(e.user_email || e.email || e.userEmail).toLowerCase().trim() === cleanEmail);
-        const potentialUserId = matchedSession?.userId || matchedSession?.user_id || matchedEvent?.userId || matchedEvent?.user_id || null;
-
         const matchingProfiles = profilesByEmail.get(cleanEmail) || [];
 
         if (matchingProfiles.length > 0) {
-          // --- PROFILE ALREADY EXISTS: MERGE DATA ---
-          setSyncStatus(`Merging data for existing user: ${cleanEmail}...`);
+          // --- PROFILE EXISTS: UPDATE & MERGE ---
           const primaryProfile = matchingProfiles[0];
-
-          // Check for missing fields that need filling or merging
           const mergePayload = {};
+
           if (!primaryProfile.full_name || primaryProfile.full_name === cleanEmail) {
-            mergePayload.full_name = formattedName;
+            mergePayload.full_name = primaryProfile.display_name || formattedName;
           }
           if (!primaryProfile.created_date && (matchedSession?.created_date || matchedEvent?.created_date)) {
             mergePayload.created_date = matchedSession?.created_date || matchedEvent?.created_date;
           }
-          mergePayload.updated_date = new Date().toISOString();
 
-          // Merge updates into existing user document
-          await db.entities.User.update(primaryProfile.id, {
-            ...primaryProfile,
-            ...mergePayload,
-          });
-          mergedCount++;
+          // Only perform DB update if missing fields need filling
+          if (Object.keys(mergePayload).length > 0) {
+            setSyncStatus(`Merging data for user: ${cleanEmail}...`);
+            await db.entities.User.update(primaryProfile.id, {
+              ...mergePayload,
+              updated_date: new Date().toISOString()
+            }).catch(err => console.error(`Failed updating ${cleanEmail}:`, err));
+            mergedCount++;
+          }
 
-          // Clean up extraneous duplicate profile records for the same email if present
+          // Clean up duplicate accounts with identical email
           if (matchingProfiles.length > 1) {
             for (let i = 1; i < matchingProfiles.length; i++) {
               await db.entities.User.delete(matchingProfiles[i].id).catch(() => {});
             }
           }
         } else {
-          // --- NO PROFILE EXISTS: CREATE NEW RECOVERED PROFILE ---
-          setSyncStatus(`Healing missing profile: ${cleanEmail}...`);
+          // --- MISSING PROFILE IN USER TABLE: RECOVER FROM LOGS ---
+          setSyncStatus(`Creating missing profile: ${cleanEmail}...`);
 
           const newProfilePayload = {
             email: cleanEmail,
             full_name: formattedName,
+            display_name: formattedName,
             role: 'user',
             bio: '',
+            is_verified: true,
             created_date: matchedSession?.created_date || matchedEvent?.created_date || new Date().toISOString(),
             updated_date: new Date().toISOString()
           };
 
-          if (potentialUserId) {
-            newProfilePayload.id = potentialUserId;
+          try {
+            // Note: Do not manually supply `id` to avoid DB rejection
+            const createdUser = await db.entities.User.create(newProfilePayload);
+            profilesByEmail.set(cleanEmail, [createdUser]);
+            healedCount++;
+          } catch (err) {
+            console.error(`Failed healing profile for ${cleanEmail}:`, err);
           }
-
-          const createdUser = await db.entities.User.create(newProfilePayload);
-          profilesByEmail.set(cleanEmail, [createdUser]);
-          healedCount++;
         }
       }
 
-      setSyncStatus(`✅ Complete! Recovered ${healedCount} missing profiles and merged ${mergedCount} existing profiles.`);
+      setSyncStatus(`✅ Complete! Processed ${allEmails.size} total accounts (${healedCount} recovered, ${mergedCount} updated).`);
     } catch (err) {
       console.error(err);
       setSyncStatus(`❌ Sync failed: ${err.message || err}`);
@@ -359,7 +359,7 @@ function UserSyncButton({ cardStyle, mutedStyle }) {
     <div className="rounded-2xl p-4 mb-4 border border-dashed text-xs" style={{ ...cardStyle, borderColor: 'var(--app-border)' }}>
       <h3 className="text-sm font-bold text-indigo-400 mb-1">🔄 User Profile Synchronization</h3>
       <p className="text-xs mb-3" style={mutedStyle}>
-        Scans background operational logs (Sessions, Logins) to find active users, merging existing matching profiles or recovering missing ones without creating duplicates.
+        Scans all accounts and operational logs (Sessions, Logins) to update profiles, recover missing accounts, and resolve duplicates.
       </p>
       <button
         onClick={runUserSync}
@@ -835,36 +835,57 @@ function AIUsagePanel({ cardStyle, mutedStyle }) {
 
   if (loading) return <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-violet-400" /></div>;
 
-  const lynxTotal = logs.filter(l => l.provider === "lynx").length;
-  const geminiTotal = logs.filter(l => l.provider === "gemini").length;
-  const cohereTotal = logs.filter(l => l.provider === "cohere").length;
-  const claudeTotal = logs.filter(l => l.provider === "claude").length;
-  const firebaseTotal = logs.filter(l => l.provider === "firebase").length;
-  const openrouterTotal = logs.filter(l => l.provider === "openrouter").length;
-  const nvidiaTotal = logs.filter(l => l.provider === "nvidia").length;
-  const groqTotal = logs.filter(l => l.provider === "groq").length;
+  // Helper for matching provider names reliably
+  const isProvider = (p, name) => {
+    const norm = String(p || "").toLowerCase();
+    if (name === "mistral") return norm.includes("mistral");
+    return norm === name;
+  };
+
+  const lynxTotal = logs.filter(l => isProvider(l.provider, "lynx")).length;
+  const geminiTotal = logs.filter(l => isProvider(l.provider, "gemini")).length;
+  const cohereTotal = logs.filter(l => isProvider(l.provider, "cohere")).length;
+  const claudeTotal = logs.filter(l => isProvider(l.provider, "claude")).length;
+  const firebaseTotal = logs.filter(l => isProvider(l.provider, "firebase")).length;
+  const openrouterTotal = logs.filter(l => isProvider(l.provider, "openrouter")).length;
+  const nvidiaTotal = logs.filter(l => isProvider(l.provider, "nvidia")).length;
+  const groqTotal = logs.filter(l => isProvider(l.provider, "groq")).length;
+  const mistralTotal = logs.filter(l => isProvider(l.provider, "mistral")).length;
   const total = logs.length;
 
-  const lynxSuccess = logs.filter(l => l.provider === "lynx" && l.success !== false).length;
-  const geminiSuccess = logs.filter(l => l.provider === "gemini" && l.success !== false).length;
-  const cohereSuccess = logs.filter(l => l.provider === "cohere" && l.success !== false).length;
-  const firebaseSuccess = logs.filter(l => l.provider === "firebase" && l.success !== false).length;
-  const claudeSuccess = logs.filter(l => l.provider === "claude" && l.success !== false).length;
-  const openrouterSuccess = logs.filter(l => l.provider === "openrouter" && l.success !== false).length;
-  const nvidiaSuccess = logs.filter(l => l.provider === "nvidia" && l.success !== false).length;
-  const groqSuccess = logs.filter(l => l.provider === "groq" && l.success !== false).length;
+  const lynxSuccess = logs.filter(l => isProvider(l.provider, "lynx") && l.success !== false).length;
+  const geminiSuccess = logs.filter(l => isProvider(l.provider, "gemini") && l.success !== false).length;
+  const cohereSuccess = logs.filter(l => isProvider(l.provider, "cohere") && l.success !== false).length;
+  const firebaseSuccess = logs.filter(l => isProvider(l.provider, "firebase") && l.success !== false).length;
+  const claudeSuccess = logs.filter(l => isProvider(l.provider, "claude") && l.success !== false).length;
+  const openrouterSuccess = logs.filter(l => isProvider(l.provider, "openrouter") && l.success !== false).length;
+  const nvidiaSuccess = logs.filter(l => isProvider(l.provider, "nvidia") && l.success !== false).length;
+  const groqSuccess = logs.filter(l => isProvider(l.provider, "groq") && l.success !== false).length;
+  const mistralSuccess = logs.filter(l => isProvider(l.provider, "mistral") && l.success !== false).length;
 
   // Feature breakdown mapping keys
   const featureCounts = {};
   logs.forEach(l => {
     const k = l.feature || "unknown";
-    if (!featureCounts[k]) featureCounts[k] = { lynx: 0, gemini: 0, cohere: 0, claude: 0, firebase: 0, openrouter: 0, nvidia: 0, groq: 0 };
-    featureCounts[k][l.provider] = (featureCounts[k][l.provider] || 0) + 1;
+    if (!featureCounts[k]) featureCounts[k] = { lynx: 0, gemini: 0, cohere: 0, claude: 0, firebase: 0, openrouter: 0, nvidia: 0, groq: 0, mistral: 0 };
+    
+    let key = "firebase";
+    const raw = String(l.provider || "").toLowerCase();
+    if (raw.includes("lynx")) key = "lynx";
+    else if (raw.includes("gemini")) key = "gemini";
+    else if (raw.includes("cohere")) key = "cohere";
+    else if (raw.includes("claude")) key = "claude";
+    else if (raw.includes("openrouter")) key = "openrouter";
+    else if (raw.includes("nvidia")) key = "nvidia";
+    else if (raw.includes("groq")) key = "groq";
+    else if (raw.includes("mistral")) key = "mistral";
+
+    featureCounts[k][key] = (featureCounts[k][key] || 0) + 1;
   });
   
   const features = Object.entries(featureCounts).sort((a, b) => 
-    (b[1].lynx + b[1].gemini + b[1].cohere + b[1].claude + (b[1].firebase || 0) + (b[1].openrouter || 0) + (b[1].nvidia || 0) + (b[1].groq || 0)) - 
-    (a[1].lynx + a[1].gemini + a[1].cohere + a[1].claude + (a[1].firebase || 0) + (a[1].openrouter || 0) + (a[1].nvidia || 0) + (a[1].groq || 0))
+    (b[1].lynx + b[1].gemini + b[1].cohere + b[1].claude + (b[1].firebase || 0) + (b[1].openrouter || 0) + (b[1].nvidia || 0) + (b[1].groq || 0) + (b[1].mistral || 0)) - 
+    (a[1].lynx + a[1].gemini + a[1].cohere + a[1].claude + (a[1].firebase || 0) + (a[1].openrouter || 0) + (a[1].nvidia || 0) + (a[1].groq || 0) + (a[1].mistral || 0))
   );
 
   // Recent 50 logs
@@ -873,7 +894,7 @@ function AIUsagePanel({ cardStyle, mutedStyle }) {
   return (
     <div className="space-y-5">
       {/* Totals Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
         {[
           { label: "Total AI Calls", value: total, color: "text-white", success: null },
           { label: "⚡ Lynx API", value: lynxTotal, color: "text-amber-400", success: lynxSuccess },
@@ -884,6 +905,7 @@ function AIUsagePanel({ cardStyle, mutedStyle }) {
           { label: "🧠 OpenRouter", value: openrouterTotal, color: "text-pink-400", success: openrouterSuccess },
           { label: "🟩 NVIDIA API", value: nvidiaTotal, color: "text-green-500", success: nvidiaSuccess },
           { label: "🚀 Groq API", value: groqTotal, color: "text-red-400", success: groqSuccess },
+          { label: "🦊 Mistral API", value: mistralTotal, color: "text-amber-500", success: mistralSuccess },
         ].map(stat => (
           <div key={stat.label} className="rounded-2xl p-5 text-center" style={cardStyle}>
             <div className={`text-3xl font-black mb-1 ${stat.color}`}>{stat.value}</div>
@@ -908,6 +930,7 @@ function AIUsagePanel({ cardStyle, mutedStyle }) {
             <div className="bg-pink-500 transition-all" style={{ width: `${(openrouterTotal / total) * 100}%` }} />
             <div className="bg-green-600 transition-all" style={{ width: `${(nvidiaTotal / total) * 100}%` }} />
             <div className="bg-red-500 transition-all" style={{ width: `${(groqTotal / total) * 100}%` }} />
+            <div className="bg-amber-600 transition-all" style={{ width: `${(mistralTotal / total) * 100}%` }} />
           </div>
           <div className="flex gap-4 text-xs flex-wrap">
             <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-amber-500 inline-block" /><span style={mutedStyle}>Lynx {Math.round((lynxTotal / total) * 100)}%</span></div>
@@ -918,6 +941,7 @@ function AIUsagePanel({ cardStyle, mutedStyle }) {
             <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-pink-500 inline-block" /><span style={mutedStyle}>OpenRouter {Math.round((openrouterTotal / total) * 100)}%</span></div>
             <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-green-600 inline-block" /><span style={mutedStyle}>Nvidia {Math.round((nvidiaTotal / total) * 100)}%</span></div>
             <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-red-500 inline-block" /><span style={mutedStyle}>Groq {Math.round((groqTotal / total) * 100)}%</span></div>
+            <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-amber-600 inline-block" /><span style={mutedStyle}>Mistral {Math.round((mistralTotal / total) * 100)}%</span></div>
           </div>
         </div>
       )}
@@ -928,7 +952,7 @@ function AIUsagePanel({ cardStyle, mutedStyle }) {
           <h3 className="font-bold text-sm mb-3">Usage by Feature</h3>
           <div className="space-y-2">
             {features.map(([feature, counts]) => {
-              const ft = (counts.lynx || 0) + (counts.gemini || 0) + (counts.cohere || 0) + (counts.claude || 0) + (counts.firebase || 0) + (counts.openrouter || 0) + (counts.nvidia || 0) + (counts.groq || 0);
+              const ft = (counts.lynx || 0) + (counts.gemini || 0) + (counts.cohere || 0) + (counts.claude || 0) + (counts.firebase || 0) + (counts.openrouter || 0) + (counts.nvidia || 0) + (counts.groq || 0) + (counts.mistral || 0);
               return (
                 <div key={feature} className="flex items-center gap-3">
                   <span className="text-xs font-mono w-36 truncate" style={mutedStyle}>{feature}</span>
@@ -941,9 +965,10 @@ function AIUsagePanel({ cardStyle, mutedStyle }) {
                     {counts.openrouter > 0 && <div className="bg-pink-500/80" style={{ width: `${(counts.openrouter / ft) * 100}%` }} />}
                     {counts.nvidia > 0 && <div className="bg-green-600/80" style={{ width: `${(counts.nvidia / ft) * 100}%` }} />}
                     {counts.groq > 0 && <div className="bg-red-500/80" style={{ width: `${(counts.groq / ft) * 100}%` }} />}
+                    {counts.mistral > 0 && <div className="bg-amber-600/80" style={{ width: `${(counts.mistral / ft) * 100}%` }} />}
                   </div>
                   <span className="text-xs font-black w-8 text-right">{ft}</span>
-                  <span className="text-[10px] opacity-60 w-72 text-right">⚡{counts.lynx || 0} 🔵{counts.gemini || 0} 🟢{counts.cohere || 0} 🟠{counts.claude || 0} 🔥{counts.firebase || 0} 🧠{counts.openrouter || 0} 🟩{counts.nvidia || 0} 🚀{counts.groq || 0}</span>
+                  <span className="text-[10px] opacity-60 w-80 text-right">⚡{counts.lynx || 0} 🔵{counts.gemini || 0} 🟢{counts.cohere || 0} 🟠{counts.claude || 0} 🔥{counts.firebase || 0} 🧠{counts.openrouter || 0} 🟩{counts.nvidia || 0} 🚀{counts.groq || 0} 🦊{counts.mistral || 0}</span>
                 </div>
               );
             })}
@@ -965,39 +990,53 @@ function AIUsagePanel({ cardStyle, mutedStyle }) {
             </tr>
           </thead>
           <tbody>
-            {recent.map(log => (
-              <tr key={log.id} style={{ borderBottom: "1px solid var(--app-border)" }}>
-                <td className="px-4 py-2" style={mutedStyle}>{new Date(log.created_date).toLocaleTimeString()}</td>
-                <td className="px-4 py-2 truncate max-w-[120px]" style={mutedStyle}>{log.user_email?.split("@")[0] || "—"}</td>
-                <td className="px-4 py-2 font-mono">{log.feature || "—"}</td>
-                <td className="px-4 py-2">
-                  <span className={`px-2 py-0.5 rounded-lg font-bold ${
-                    log.provider === "lynx" ? "bg-amber-500/15 text-amber-400" : 
-                    log.provider === "gemini" ? "bg-blue-500/15 text-blue-400" : 
-                    log.provider === "cohere" ? "bg-teal-500/15 text-teal-400" : 
-                    log.provider === "claude" ? "bg-orange-500/15 text-orange-400" : 
-                    log.provider === "openrouter" ? "bg-pink-500/15 text-pink-400" : 
-                    log.provider === "nvidia" ? "bg-green-500/15 text-green-400" : 
-                    log.provider === "groq" ? "bg-red-500/15 text-red-400" :
-                    "bg-violet-500/15 text-violet-400"
-                  }`}>
-                    {log.provider === "lynx" ? "⚡ Lynx" : 
-                     log.provider === "gemini" ? "🔵 Gemini" : 
-                     log.provider === "cohere" ? "🟢 Cohere" : 
-                     log.provider === "claude" ? "🟠 Claude" : 
-                     log.provider === "openrouter" ? "🧠 OpenRouter" : 
-                     log.provider === "nvidia" ? "🟩 Nvidia" : 
-                     log.provider === "groq" ? "🚀 Groq" :
-                     "🔥 Firebase"}
-                  </span>
-                </td>
-                <td className="px-4 py-2">
-                  <span className={log.success === false ? "text-red-400" : "text-emerald-400"}>
-                    {log.success === false ? "✗ fail" : "✓ ok"}
-                  </span>
-                </td>
-              </tr>
-            ))}
+            {recent.map(log => {
+              const p = String(log.provider || "").toLowerCase();
+              const isMistral = p.includes("mistral");
+              const isLynx = p === "lynx";
+              const isGemini = p === "gemini";
+              const isCohere = p === "cohere";
+              const isClaude = p === "claude";
+              const isOpenRouter = p === "openrouter";
+              const isNvidia = p === "nvidia";
+              const isGroq = p === "groq";
+
+              return (
+                <tr key={log.id} style={{ borderBottom: "1px solid var(--app-border)" }}>
+                  <td className="px-4 py-2" style={mutedStyle}>{new Date(log.created_date).toLocaleTimeString()}</td>
+                  <td className="px-4 py-2 truncate max-w-[120px]" style={mutedStyle}>{log.user_email?.split("@")[0] || "—"}</td>
+                  <td className="px-4 py-2 font-mono">{log.feature || "—"}</td>
+                  <td className="px-4 py-2">
+                    <span className={`px-2 py-0.5 rounded-lg font-bold ${
+                      isLynx ? "bg-amber-500/15 text-amber-400" : 
+                      isGemini ? "bg-blue-500/15 text-blue-400" : 
+                      isCohere ? "bg-teal-500/15 text-teal-400" : 
+                      isClaude ? "bg-orange-500/15 text-orange-400" : 
+                      isOpenRouter ? "bg-pink-500/15 text-pink-400" : 
+                      isNvidia ? "bg-green-500/15 text-green-400" : 
+                      isGroq ? "bg-red-500/15 text-red-400" :
+                      isMistral ? "bg-amber-600/15 text-amber-500" :
+                      "bg-violet-500/15 text-violet-400"
+                    }`}>
+                      {isLynx ? "⚡ Lynx" : 
+                       isGemini ? "🔵 Gemini" : 
+                       isCohere ? "🟢 Cohere" : 
+                       isClaude ? "🟠 Claude" : 
+                       isOpenRouter ? "🧠 OpenRouter" : 
+                       isNvidia ? "🟩 Nvidia" : 
+                       isGroq ? "🚀 Groq" :
+                       isMistral ? "🦊 Mistral" :
+                       "🔥 Firebase"}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2">
+                    <span className={log.success === false ? "text-red-400" : "text-emerald-400"}>
+                      {log.success === false ? "✗ fail" : "✓ ok"}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
