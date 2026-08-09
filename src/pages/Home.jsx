@@ -330,47 +330,77 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="min-h-screen w-full flex flex-col items-center justify-center relative overflow-hidden font-sans antialiased transition-colors duration-200" style={bgStyle}>
-        <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
-        
-        <div className="w-full max-w-[390px] space-y-6 px-4">
-          <div className="flex flex-col items-center text-center space-y-4">
-            <div className="flex items-center gap-3">
-              <img 
-                src="https://media.base44.com/images/public/69b097f35579053a78af47a3/43f8b728d_9e9c4097b_logo1.png" 
-                alt="Cognita" 
-                className="w-10 h-10 object-contain rounded-xl border p-1 bg-[var(--app-surface)] shadow-md" 
+      <div 
+        className="min-h-screen w-full flex flex-col items-center justify-center relative overflow-hidden font-sans antialiased transition-colors duration-200" 
+        style={bgStyle}
+      >
+        {/* Soft Background Radial Glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-violet-500/5 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="w-full max-w-[380px] space-y-6 px-4 z-10">
+          
+          {/* Main Card */}
+          <div 
+            className="rounded-3xl border bg-[var(--app-surface)] backdrop-blur-xl p-6 sm:p-8 shadow-xl flex flex-col items-center text-center space-y-6" 
+            style={{ borderColor: "var(--app-border)" }}
+          >
+            {/* Logo Brand Pulse Loader */}
+            <div className="relative w-20 h-20 flex items-center justify-center my-1">
+              {/* Smooth Rotating Outer Ring */}
+              <div className="absolute inset-0 rounded-2xl border-2 border-violet-500/20 border-t-violet-500 animate-spin" />
+              
+              {/* Subtle Pulse Aura */}
+              <div className="absolute inset-2 bg-violet-500/10 rounded-xl animate-pulse" />
+
+              {/* Logo Badge */}
+              <div 
+                className="relative z-10 w-12 h-12 rounded-xl bg-[var(--app-surface)] border p-2 flex items-center justify-center shadow-sm"
                 style={{ borderColor: "var(--app-border)" }}
-              />
-              <div className="flex items-center gap-2">
-                <span className="font-black text-xl tracking-tight text-[var(--app-text)]">Cognita</span>
-                <span className="text-[9px] font-bold text-violet-500 dark:text-violet-400 bg-violet-500/10 border border-violet-500/20 rounded px-1.5 py-0.5 tracking-wide">Free</span>
+              >
+                <img 
+                  src="https://media.base44.com/images/public/69b097f35579053a78af47a3/43f8b728d_9e9c4097b_logo1.png" 
+                  alt="Cognita" 
+                  className="w-full h-full object-contain" 
+                />
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <h2 className="text-xl font-black tracking-tight text-[var(--app-text)]">Loading your workspace</h2>
-              <p className="text-xs font-medium" style={mutedStyle}>Setting up dashboard assets and user profiles...</p>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border bg-[var(--app-surface)] backdrop-blur-xl p-6 shadow-2xl flex flex-col items-center justify-center text-center space-y-5" style={{ borderColor: "var(--app-border)" }}>
-            <div className="relative w-10 h-10 flex items-center justify-center">
-              <Loader2 className="w-7 h-7 text-violet-500 animate-spin absolute" />
-              <div className="w-2 h-2 rounded-full bg-violet-400" />
+            {/* Simple Status Message */}
+            <div className="space-y-1">
+              <h2 className="text-lg font-bold tracking-tight text-[var(--app-text)]">
+                Loading your dashboard
+              </h2>
+              <p className="text-xs font-medium" style={mutedStyle}>
+                Getting things ready for you...
+              </p>
             </div>
 
-            <div className="w-full pt-4 border-t text-left" style={{ borderColor: "var(--app-border)" }}>
-              <span className="text-[10px] font-bold text-violet-500 dark:text-violet-400 uppercase tracking-wider block mb-1">Study Tip</span>
-              <p className="text-xs leading-relaxed font-medium transition-opacity duration-300 text-[var(--app-text)]">
+            {/* Minimal Progress Bar */}
+            <div className="w-full px-4">
+              <div className="w-full h-1 bg-white/10 dark:bg-white/5 rounded-full overflow-hidden">
+                <div className="h-full bg-violet-500 rounded-full animate-pulse w-3/4 transition-all duration-500" />
+              </div>
+            </div>
+
+            {/* Study Tip Card */}
+            <div 
+              className="w-full pt-4 border-t text-left space-y-1.5" 
+              style={{ borderColor: "var(--app-border)" }}
+            >
+              <span className="text-[10px] font-bold text-violet-500 dark:text-violet-400 uppercase tracking-wider block">
+                Quick Tip
+              </span>
+              <p className="text-xs leading-relaxed font-medium transition-opacity duration-300 text-[var(--app-text)] min-h-[36px]">
                 {ROTATING_TIPS[tipIndex]}
               </p>
             </div>
           </div>
 
-          <div className="text-center text-[11px] font-medium tracking-wide" style={mutedStyle}>
+          {/* Footer */}
+          <div className="text-center text-[11px] font-medium tracking-wide opacity-70" style={mutedStyle}>
             Made by Yohan Chang • Marina High School • 2026
           </div>
+
         </div>
       </div>
     );
