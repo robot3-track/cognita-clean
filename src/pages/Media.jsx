@@ -27,7 +27,7 @@ const ENCODED_RESTRICTED_WORDS = [
   "Z29yZQ==",      
   "a2lsbA==",      
   "dmlvbGVuY2U=",   
-  "c3VpY2lkZQ==",  
+  "c3VpY2lidZQ==",  
   "c2VsZi1oYXJt",   
   "d2VhcG9u",       
   "ZHJ1Zw==",       
@@ -71,6 +71,28 @@ async function logFlaggedPrompt(prompt, matchedKeywords) {
   } catch (err) {
     console.warn("Failed to log flagged prompt:", err);
   }
+}
+
+// ─── Image With Loading Spinner Component ──────────────────────────────────
+function ImageWithLoader({ src, alt }) {
+  const [loaded, setLoaded] = useState(false);
+
+  return (
+    <div className="relative rounded-2xl overflow-hidden mb-4 border border-white/10 bg-black/40 flex justify-center items-center min-h-[220px]">
+      {!loaded && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/20 backdrop-blur-sm z-10">
+          <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
+          <p className="text-xs text-emerald-400/80 font-medium">Loading image...</p>
+        </div>
+      )}
+      <img
+        src={src}
+        alt={alt}
+        onLoad={() => setLoaded(true)}
+        className={`max-h-96 w-full object-contain transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
+      />
+    </div>
+  );
 }
 
 // ─── How It Works Steps ──────────────────────────────────────────────────────
@@ -174,11 +196,12 @@ export default function Media() {
         db.entities.Deck.list("-updated_date", 100).catch(() => []),
       ]);
 
-      const mine = allMedia.filter(m => {
-        if (!email) return true;
-        return m.created_by === email || m.created_by_id === email || !m.created_by;
-      });
+      // Strictly filter to current user's items for "My Studio"
+      const mine = email
+        ? allMedia.filter(m => m.created_by === email || m.created_by_id === email)
+        : [];
 
+      // Public items for community tab
       const community = allMedia.filter(m => m.is_public);
       setMediaList(mine);
       setPublicMedia(community);
@@ -238,6 +261,16 @@ export default function Media() {
     incrementAiUsage(userEmail);
     setCreating(true);
 
+    // Get current email if not cached yet
+    let currentEmail = userEmail;
+    if (!currentEmail) {
+      try {
+        const me = await db.auth.me().catch(() => null);
+        currentEmail = me?.email || "";
+        setUserEmail(currentEmail);
+      } catch {}
+    }
+
     try {
       if (type === "audio") {
         const script = await callAIForMedia({
@@ -251,8 +284,8 @@ export default function Media() {
           script,
           source_text: sourceText.trim(),
           is_public: isPublic,
-          created_by: userEmail || undefined,
-          created_by_id: userEmail || undefined,
+          created_by: currentEmail,
+          created_by_id: currentEmail,
         });
         setMediaList(prev => [media, ...prev]);
         if (isPublic) setPublicMedia(prev => [media, ...prev]);
@@ -275,8 +308,8 @@ export default function Media() {
           source_text: sourceText.trim(),
           script: `Prompt: ${sourceText.trim()}`,
           is_public: isPublic,
-          created_by: userEmail || undefined,
-          created_by_id: userEmail || undefined,
+          created_by: currentEmail,
+          created_by_id: currentEmail,
         });
         setMediaList(prev => [media, ...prev]);
         if (isPublic) setPublicMedia(prev => [media, ...prev]);
@@ -358,8 +391,8 @@ export default function Media() {
           full_narration: scriptData?.narration || "",
           file_url: finalFileUrl || undefined,
           is_public: isPublic,
-          created_by: userEmail || undefined,
-          created_by_id: userEmail || undefined,
+          created_by: currentEmail,
+          created_by_id: currentEmail,
         });
         setMediaList(prev => [media, ...prev]);
         if (isPublic) setPublicMedia(prev => [media, ...prev]);
@@ -494,15 +527,9 @@ export default function Media() {
         </div>
       </div>
 
-      {/* Render Image */}
+      {/* Render Image with Loader */}
       {item.type === "image" && item.file_url && (
-        <div className="rounded-2xl overflow-hidden mb-4 border border-white/10 bg-black/40 flex justify-center">
-          <img
-            src={item.file_url}
-            alt={item.title}
-            className="max-h-96 w-full object-contain"
-          />
-        </div>
+        <ImageWithLoader src={item.file_url} alt={item.title} />
       )}
 
       {/* Video player */}
