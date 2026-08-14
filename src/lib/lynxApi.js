@@ -52,7 +52,7 @@ const NVIDIA_CODE_MODELS = [
 
 export const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY || "";
 export const GROQ_BASE_URL = "https://api.groq.com/openai/v1/chat/completions";
-export const GROQ_MODEL = "llama-3.1-8b-instant"; // Blazing fast & reliable
+export const GROQ_MODEL = "openai/gpt-oss-20b"; // Blazing fast & reliable
 
 // Imagen 3 for scene image generation
 export const IMAGEN_MODEL = "imagen-3.0-generate-002";
@@ -107,6 +107,7 @@ const COGNITA_SYSTEM_PROMPT =
   "- For stimulus-based questions: quote the relevant stimulus text before asking the question.\n\n" +
   "FORMATTING RULES (follow strictly):\n" +
   "- For ALL mathematical expressions, use LaTeX. Inline math: $expression$. Block/display math: $$expression$$.\n" +
+  "- For ALL mathematical expressions, use LaTeX with $$ signs to represent math. DO NOT WRITE LATEX FORM WITHOUT $$ signs clearly indicating it.\n" +
   "- Examples: write $x^2 + y^2 = z^2$ for inline, $$\\int_0^\\infty e^{-x} dx = 1$$ for block equations.\n" +
   "- NEVER write raw math without LaTeX delimiters. NEVER use Unicode math symbols like ², ³, √ instead of LaTeX.\n" +
   "- For code, always use markdown fenced code blocks with the language name, e.g. ```python ... ```.\n" +
@@ -320,8 +321,7 @@ async function tryOpenRouter({ enhancedPrompt, systemPrompt, response_json_schem
 }
 
 async function tryNvidia({ enhancedPrompt, systemPrompt, response_json_schema, feature }) {
-  if (!NVIDIA_API_KEY) return null;
-
+  // Use model selections based on feature
   const isCode = feature === "code_sandbox_ai" || feature === "code_helper";
   const candidateModels = isCode ? NVIDIA_CODE_MODELS : NVIDIA_GENERAL_MODELS;
 
@@ -331,13 +331,11 @@ async function tryNvidia({ enhancedPrompt, systemPrompt, response_json_schema, f
 
   for (const model of candidateModels) {
     try {
-      const res = await fetch(NVIDIA_BASE_URL, {
+      // Call your Vercel serverless endpoint instead of calling NVIDIA directly
+      const res = await fetch("/api/nvidia", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          // Note: Authorization header can also be handled on your serverless function, 
-          // but keeping it here matches your code setup if your API route reads req.headers.authorization
-          "Authorization": `Bearer ${NVIDIA_API_KEY}`,
         },
         body: JSON.stringify({
           model: model,
@@ -396,7 +394,7 @@ async function tryNvidia({ enhancedPrompt, systemPrompt, response_json_schema, f
           }
         }
         
-        // hopefully doesn't reach here- means that Nvidia failed guys
+        // Move to next model if JSON parsing fails
         continue;
       }
 
@@ -501,40 +499,80 @@ async function tryBigPickle({ enhancedPrompt, systemPrompt, response_json_schema
     ? `${enhancedPrompt}\n\nIMPORTANT: Respond with ONLY valid JSON. No markdown fences, no explanation, no text before or after the JSON object.`
     : enhancedPrompt;
 
-  // Proxy through InvokeLLM to avoid CORS
-  const proxyPrompt = `You are a server-side HTTP proxy. Execute this exact HTTP request and return ONLY the raw response content — no explanation, no markdown, no extra text.
-
-REQUEST:
-Method: POST
-URL: ${BIG_PICKLE_BASE_URL}/chat/completions
-Headers:
-  Authorization: Bearer ${BIG_PICKLE_API_KEY}
-  Content-Type: application/json
-Body:
-${JSON.stringify({
-    model: BIG_PICKLE_MODEL,
-    temperature: 0.7,
-    messages: [
-      { role: "system", content: sysPrompt },
-      { role: "user", content: userContent },
-    ],
-  })}
-
-Extract and return ONLY the content field from choices[0].message.content in the JSON response.`;
-
   try {
-    const result = await db.integrations.Core.InvokeLLM({ prompt: proxyPrompt });
-    const content = typeof result === "string" ? result : JSON.stringify(result);
-    if (!content?.trim()) { logAIUsage("bigpickle", feature, enhancedPrompt?.length, false); return null; }
+    const res = await fetch("/api/bigpickle", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${BIG_PICKLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: BIG_PICKLE_MODEL,
+        temperature: 0.7,
+        messages: [
+          { role: "system", content: sysPrompt },
+          { role: "user", content: userContent },
+        ],
+      }),
+    });
+
+    if (!res.ok) {
+      logAIUsage("bigpickle", feature, enhancedPrompt?.length, false);
+      return null;
+    }
+
+    const data = await res.json();
+    const content = data?.choices?.[0]?.message?.content;
+
+    if (!content?.trim()) {
+      logAIUsage("bigpickle", feature, enhancedPrompt?.length, false);
+      return null;
+    }
+
     if (response_json_schema) {
       try {
-        let cleaned = content.replace(/^```(?:json)?\s*/im, "").replace(/\s*```\s*$/im, "").trim();
-        try { logAIUsage("bigpickle", feature, enhancedPrompt?.length, true); return JSON.parse(cleaned); } catch {}
-        const jsonMatch = cleaned.match(/(\{[\s\S]*\})/);
-        if (jsonMatch) { logAIUsage("bigpickle", feature, enhancedPrompt?.length, true); return JSON.parse(jsonMatch[1]); }
-        logAIUsage("bigpickle", feature, enhancedPrompt?.length, false); return null;
-      } catch { logAIUsage("bigpickle", feature, enhancedPrompt?.length, false); return null; }
+        let cleaned = content.trim();
+
+        // Strip leading markdown block (e.g. ```json)
+        if (cleaned.startsWith("```")) {
+          const firstNewLine = cleaned.indexOf("\n");
+          if (firstNewLine !== -1) {
+            cleaned = cleaned.slice(firstNewLine + 1);
+          } else {
+            cleaned = cleaned.replace(/^```[a-zA-Z]*/, "");
+          }
+        }
+
+        // Strip trailing markdown block
+        if (cleaned.endsWith("```")) {
+          cleaned = cleaned.slice(0, -3);
+        }
+
+        cleaned = cleaned.trim();
+
+        // Direct JSON attempt
+        try {
+          logAIUsage("bigpickle", feature, enhancedPrompt?.length, true);
+          return JSON.parse(cleaned);
+        } catch {}
+
+        // Fallback: extract substring between first '{' and last '}'
+        const firstBrace = cleaned.indexOf("{");
+        const lastBrace = cleaned.lastIndexOf("}");
+        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+          const jsonSubstring = cleaned.slice(firstBrace, lastBrace + 1);
+          logAIUsage("bigpickle", feature, enhancedPrompt?.length, true);
+          return JSON.parse(jsonSubstring);
+        }
+
+        logAIUsage("bigpickle", feature, enhancedPrompt?.length, false);
+        return null;
+      } catch {
+        logAIUsage("bigpickle", feature, enhancedPrompt?.length, false);
+        return null;
+      }
     }
+
     logAIUsage("bigpickle", feature, enhancedPrompt?.length, true);
     return content;
   } catch {
@@ -705,6 +743,11 @@ export async function callAI({ prompt, response_json_schema, add_context_from_in
       if (rLynx != null) return rLynx;
     } catch (e) { console.warn("Lynx fallback failed for vision/internet:", e?.message); }
 
+    try {
+      const rGroq = await tryGroq(args);
+      if (rGroq != null) return rGroq;
+    } catch (e) { console.warn("Groq fallback failed:", e?.message); }
+
     // Try Nvidia
     try {
       const rNvidia = await tryNvidia(args);
@@ -716,11 +759,6 @@ export async function callAI({ prompt, response_json_schema, add_context_from_in
       const rOR = await tryOpenRouter(args);
       if (rOR != null) return rOR;
     } catch (e) { console.warn("OpenRouter fallback failed:", e?.message); }
-
-    try {
-      const rGroq = await tryGroq(args);
-      if (rGroq != null) return rGroq;
-    } catch (e) { console.warn("Groq fallback failed:", e?.message); }
 
     // 3. Try Cohere
     try {
@@ -771,14 +809,14 @@ export async function callAI({ prompt, response_json_schema, add_context_from_in
     if (r3 != null) return r3;
   } else {
     // Standard: Lynx → OpenRouter → Groq → Gemini → Cohere → Big Pickle → Claude → Base44
+    const rGroq = await tryGroq(args).catch(() => null); // <-- Added Groq 3rd in line
+    if (rGroq != null) return rGroq;
     const r1 = await tryLynx(args).catch(() => null);
     if (r1 != null) return r1;
     const rOR = await tryOpenRouter(args).catch(() => null);
     if (rOR != null) return rOR;
     const rNvidia = await tryNvidia(args).catch(() => null); // Nvidia update! let's go
     if (rNvidia != null) return rNvidia;
-    const rGroq = await tryGroq(args).catch(() => null); // <-- Added Groq 3rd in line
-    if (rGroq != null) return rGroq;
     const r3 = await tryCohere(args).catch(() => null);
     if (r3 != null) return r3;
     const r2 = await tryGemini(args).catch(() => null);
