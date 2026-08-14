@@ -142,17 +142,7 @@ export default function Media() {
   const [extracting, setExtracting] = useState(false);
   const [videoGenStatus, setVideoGenStatus] = useState("");
   const [showHowItWorks, setShowHowItWorks] = useState(false);
-  
   const fileInputRef = useRef(null);
-  const formRef = useRef(null);
-
-  const openForm = (mediaType) => {
-    setType(mediaType);
-    setShowForm(true);
-    setTimeout(() => {
-      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 50);
-  };
 
   useEffect(() => {
     loadMedia();
@@ -165,9 +155,10 @@ export default function Media() {
     const prompt = params.get("prompt");
     const mediaType = params.get("type");
     if (prompt) {
+      setShowForm(true);
       setSourceText(prompt);
       setTitle(prompt.slice(0, 60));
-      openForm(mediaType === "video" ? "video" : mediaType === "image" ? "image" : "audio");
+      setType(mediaType === "video" ? "video" : mediaType === "image" ? "image" : "audio");
       window.history.replaceState({}, "", window.location.pathname);
     }
   }, []);
@@ -377,11 +368,45 @@ export default function Media() {
     setPlaying(item.id);
   };
 
-  const downloadScript = (item) => {
-    const blob = new Blob([item.script || ""], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = `${item.title}_script.txt`; a.click();
-    URL.revokeObjectURL(url);
+  const handleDownload = async (item) => {
+    const cleanFileName = (item.title || "download").replace(/[^a-z0-9_\-]/gi, "_");
+
+    if ((item.type === "image" || item.type === "video") && item.file_url) {
+      try {
+        const response = await fetch(item.file_url);
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+
+        let extension = item.type === "video" ? "mp4" : "png";
+        if (item.type === "image") {
+          if (blob.type.includes("jpeg") || blob.type.includes("jpg")) extension = "jpg";
+          else if (blob.type.includes("webp")) extension = "webp";
+        }
+
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = `${cleanFileName}.${extension}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+      } catch (err) {
+        console.warn("Direct blob download failed, attempting direct link download:", err);
+        const a = document.createElement("a");
+        a.href = item.file_url;
+        a.target = "_blank";
+        a.download = cleanFileName;
+        a.click();
+      }
+    } else if (item.script) {
+      const blob = new Blob([item.script], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${cleanFileName}_script.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
   };
 
   const deleteMedia = async (id) => {
@@ -431,8 +456,12 @@ export default function Media() {
               {item.is_public ? "Public" : "Private"}
             </button>
           )}
-          {isOwner && item.script && (
-            <button onClick={() => downloadScript(item)} className="p-2 rounded-xl opacity-30 hover:opacity-80 transition-all" title="Download script">
+          {isOwner && (item.file_url || item.script) && (
+            <button
+              onClick={() => handleDownload(item)}
+              className="p-2 rounded-xl opacity-30 hover:opacity-80 transition-all"
+              title={item.type === "image" ? "Download image" : item.type === "video" && item.file_url ? "Download video" : "Download script"}
+            >
               <Download className="w-4 h-4" />
             </button>
           )}
@@ -518,19 +547,19 @@ export default function Media() {
 
           <div className="flex flex-wrap gap-3">
             <button
-              onClick={() => openForm("audio")}
+              onClick={() => { setShowForm(true); setType("audio"); }}
               className="flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all"
             >
               <Mic className="w-4 h-4" /> Create Audio
             </button>
             <button
-              onClick={() => openForm("video")}
+              onClick={() => { setShowForm(true); setType("video"); }}
               className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all"
             >
               <Clapperboard className="w-4 h-4" /> Create Video
             </button>
             <button
-              onClick={() => openForm("image")}
+              onClick={() => { setShowForm(true); setType("image"); }}
               className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all"
             >
               <ImageIcon className="w-4 h-4" /> Generate Image
@@ -570,7 +599,7 @@ export default function Media() {
 
         {/* ── Creation form ── */}
         {showForm && (
-          <div ref={formRef} className="rounded-3xl p-6 mb-8" style={cardStyle}>
+          <div className="rounded-3xl p-6 mb-8" style={cardStyle}>
             <div className="flex items-center justify-between mb-5">
               <h3 className="font-black text-lg">New Lesson</h3>
               <button onClick={() => { setShowForm(false); setVideoGenStatus(""); }} className="p-2 rounded-xl opacity-40 hover:opacity-80 transition-all">
@@ -779,15 +808,15 @@ export default function Media() {
                 <p className="font-black text-lg mb-2">Your studio is empty</p>
                 <p className="text-sm mb-6" style={mutedStyle}>Create your first audio, video, or image lesson from any study material.</p>
                 <div className="flex gap-3 justify-center flex-wrap">
-                  <button onClick={() => openForm("audio")}
+                  <button onClick={() => { setShowForm(true); setType("audio"); }}
                     className="flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all">
                     <Mic className="w-4 h-4" /> Create Audio
                   </button>
-                  <button onClick={() => openForm("video")}
+                  <button onClick={() => { setShowForm(true); setType("video"); }}
                     className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all">
                     <Clapperboard className="w-4 h-4" /> Create Video
                   </button>
-                  <button onClick={() => openForm("image")}
+                  <button onClick={() => { setShowForm(true); setType("image"); }}
                     className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all">
                     <ImageIcon className="w-4 h-4" /> Generate Image
                   </button>
