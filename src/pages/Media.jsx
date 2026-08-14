@@ -142,7 +142,17 @@ export default function Media() {
   const [extracting, setExtracting] = useState(false);
   const [videoGenStatus, setVideoGenStatus] = useState("");
   const [showHowItWorks, setShowHowItWorks] = useState(false);
+  
   const fileInputRef = useRef(null);
+  const formRef = useRef(null);
+
+  const openForm = (mediaType) => {
+    setType(mediaType);
+    setShowForm(true);
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
+  };
 
   useEffect(() => {
     loadMedia();
@@ -155,10 +165,9 @@ export default function Media() {
     const prompt = params.get("prompt");
     const mediaType = params.get("type");
     if (prompt) {
-      setShowForm(true);
       setSourceText(prompt);
       setTitle(prompt.slice(0, 60));
-      setType(mediaType === "video" ? "video" : mediaType === "image" ? "image" : "audio");
+      openForm(mediaType === "video" ? "video" : mediaType === "image" ? "image" : "audio");
       window.history.replaceState({}, "", window.location.pathname);
     }
   }, []);
@@ -509,19 +518,19 @@ export default function Media() {
 
           <div className="flex flex-wrap gap-3">
             <button
-              onClick={() => { setShowForm(true); setType("audio"); }}
+              onClick={() => openForm("audio")}
               className="flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all"
             >
               <Mic className="w-4 h-4" /> Create Audio
             </button>
             <button
-              onClick={() => { setShowForm(true); setType("video"); }}
+              onClick={() => openForm("video")}
               className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all"
             >
               <Clapperboard className="w-4 h-4" /> Create Video
             </button>
             <button
-              onClick={() => { setShowForm(true); setType("image"); }}
+              onClick={() => openForm("image")}
               className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all"
             >
               <ImageIcon className="w-4 h-4" /> Generate Image
@@ -561,7 +570,7 @@ export default function Media() {
 
         {/* ── Creation form ── */}
         {showForm && (
-          <div className="rounded-3xl p-6 mb-8" style={cardStyle}>
+          <div ref={formRef} className="rounded-3xl p-6 mb-8" style={cardStyle}>
             <div className="flex items-center justify-between mb-5">
               <h3 className="font-black text-lg">New Lesson</h3>
               <button onClick={() => { setShowForm(false); setVideoGenStatus(""); }} className="p-2 rounded-xl opacity-40 hover:opacity-80 transition-all">
@@ -770,15 +779,15 @@ export default function Media() {
                 <p className="font-black text-lg mb-2">Your studio is empty</p>
                 <p className="text-sm mb-6" style={mutedStyle}>Create your first audio, video, or image lesson from any study material.</p>
                 <div className="flex gap-3 justify-center flex-wrap">
-                  <button onClick={() => { setShowForm(true); setType("audio"); }}
+                  <button onClick={() => openForm("audio")}
                     className="flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all">
                     <Mic className="w-4 h-4" /> Create Audio
                   </button>
-                  <button onClick={() => { setShowForm(true); setType("video"); }}
+                  <button onClick={() => openForm("video")}
                     className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all">
                     <Clapperboard className="w-4 h-4" /> Create Video
                   </button>
-                  <button onClick={() => { setShowForm(true); setType("image"); }}
+                  <button onClick={() => openForm("image")}
                     className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all">
                     <ImageIcon className="w-4 h-4" /> Generate Image
                   </button>
