@@ -164,19 +164,30 @@ export default function Media() {
   }, []);
 
   const loadMedia = async () => {
-    const me = await db.auth.me();
-    const email = me?.email || "";
-    setUserEmail(email);
-    const [allMedia, myDecks] = await Promise.all([
-      db.entities.GeneratedMedia.list("-created_date", 300).catch(() => []),
-      db.entities.Deck.list("-updated_date", 100).catch(() => []),
-    ]);
-    const mine = allMedia.filter(m => m.created_by === email || m.created_by_id === email);
-    const community = allMedia.filter(m => m.is_public);
-    setMediaList(mine);
-    setPublicMedia(community);
-    setDecks(myDecks);
-    setLoading(false);
+    try {
+      const me = await db.auth.me().catch(() => null);
+      const email = me?.email || "";
+      setUserEmail(email);
+
+      const [allMedia, myDecks] = await Promise.all([
+        db.entities.GeneratedMedia.list("-created_date", 300).catch(() => []),
+        db.entities.Deck.list("-updated_date", 100).catch(() => []),
+      ]);
+
+      const mine = allMedia.filter(m => {
+        if (!email) return true;
+        return m.created_by === email || m.created_by_id === email || !m.created_by;
+      });
+
+      const community = allMedia.filter(m => m.is_public);
+      setMediaList(mine);
+      setPublicMedia(community);
+      setDecks(myDecks);
+    } catch (err) {
+      console.error("Error loading media:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleFileExtract = async (file) => {
@@ -234,8 +245,14 @@ export default function Media() {
           feature: "media_audio",
         });
         const media = await db.entities.GeneratedMedia.create({
-          title: title.trim(), type: "audio", status: "ready", script,
-          source_text: sourceText.trim(), is_public: isPublic,
+          title: title.trim(),
+          type: "audio",
+          status: "ready",
+          script,
+          source_text: sourceText.trim(),
+          is_public: isPublic,
+          created_by: userEmail || undefined,
+          created_by_id: userEmail || undefined,
         });
         setMediaList(prev => [media, ...prev]);
         if (isPublic) setPublicMedia(prev => [media, ...prev]);
@@ -258,6 +275,8 @@ export default function Media() {
           source_text: sourceText.trim(),
           script: `Prompt: ${sourceText.trim()}`,
           is_public: isPublic,
+          created_by: userEmail || undefined,
+          created_by_id: userEmail || undefined,
         });
         setMediaList(prev => [media, ...prev]);
         if (isPublic) setPublicMedia(prev => [media, ...prev]);
@@ -339,6 +358,8 @@ export default function Media() {
           full_narration: scriptData?.narration || "",
           file_url: finalFileUrl || undefined,
           is_public: isPublic,
+          created_by: userEmail || undefined,
+          created_by_id: userEmail || undefined,
         });
         setMediaList(prev => [media, ...prev]);
         if (isPublic) setPublicMedia(prev => [media, ...prev]);
