@@ -10,6 +10,7 @@ export default function Profile() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [loadingUser, setLoadingUser] = useState(true);
 
   // Check if viewing another user's profile
   const urlParams = new URLSearchParams(window.location.search);
@@ -34,15 +35,12 @@ export default function Profile() {
     if (!currentUser?.email) return null;
 
     try {
-      // Find existing user record by email
       const users = await db.entities.User.list("-created_date", 500).catch(() => []);
       const existing = users.find(u => u.email === currentUser.email);
 
       if (existing?.id) {
-        // Update existing record
         await db.entities.User.update(existing.id, fieldsToUpdate);
       } else {
-        // Create new record for this user if missing
         await db.entities.User.create({
           email: currentUser.email,
           display_name: currentUser.display_name || currentUser.full_name || currentUser.displayName || "",
@@ -59,8 +57,12 @@ export default function Profile() {
   };
 
   useEffect(() => {
+    setLoadingUser(true);
     db.auth.me().then(async (u) => {
-      if (!u) return;
+      if (!u) {
+        setLoadingUser(false);
+        return;
+      }
 
       // Sync and retrieve full entity record to ensure custom fields are retained
       let dbUserRecord = null;
@@ -96,6 +98,7 @@ export default function Profile() {
       setEditName(mergedUser.display_name || mergedUser.full_name || "");
       setEditBio(mergedUser.bio || "");
       setIsPublic(mergedUser.is_public || false);
+      setLoadingUser(false);
 
       if (viewEmail && viewEmail !== u.email) {
         db.entities.User.list("-created_date", 500).then(users => {
@@ -108,7 +111,9 @@ export default function Profile() {
           ]}).then(fs => setFriendship(fs[0] || null)).catch(() => {});
         }).catch(() => setViewLoading(false));
       }
-    }).catch(() => {});
+    }).catch(() => {
+      setLoadingUser(false);
+    });
   }, [viewEmail]);
 
   const handleSaveProfile = async () => {
@@ -127,7 +132,6 @@ export default function Profile() {
         is_public: isPublic
       };
 
-      // Safely upsert user record in database entities collection
       await upsertUserData(user, updates);
 
       const refreshed = await db.auth.me();
@@ -161,7 +165,6 @@ export default function Profile() {
             await updateProfile(currentUser, { photoURL: base64String });
           }
 
-          // Safely save profile picture URL to user entity
           await upsertUserData(user, { profile_picture_url: base64String });
 
           const refreshed = await db.auth.me();
@@ -335,13 +338,17 @@ export default function Profile() {
         <div className="flex items-center gap-4 mb-4">
           <div className="relative shrink-0">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-violet-600 flex items-center justify-center overflow-hidden shadow-md border border-white/10">
-              {user?.profile_picture_url
-                ? <img src={user.profile_picture_url} alt="profile" className="w-full h-full object-cover" />
-                : <User className="w-7 h-7 text-white" />}
+              {loadingUser ? (
+                <Loader2 className="w-6 h-6 text-white animate-spin" />
+              ) : user?.profile_picture_url ? (
+                <img src={user.profile_picture_url} alt="profile" className="w-full h-full object-cover" />
+              ) : (
+                <User className="w-7 h-7 text-white" />
+              )}
             </div>
             <button
               onClick={() => picInputRef.current?.click()}
-              disabled={uploadingPic}
+              disabled={uploadingPic || loadingUser}
               className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-blue-600 border-2 flex items-center justify-center hover:bg-blue-500 transition-all shadow"
               style={{ borderColor: "var(--app-surface)" }}
             >
@@ -351,19 +358,31 @@ export default function Profile() {
           </div>
 
           <div className="flex-1 min-w-0">
-            <div className="font-bold text-lg truncate">{user?.display_name || user?.full_name || "—"}</div>
-            <div className="flex items-center gap-1.5 text-sm mt-0.5 truncate" style={mutedStyle}>
-              <Mail className="w-3.5 h-3.5 shrink-0" />
-              <span className="truncate">{user?.email || "—"}</span>
-            </div>
-            {user?.bio && !editing && (
-              <p className="text-sm mt-1 leading-relaxed" style={mutedStyle}>{user.bio}</p>
+            {loadingUser ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 text-blue-500 animate-spin shrink-0" />
+                  <span className="text-sm font-medium opacity-60">Loading details...</span>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="font-bold text-lg truncate">{user?.display_name || user?.full_name || "User"}</div>
+                <div className="flex items-center gap-1.5 text-sm mt-0.5 truncate" style={mutedStyle}>
+                  <Mail className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">{user?.email || ""}</span>
+                </div>
+                {user?.bio && !editing && (
+                  <p className="text-sm mt-1 leading-relaxed" style={mutedStyle}>{user.bio}</p>
+                )}
+              </>
             )}
           </div>
 
           <button
             onClick={() => setEditing(!editing)}
-            className="p-2.5 rounded-xl opacity-60 hover:opacity-100 transition-all border border-white/5"
+            disabled={loadingUser}
+            className="p-2.5 rounded-xl opacity-60 hover:opacity-100 disabled:opacity-30 transition-all border border-white/5"
             style={{ color: "var(--app-text)", background: "var(--app-bg)" }}
           >
             {editing ? <X className="w-4 h-4" /> : <Edit3 className="w-4 h-4" />}
