@@ -89,6 +89,33 @@ function sanitizeForFirestore(obj) {
   return obj;
 }
 
+// ─── Image With Loading Spinner Component ──────────────────────────────────
+function ChatImageWithLoader({ src, alt }) {
+  const [loaded, setLoaded] = useState(false);
+
+  return (
+    <div className="relative my-3 rounded-2xl overflow-hidden border border-white/10 shadow-lg bg-black/20 flex justify-center items-center min-h-[220px]">
+      {!loaded && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/20 backdrop-blur-sm z-10">
+          <Loader2 className="w-8 h-8 text-violet-400 animate-spin" />
+          <p className="text-xs text-violet-300 font-medium">Loading image...</p>
+        </div>
+      )}
+      <img
+        src={src}
+        alt={alt || "Generated AI Image"}
+        referrerPolicy="no-referrer"
+        crossOrigin="anonymous"
+        onLoad={() => setLoaded(true)}
+        onError={(e) => {
+          console.error("Image failed to load:", src);
+        }}
+        className={`w-full h-auto max-h-[450px] object-contain rounded-2xl transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
+      />
+    </div>
+  );
+}
+
 export default function Chat() {
   const { t } = useTranslation();
   const [sessions, setSessions] = useState([]);
@@ -351,7 +378,7 @@ export default function Chat() {
 
         const aiMsg = {
           role: "assistant",
-          content: `Here is the image you requested (might take a few seconds to load, don't scroll away!):\n\n![${userPrompt}](${imageUrl})`,
+          content: "Here is the image you requested:",
           imageUrl: imageUrl,
         };
 
@@ -979,24 +1006,13 @@ export default function Chat() {
                         ))}
                       </div>
                     )}
-                    {/* Render explicit image if msg.imageUrl exists */}
-                    {msg.imageUrl && (
-                      <div className="my-3 rounded-2xl overflow-hidden border border-white/10 shadow-lg bg-black/20">
-                        <img
-                          src={msg.imageUrl}
-                          alt="Generated AI"
-                          referrerPolicy="no-referrer"
-                          crossOrigin="anonymous"
-                          className="w-full h-auto max-h-[450px] object-contain rounded-2xl"
-                          onError={(e) => {
-                            // Fallback if image fails to load
-                            console.error("Image failed to load:", msg.imageUrl);
-                          }}
-                        />
-                      </div>
-                    )}
-
+                    
                     <ChatMessage content={msg.content} />
+
+                    {/* Render explicit image with loader if msg.imageUrl exists */}
+                    {msg.imageUrl && (
+                      <ChatImageWithLoader src={msg.imageUrl} alt="Generated AI Image" />
+                    )}
                   </div>
                 </div>
               ))}
