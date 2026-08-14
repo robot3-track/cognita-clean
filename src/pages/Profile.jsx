@@ -29,12 +29,73 @@ export default function Profile() {
   const [uploadingPic, setUploadingPic] = useState(false);
   const picInputRef = useRef(null);
 
+  // Helper to ensure a user record exists in db.entities.User and update/create it safely
+  const upsertUserData = async (currentUser, fieldsToUpdate) => {
+    if (!currentUser?.email) return null;
+
+    try {
+      // Find existing user record by email
+      const users = await db.entities.User.list("-created_date", 500).catch(() => []);
+      const existing = users.find(u => u.email === currentUser.email);
+
+      if (existing?.id) {
+        // Update existing record
+        await db.entities.User.update(existing.id, fieldsToUpdate);
+      } else {
+        // Create new record for this user if missing
+        await db.entities.User.create({
+          email: currentUser.email,
+          display_name: currentUser.display_name || currentUser.full_name || currentUser.displayName || "",
+          full_name: currentUser.display_name || currentUser.full_name || currentUser.displayName || "",
+          bio: "",
+          is_public: false,
+          created_date: new Date().toISOString(),
+          ...fieldsToUpdate,
+        });
+      }
+    } catch (err) {
+      console.warn("Failed to upsert user record in db.entities.User:", err);
+    }
+  };
+
   useEffect(() => {
-    db.auth.me().then(u => {
-      setUser(u);
-      setEditName(u?.display_name || u?.full_name || "");
-      setEditBio(u?.bio || "");
-      setIsPublic(u?.is_public || false);
+    db.auth.me().then(async (u) => {
+      if (!u) return;
+
+      // Sync and retrieve full entity record to ensure custom fields are retained
+      let dbUserRecord = null;
+      try {
+        const users = await db.entities.User.list("-created_date", 500).catch(() => []);
+        dbUserRecord = users.find(usr => usr.email === u.email);
+
+        // If no entity record exists yet for logged in user, create it now
+        if (!dbUserRecord && u.email) {
+          await upsertUserData(u, {
+            display_name: u.display_name || u.displayName || u.email.split("@")[0],
+            full_name: u.full_name || u.displayName || u.email.split("@")[0],
+          });
+          const refreshedUsers = await db.entities.User.list("-created_date", 500).catch(() => []);
+          dbUserRecord = refreshedUsers.find(usr => usr.email === u.email);
+        }
+      } catch (e) {
+        console.warn("Error fetching DB user record:", e);
+      }
+
+      // Merge auth user with DB record data
+      const mergedUser = {
+        ...u,
+        id: dbUserRecord?.id || u.id,
+        display_name: dbUserRecord?.display_name || u.display_name || u.displayName || "",
+        full_name: dbUserRecord?.full_name || u.full_name || u.displayName || "",
+        bio: dbUserRecord?.bio || u.bio || "",
+        is_public: dbUserRecord?.is_public ?? u.is_public ?? false,
+        profile_picture_url: dbUserRecord?.profile_picture_url || u.profile_picture_url || u.photoURL || "",
+      };
+
+      setUser(mergedUser);
+      setEditName(mergedUser.display_name || mergedUser.full_name || "");
+      setEditBio(mergedUser.bio || "");
+      setIsPublic(mergedUser.is_public || false);
 
       if (viewEmail && viewEmail !== u.email) {
         db.entities.User.list("-created_date", 500).then(users => {
@@ -59,29 +120,24 @@ export default function Profile() {
         await updateProfile(currentUser, { displayName: editName });
       }
 
-      // Upsert/Update user record in database entities collection
-      if (user?.id) {
-        await db.entities.User.update(user.id, {
-          display_name: editName,
-          full_name: editName,
-          bio: editBio,
-          is_public: isPublic
-        });
-      } else if (user?.email) {
-        const users = await db.entities.User.list("-created_date", 500);
-        const existing = users.find(u => u.email === user.email);
-        if (existing) {
-          await db.entities.User.update(existing.id, {
-            display_name: editName,
-            full_name: editName,
-            bio: editBio,
-            is_public: isPublic
-          });
-        }
-      }
+      const updates = {
+        display_name: editName,
+        full_name: editName,
+        bio: editBio,
+        is_public: isPublic
+      };
 
-      const updated = await db.auth.me();
-      setUser(updated);
+      // Safely upsert user record in database entities collection
+      await upsertUserData(user, updates);
+
+      const refreshed = await db.auth.me();
+      const updatedUser = {
+        ...refreshed,
+        ...user,
+        ...updates,
+      };
+
+      setUser(updatedUser);
       setEditing(false);
     } catch (err) {
       console.error("Failed to save profile:", err);
@@ -105,18 +161,15 @@ export default function Profile() {
             await updateProfile(currentUser, { photoURL: base64String });
           }
 
-          if (user?.id) {
-            await db.entities.User.update(user.id, { profile_picture_url: base64String });
-          } else if (user?.email) {
-            const users = await db.entities.User.list("-created_date", 500);
-            const existing = users.find(u => u.email === user.email);
-            if (existing) {
-              await db.entities.User.update(existing.id, { profile_picture_url: base64String });
-            }
-          }
+          // Safely save profile picture URL to user entity
+          await upsertUserData(user, { profile_picture_url: base64String });
 
-          const updated = await db.auth.me();
-          setUser(updated);
+          const refreshed = await db.auth.me();
+          setUser({
+            ...refreshed,
+            ...user,
+            profile_picture_url: base64String
+          });
         } catch (err) {
           console.error("Error saving picture data:", err);
         } finally {
