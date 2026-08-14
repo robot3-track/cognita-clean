@@ -182,11 +182,14 @@ export default function Chat() {
   };
 
   useEffect(() => {
-    loadSessions();
     db.auth.me().then(u => {
       setUser(u);
-      initAiCredits(u.email);
-    }).catch(() => {});
+      initAiCredits(u?.email);
+      loadSessions(u);
+    }).catch(() => {
+      loadSessions(null);
+    });
+
     // Load user decks for attachment
     db.entities.Deck.list("-updated_date", 50).then(d => setUserDecks(d)).catch(() => {});
     // Load folders from localStorage
@@ -210,9 +213,19 @@ export default function Chat() {
     localStorage.setItem("cognita_chat_folders", JSON.stringify(newFolders));
   };
 
-  const loadSessions = async () => {
+  // Filter session history privately per user
+  const loadSessions = async (currentUser) => {
     setLoadingSessions(true);
-    const s = await db.entities.ChatSession.list("-updated_date", 50);
+    const u = currentUser || user || await db.auth.me().catch(() => null);
+    const email = u?.email;
+
+    let s = await db.entities.ChatSession.list("-updated_date", 100).catch(() => []);
+    if (email) {
+      s = s.filter(sess => sess.user_email === email || sess.created_by === email);
+    } else {
+      s = [];
+    }
+
     setSessions(s);
     if (s.length > 0 && !activeSession) selectSession(s[0]);
     setLoadingSessions(false);
@@ -237,7 +250,16 @@ export default function Chat() {
       try { dictationRef.current.stop(); } catch {}
       setIsDictating(false);
     }
-    const session = await db.entities.ChatSession.create({ title: "New Chat", messages: [] });
+
+    const currentUser = user || await db.auth.me().catch(() => null);
+    const email = currentUser?.email || "";
+
+    const session = await db.entities.ChatSession.create({
+      title: "New Chat",
+      messages: [],
+      user_email: email,
+      created_by: email
+    });
     setSessions(prev => [session, ...prev]);
     setActiveSession(session);
     setMessages([]);
@@ -347,9 +369,17 @@ export default function Chat() {
     const abortController = new AbortController();
     abortControllerRef.current = abortController;
 
+    const currentUser = user || await db.auth.me().catch(() => null);
+    const email = currentUser?.email || "";
+
     let session = activeSession;
     if (!session) {
-      session = await db.entities.ChatSession.create({ title: input.slice(0, 40), messages: [] });
+      session = await db.entities.ChatSession.create({
+        title: input.slice(0, 40),
+        messages: [],
+        user_email: email,
+        created_by: email
+      });
       setSessions(prev => [session, ...prev]);
       setActiveSession(session);
     }
@@ -666,39 +696,44 @@ export default function Chat() {
         const resp = await db.integrations.Core.TranscribeAudio({ audio_url: file_url });
         
         let backendText = typeof resp === 'string' ? resp : (resp?.text || resp?.transcript || resp?.result || "");
-        if (backendText && backendText !== "Transcribed Audio Content") {
-          finalTranscript = backendText.trim();
-        } else if (backendText === "Transcribed Audio Content") {
-          finalTranscript = liveSpeechRef.current.trim() || "Can you summarize key study topics for me?";
-        }
-      } catch (err) {
-        console.warn("Backend transcription error:", err);
+        if (backendText) finalTranscript = backendText.trim();
+      } catch (e) {
+        console.warn("Server audio transcription fallback failed:", e);
       }
     }
 
     if (!finalTranscript) {
-      setVoiceStatus("Couldn't understand speech. Try again.");
-      setIsRecording(false);
+      setVoiceStatus("Could not understand audio. Try again.");
       isGeneratingRef.current = false;
       setLoading(false);
-      abortControllerRef.current = null;
+      setIsRecording(false);
       return;
     }
 
+    setVoiceTranscript(finalTranscript);
+    setVoiceStatus(`" ${finalTranscript} "`);
+
+    const currentUser = user || await db.auth.me().catch(() => null);
+    const email = currentUser?.email || "";
+
+    let session = activeSession;
+    if (!session) {
+      session = await db.entities.ChatSession.create({
+        title: "Voice Chat",
+        messages: [],
+        user_email: email,
+        created_by: email
+      });
+      setSessions(prev => [session, ...prev]);
+      setActiveSession(session);
+    }
+
+    const userMsg = { role: "user", content: finalTranscript, voice: true };
+    const newMsgs = [...messages, userMsg];
+    setMessages(newMsgs);
+
     try {
-      setVoiceTranscript(finalTranscript);
-      setVoiceStatus("🤔 AI is thinking…");
-
-      let session = activeSession;
-      if (!session) {
-        session = await db.entities.ChatSession.create({ title: "Voice Chat", messages: [] });
-        setSessions(prev => [session, ...prev]);
-        setActiveSession(session);
-      }
-      const userMsg = { role: "user", content: finalTranscript };
-      const newMsgs = [...messages, userMsg];
-      setMessages(newMsgs);
-
+      incrementAiUsage(user?.email);
       const history = newMsgs.map(m => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`).join("\n");
       const response = await callAI({
         prompt: `${history}\n\nRespond warmly, concisely, and conversationally. Keep your reply under 3 sentences when possible.`,
@@ -706,13 +741,14 @@ export default function Chat() {
         systemPrompt: COGNITA_SYSTEM_PROMPT_VOICE,
         signal: abortController.signal
       });
+
       if (abortController.signal.aborted) return;
 
       const aiMsg = { role: "assistant", content: response, voice: true };
       const finalMsgs = [...newMsgs, aiMsg];
       setMessages(finalMsgs);
-
       setVoiceStatus("🔊 Speaking response…");
+
       try {
         const { url } = await db.integrations.Core.GenerateSpeech({ text: response.slice(0, 2000), voice: "river" });
         const audio = new Audio(url);
@@ -747,38 +783,37 @@ export default function Chat() {
     if (synth) {
       synth.cancel();
       const utt = new SpeechSynthesisUtterance(text.slice(0, 600));
-      utt.rate = 0.95; utt.pitch = 1;
+      utt.rate = 0.95;
+      utt.pitch = 1;
       const voices = synth.getVoices();
       const preferred = voices.find(v => v.lang?.startsWith("en") && v.name.includes("Female")) || voices.find(v => v.lang?.startsWith("en"));
       if (preferred) utt.voice = preferred;
       utt.onend = () => setVoiceStatus("✅ Ready — hold mic to speak again");
       synth.speak(utt);
-    } else {
-      setVoiceStatus("✅ Ready — hold mic to speak again");
     }
   };
-
-  const filedIds = new Set(Object.values(folders).flat());
-  const unfiledSessions = sessions.filter(s => !filedIds.has(s.id));
 
   const sessionItem = (s, inDrawer = false) => (
     <div
       key={s.id}
       onClick={() => { selectSession(s); if (inDrawer) setMobileDrawerOpen(false); }}
-      className={`group flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl cursor-pointer transition-all mb-1 ${
-        activeSession?.id === s.id 
-          ? "bg-violet-600/20 text-violet-300 font-semibold border border-violet-500/30 shadow-sm" 
-          : "opacity-75 hover:opacity-100 hover:bg-white/[0.05]"
-      }`}
+      className={`group flex items-center justify-between p-3 rounded-2xl cursor-pointer transition-all ${activeSession?.id === s.id ? "bg-violet-600/20 border border-violet-500/30 text-violet-300 font-semibold" : "hover:bg-white/5 opacity-70 hover:opacity-100"}`}
     >
-      {renamingId === s.id ? (
-        <div className="flex items-center gap-1 flex-1" onClick={e => e.stopPropagation()}>
-          <input autoFocus value={renameValue} onChange={e => setRenameValue(e.target.value)} onKeyDown={e => e.key === "Enter" && submitRename(s)} className="flex-1 bg-transparent text-xs outline-none border-b border-violet-500 pb-0.5" />
-          <button onClick={() => submitRename(s)} className="text-violet-400"><Check className="w-3.5 h-3.5" /></button>
-        </div>
-      ) : (
-        <p className="text-xs truncate flex-1 leading-snug">{s.title}</p>
-      )}
+      <div className="flex items-center gap-2.5 min-w-0 pr-2">
+        <MessageSquare className="w-4 h-4 shrink-0" />
+        {renamingId === s.id ? (
+          <input
+            value={renameValue}
+            onChange={e => setRenameValue(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && submitRename(s)}
+            onClick={e => e.stopPropagation()}
+            autoFocus
+            className="bg-black/30 text-xs px-2 py-1 rounded border border-violet-500/50 outline-none w-full text-white"
+          />
+        ) : (
+          <span className="text-xs truncate">{s.title || "Untitled Chat"}</span>
+        )}
+      </div>
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
         <button onClick={e => startRename(s, e)} className="text-violet-400/70 hover:text-violet-400 p-1"><Edit3 className="w-3 h-3" /></button>
         <button onClick={e => deleteSession(s.id, e)} className="text-red-400/70 hover:text-red-400 p-1"><Trash2 className="w-3 h-3" /></button>
@@ -796,58 +831,75 @@ export default function Chat() {
             </button>
           </Link>
         )}
-        <button onClick={() => { newChat(); if (inDrawer) setMobileDrawerOpen(false); }}
-          className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 hover:opacity-90 text-white px-4 py-3 rounded-2xl font-semibold text-sm transition-all shadow-md shadow-violet-900/20">
+        <button onClick={() => { newChat(); if (inDrawer) setMobileDrawerOpen(false); }} className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 hover:opacity-90 text-white px-4 py-3 rounded-2xl font-semibold text-sm transition-all shadow-md shadow-violet-900/20">
           <Plus className="w-4 h-4" /> {t('newChat') || "New Chat"}
         </button>
+
         {showFolderInput ? (
           <div className="flex gap-1 bg-white/5 p-1 rounded-xl border border-white/10">
             <input value={newFolderName} onChange={e => setNewFolderName(e.target.value)} onKeyDown={e => e.key === "Enter" && createFolder()} placeholder="Folder name…" className="flex-1 bg-transparent text-xs outline-none px-2" />
             <button onClick={createFolder} className="text-violet-400 p-1 hover:bg-white/10 rounded-lg shrink-0"><Check className="w-3.5 h-3.5" /></button>
-            <button onClick={() => setShowFolderInput(false)} className="opacity-40 p-1 hover:bg-white/10 rounded-lg"><X className="w-3.5 h-3.5" /></button>
+            <button onClick={() => setShowFolderInput(false)} className="opacity-50 p-1 hover:bg-white/10 rounded-lg shrink-0"><X className="w-3.5 h-3.5" /></button>
           </div>
         ) : (
-          <button onClick={() => setShowFolderInput(true)} className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs opacity-60 hover:opacity-100 hover:bg-white/5 transition-all">
-            <FolderOpen className="w-3.5 h-3.5" /> New Folder
+          <button onClick={() => setShowFolderInput(true)} className="w-full flex items-center justify-center gap-1.5 border border-white/10 hover:bg-white/5 px-3 py-2 rounded-xl text-xs opacity-70 transition-all">
+            <FolderOpen className="w-3.5 h-3.5 text-amber-400" /> New Folder
           </button>
         )}
       </div>
+
+      {/* Mode Switcher */}
+      <div className="p-3 border-b" style={{ borderColor: "var(--app-border)" }}>
+        <div className="flex bg-black/20 p-1 rounded-2xl border border-white/5">
+          <button onClick={() => setMode("chat")} className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold transition-all ${mode === "chat" ? "bg-violet-600 text-white shadow-md" : "opacity-60 hover:opacity-100"}`}>
+            <MessageSquare className="w-3.5 h-3.5" /> Text
+          </button>
+          <button onClick={() => setMode("voice")} className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold transition-all ${mode === "voice" ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md" : "opacity-60 hover:opacity-100"}`}>
+            <Mic className="w-3.5 h-3.5" /> Voice
+          </button>
+        </div>
+      </div>
+
       <div className="flex-1 overflow-y-auto p-3 space-y-1">
         {loadingSessions ? (
-          <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 text-violet-500 animate-spin" /></div>
+          <div className="flex items-center justify-center py-8 text-xs opacity-40"><Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading…</div>
+        ) : sessions.length === 0 ? (
+          <div className="text-center py-8 text-xs opacity-40">No chat history yet</div>
         ) : (
           <>
-            {Object.entries(folders).map(([fname, ids]) => {
-              const folderSessions = sessions.filter(s => ids.includes(s.id));
+            {/* Folder list */}
+            {Object.keys(folders).map(folderName => {
+              const folderSessionIds = folders[folderName] || [];
+              const isExpanded = expandedFolders[folderName];
+              const folderSessions = sessions.filter(s => folderSessionIds.includes(s.id));
               return (
-                <div key={fname} className="space-y-0.5">
-                  <div className="group/folder flex items-center gap-1">
-                    <button onClick={() => setExpandedFolders(prev => ({ ...prev, [fname]: !prev[fname] }))} className="flex-1 flex items-center gap-2 px-2.5 py-2 text-xs font-semibold opacity-80 hover:opacity-100 transition-all rounded-xl hover:bg-white/5">
+                <div key={folderName} className="mb-2">
+                  <div onClick={() => setExpandedFolders(prev => ({ ...prev, [folderName]: !prev[folderName] }))} className="flex items-center justify-between p-2 rounded-xl hover:bg-white/5 cursor-pointer text-xs font-bold text-amber-400/90">
+                    <div className="flex items-center gap-2 truncate">
                       <Folder className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                      <span className="flex-1 text-left truncate">{fname}</span>
-                      <span className="text-[10px] opacity-50 bg-white/10 px-1.5 py-0.5 rounded-full">{folderSessions.length}</span>
-                      {expandedFolders[fname] ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                    </button>
-                    <button onClick={() => { const newF = { ...folders }; delete newF[fname]; saveFolders(newF); }} className="opacity-0 group-hover/folder:opacity-60 hover:opacity-100 transition-all p-1 text-red-400">
-                      <X className="w-3 h-3" />
-                    </button>
+                      <span className="truncate">{folderName}</span>
+                      <span className="text-[10px] opacity-50">({folderSessions.length})</span>
+                    </div>
+                    {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
                   </div>
-                  {expandedFolders[fname] && <div className="pl-2 border-l border-white/10 space-y-0.5 ml-2">{folderSessions.map(s => sessionItem(s, inDrawer))}</div>}
+                  {isExpanded && (
+                    <div className="pl-3 space-y-1 border-l border-amber-500/20 ml-3 my-1">
+                      {folderSessions.map(s => sessionItem(s, inDrawer))}
+                    </div>
+                  )}
                 </div>
               );
             })}
-            {unfiledSessions.length === 0 && Object.keys(folders).length === 0 && (
-              <p className="text-xs text-center py-8 opacity-40 font-medium">No saved chats</p>
-            )}
-            {unfiledSessions.map(s => (
-              <div key={s.id} className="group/item">
+
+            {/* Unassigned sessions */}
+            {sessions.filter(s => !Object.values(folders).flat().includes(s.id)).map(s => (
+              <div key={s.id} className="relative group/item">
                 <div className="flex items-center gap-0.5">
                   <div className="flex-1 min-w-0">{sessionItem(s, inDrawer)}</div>
                   {Object.keys(folders).length > 0 && (
                     <div className="opacity-0 group-hover/item:opacity-100 transition-all flex flex-col gap-0.5 pr-1 shrink-0">
                       {Object.keys(folders).map(fn => (
-                        <button key={fn} onClick={e => { e.stopPropagation(); addToFolder(s.id, fn); }} title={`Move to ${fn}`}
-                          className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 hover:bg-amber-500/30 border border-amber-500/20 transition-all truncate max-w-[54px]">
+                        <button key={fn} onClick={e => { e.stopPropagation(); addToFolder(s.id, fn); }} title={`Move to ${fn}`} className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 hover:bg-amber-500/30 border border-amber-500/20 transition-all truncate max-w-[54px]">
                           📁 {fn}
                         </button>
                       ))}
@@ -876,41 +928,39 @@ export default function Chat() {
         {/* Mobile header */}
         <div className="md:hidden flex items-center justify-between px-4 py-3 border-b shrink-0 relative z-10" style={{ borderColor: "var(--app-border)", background: "var(--app-surface)" }}>
           <div className="flex items-center gap-2.5">
-            <button onClick={() => setMobileDrawerOpen(true)} className="flex items-center justify-center rounded-xl opacity-80 hover:opacity-100 transition-all p-2 bg-white/5 border border-white/10">
-              <MessageSquare className="w-4 h-4" />
+            <button onClick={() => setMobileDrawerOpen(true)} className="flex items-center justify-center rounded-xl p-2 bg-white/5 border border-white/10">
+              <MessageSquare className="w-4 h-4 text-violet-400" />
             </button>
-            <p className="font-semibold text-sm truncate max-w-[160px]">{activeSession?.title || "New Chat"}</p>
+            <span className="font-bold text-sm truncate max-w-[150px]">{activeSession?.title || "Cognita AI"}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <button onClick={() => setMode(mode === "voice" ? "chat" : "voice")} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${mode === "voice" ? "bg-violet-600 text-white shadow-md shadow-violet-900/40" : "bg-white/5 hover:bg-white/10 text-violet-400 border border-white/10"}`}>
-              <Mic className="w-3.5 h-3.5" /> {mode === "voice" ? "Voice" : "Chat"}
-            </button>
-            <button onClick={newChat} className="flex items-center justify-center bg-gradient-to-r from-violet-600 to-indigo-600 hover:opacity-90 text-white p-2 rounded-full transition-all shadow-md">
-              <Plus className="w-4 h-4" />
-            </button>
-          </div>
+          <button onClick={newChat} className="bg-violet-600 hover:bg-violet-500 text-white p-2 rounded-xl text-xs flex items-center gap-1 font-semibold transition-all">
+            <Plus className="w-3.5 h-3.5" />
+          </button>
         </div>
 
         {/* Mobile drawer */}
         {mobileDrawerOpen && (
-          <>
-            <div className="md:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" onClick={() => setMobileDrawerOpen(false)} />
-            <div className="md:hidden fixed top-0 left-0 bottom-0 z-50 w-72 flex flex-col shadow-2xl" style={{ background: "var(--app-surface-solid)", borderRight: "1px solid var(--app-border)" }}>
-              <div className="flex items-center justify-between px-5 pt-5 pb-3">
-                <span className="font-bold text-sm tracking-wide">Conversations</span>
-                <button onClick={() => setMobileDrawerOpen(false)} className="opacity-50 hover:opacity-100 p-1.5 bg-white/5 rounded-full"><X className="w-4 h-4" /></button>
+          <div className="fixed inset-0 z-50 flex md:hidden bg-black/60 backdrop-blur-sm">
+            <div className="w-72 h-full flex flex-col border-r" style={{ background: "var(--app-surface)", borderColor: "var(--app-border)" }}>
+              <div className="p-3 border-b flex justify-between items-center" style={{ borderColor: "var(--app-border)" }}>
+                <span className="font-bold text-sm">Chats & Folders</span>
+                <button onClick={() => setMobileDrawerOpen(false)} className="p-1 rounded-lg hover:bg-white/10"><X className="w-4 h-4" /></button>
               </div>
-              <Link to={createPageUrl("Home")} onClick={() => setMobileDrawerOpen(false)}>
-                <button className="mx-4 mb-2 w-[calc(100%-32px)] flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium opacity-60 hover:opacity-100 transition-all bg-white/5" style={{ color: "var(--app-text)" }}>
-                  <ChevronLeft className="w-3.5 h-3.5" /> Back to Home
-                </button>
-              </Link>
               {sidebarContent(true)}
             </div>
-          </>
+            <div className="flex-1" onClick={() => setMobileDrawerOpen(false)} />
+          </div>
         )}
 
-        {/* Voice Mode */}
+        {/* Limit error alert */}
+        {limitError && (
+          <div className="mx-4 mt-3 p-3 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs flex items-center justify-between shrink-0 relative z-20">
+            <span>{limitError}</span>
+            <button onClick={() => setLimitError(null)} className="ml-2 hover:opacity-100 opacity-60"><X className="w-3.5 h-3.5" /></button>
+          </div>
+        )}
+
+        {/* VOICE MODE UI */}
         {mode === "voice" ? (
           <div className="flex-1 flex flex-col overflow-hidden">
             <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4 relative z-10 max-w-3xl mx-auto w-full">
@@ -923,6 +973,7 @@ export default function Chat() {
                   <p className="text-sm max-w-xs opacity-60 leading-relaxed">Press and hold the mic to speak. Cognita will listen and answer smoothly.</p>
                 </div>
               )}
+
               {messages.map((msg, i) => (
                 <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} items-end gap-3`}>
                   {msg.role !== "user" && (
@@ -932,45 +983,38 @@ export default function Chat() {
                   )}
                   <div className={`max-w-[80%] px-5 py-3.5 text-sm rounded-3xl ${msg.role === "user" ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-br-sm shadow-md" : "border rounded-bl-sm shadow-sm"}`} style={msg.role !== "user" ? { background: "var(--app-surface)", borderColor: "var(--app-border)" } : {}}>
                     {msg.content}
-                    {msg.voice && <Volume2 className="w-3.5 h-3.5 inline ml-2 opacity-60 animate-pulse" />}
                   </div>
                 </div>
               ))}
               <div ref={bottomRef} />
             </div>
-            
+
             {/* Voice controls */}
-            <div className="px-4 py-6 border-t relative z-10 flex flex-col items-center gap-3 bg-white/[0.01]" style={{ borderColor: "var(--app-border)" }}>
-              {voiceStatus && <p className="text-xs font-medium text-violet-300 text-center">{voiceStatus}</p>}
+            <div className="p-6 border-t flex flex-col items-center justify-center gap-4 shrink-0 relative z-20" style={{ borderColor: "var(--app-border)", background: "var(--app-surface)" }}>
+              {voiceStatus && <p className="text-xs font-semibold text-violet-300 text-center animate-fade-in">{voiceStatus}</p>}
               <div className="flex items-center gap-4">
-                {loading && (
-                  <button onClick={stopGeneration} title="Stop generating" className="flex items-center gap-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 px-4 py-2 rounded-full text-xs font-semibold transition-all animate-pulse">
-                    <Square className="w-3.5 h-3.5 fill-current" /> Cancel
-                  </button>
-                )}
                 <button
                   onMouseDown={startVoiceRecord}
                   onMouseUp={stopVoiceRecord}
                   onTouchStart={startVoiceRecord}
                   onTouchEnd={stopVoiceRecord}
-                  disabled={loading && !isRecording}
-                  className={`w-20 h-20 rounded-full flex items-center justify-center transition-all shadow-2xl ${isRecording ? "bg-red-500 scale-110 animate-pulse shadow-red-500/50" : "bg-gradient-to-tr from-violet-600 via-indigo-600 to-blue-600 hover:scale-105 shadow-violet-900/50"} disabled:opacity-40`}
+                  disabled={loading}
+                  className={`w-20 h-20 rounded-full flex items-center justify-center transition-all shadow-xl ${isRecording ? "bg-red-500 scale-110 shadow-red-900/50 animate-pulse" : "bg-gradient-to-tr from-violet-600 via-indigo-600 to-purple-600 hover:scale-105 shadow-violet-900/40 text-white"}`}
                 >
-                  {isRecording ? <Square className="w-8 h-8 text-white fill-current" /> : <Mic className="w-8 h-8 text-white" />}
+                  <Mic className="w-8 h-8 text-white" />
                 </button>
               </div>
-              <p className="text-xs opacity-40 font-medium">{isRecording ? "Release to send" : "Hold to speak"}</p>
-              <button onClick={() => setMode("chat")} className="text-xs text-violet-400 hover:text-violet-300 transition-colors font-medium mt-1">Switch to Text Chat</button>
+              <p className="text-[11px] opacity-40">Hold button to speak, release to send</p>
             </div>
           </div>
         ) : (
+          /* CHAT TEXT MODE UI */
           <>
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-4 md:px-8 py-6 space-y-6 relative z-10 max-w-3xl mx-auto w-full">
+            <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6 relative z-10 max-w-4xl mx-auto w-full">
               {messages.length === 0 && (
-                <div className="flex flex-col items-center justify-center h-full text-center py-16">
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-violet-600 via-indigo-500 to-purple-500 flex items-center justify-center mb-6 shadow-2xl shadow-violet-900/40">
-                    <Sparkles className="w-8 h-8 text-white animate-pulse" />
+                <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+                  <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-violet-600 via-indigo-600 to-purple-600 flex items-center justify-center mb-6 shadow-2xl shadow-violet-900/50">
+                    <Sparkles className="w-10 h-10 text-white" />
                   </div>
                   <h2 className="text-3xl md:text-4xl font-black mb-3 tracking-tight bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent">
                     Hi {user?.full_name?.split(' ')[0] || 'there'}, what are we studying?
@@ -980,14 +1024,14 @@ export default function Chat() {
                   </p>
                   <div className="flex flex-wrap gap-2 justify-center max-w-xl">
                     {suggestions.map(s => (
-                      <button key={s} onClick={() => setInput(s)}
-                        className="px-4 py-2 rounded-full text-xs md:text-sm font-medium border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/20 transition-all shadow-sm">
+                      <button key={s} onClick={() => setInput(s)} className="px-4 py-2 rounded-full text-xs md:text-sm font-medium border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/20 transition-all shadow-sm">
                         {s}
                       </button>
                     ))}
                   </div>
                 </div>
               )}
+
               {messages.map((msg, i) => (
                 <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} items-start gap-3`}>
                   {msg.role !== "user" && (
@@ -995,49 +1039,72 @@ export default function Chat() {
                       <Sparkles className="w-4 h-4 text-white" />
                     </div>
                   )}
-                  <div className={`max-w-[85%] md:max-w-[80%] px-5 py-4 text-sm md:text-base leading-relaxed ${msg.role === "user" ? "bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 text-white rounded-3xl rounded-br-sm shadow-md" : "rounded-3xl rounded-bl-sm border shadow-sm"}`}
-                    style={msg.role !== "user" ? { background: "var(--app-surface)", borderColor: "var(--app-border)" } : {}}>
+
+                  <div className={`max-w-[85%] md:max-w-[80%] px-5 py-4 text-sm md:text-base leading-relaxed ${msg.role === "user" ? "bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 text-white rounded-3xl rounded-br-sm shadow-md" : "rounded-3xl rounded-bl-sm border shadow-sm"}`} style={msg.role !== "user" ? { background: "var(--app-surface)", borderColor: "var(--app-border)" } : {}}>
+                    
+                    {/* User Attached Files */}
                     {msg.files && msg.files.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 mb-3">
+                      <div className="flex flex-wrap gap-2 mb-3 pb-2 border-b border-white/20">
                         {msg.files.map((f, fi) => (
-                          <span key={fi} className="flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full bg-black/20 text-white/90 border border-white/10 font-medium">
+                          <div key={fi} className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs bg-black/20 text-white/90">
                             <Paperclip className="w-3 h-3" /> {f.name}
-                          </span>
+                          </div>
                         ))}
                       </div>
                     )}
-                    
-                    <ChatMessage content={msg.content} />
 
-                    {/* Render explicit image with loader if msg.imageUrl exists */}
-                    {msg.imageUrl && (
-                      <ChatImageWithLoader src={msg.imageUrl} alt="Generated AI Image" />
+                    {/* AI Generated Image rendering */}
+                    {msg.imageUrl ? (
+                      <div>
+                        <p className="mb-2 font-medium">{msg.content}</p>
+                        <ChatImageWithLoader src={msg.imageUrl} alt="Generated AI visual content" />
+                      </div>
+                    ) : msg.role === "user" ? (
+                      <p className="whitespace-pre-wrap">{msg.content}</p>
+                    ) : (
+                      <ChatMessage content={msg.content} />
                     )}
                   </div>
                 </div>
               ))}
+
               {loading && (
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-violet-600 via-indigo-600 to-purple-600 flex items-center justify-center shrink-0 shadow-lg shadow-violet-900/30 mt-1">
-                    <Sparkles className="w-4 h-4 text-white animate-spin" style={{ animationDuration: "3s" }} />
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-violet-600 via-indigo-600 to-purple-600 flex items-center justify-center shrink-0 shadow-lg shadow-violet-900/30">
+                    <Sparkles className="w-4 h-4 text-white animate-spin" />
                   </div>
-                  <div className="px-5 py-4 rounded-3xl rounded-bl-sm border shadow-sm flex items-center gap-2" style={{ background: "var(--app-surface)", borderColor: "var(--app-border)" }}>
-                    <div className="flex gap-1.5 items-center h-4">
-                      <span className="w-2 h-2 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: "0ms" }} />
-                      <span className="w-2 h-2 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: "150ms" }} />
-                      <span className="w-2 h-2 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: "300ms" }} />
-                    </div>
+                  <div className="p-4 rounded-3xl border text-xs flex items-center gap-2 opacity-70" style={{ background: "var(--app-surface)", borderColor: "var(--app-border)" }}>
+                    <Loader2 className="w-4 h-4 animate-spin text-violet-400" /> Thinking & generating response...
                   </div>
                 </div>
               )}
+
               <div ref={bottomRef} />
             </div>
 
-            {/* Input area */}
-            <div className="px-4 pb-4 pt-1 relative z-10 shrink-0 max-w-3xl mx-auto w-full">
-              {limitError && <p className="text-xs text-red-400 text-center mb-2 font-semibold bg-red-500/10 py-1.5 px-3 rounded-full border border-red-500/20 max-w-md mx-auto">{limitError}</p>}
+            {/* Input bar section */}
+            <div className="p-4 border-t relative z-20 max-w-4xl mx-auto w-full" style={{ borderColor: "var(--app-border)" }}>
+              {/* Deck picker modal */}
+              {showDeckPicker && (
+                <div className="absolute bottom-full mb-2 left-4 right-4 p-3 rounded-2xl bg-black/90 border border-white/20 shadow-2xl backdrop-blur-xl max-h-48 overflow-y-auto space-y-1 z-30">
+                  <div className="flex justify-between items-center mb-2 px-1 text-xs font-bold opacity-60">
+                    <span>Select deck to attach</span>
+                    <button onClick={() => setShowDeckPicker(false)}><X className="w-3.5 h-3.5" /></button>
+                  </div>
+                  {userDecks.length === 0 ? (
+                    <div className="text-xs opacity-40 p-2">No decks found</div>
+                  ) : (
+                    userDecks.map(deck => (
+                      <div key={deck.id} onClick={() => handleAttachDeck(deck)} className="p-2 rounded-xl hover:bg-white/10 cursor-pointer text-xs flex items-center justify-between transition-all">
+                        <span className="font-semibold truncate">{deck.title}</span>
+                        <span className="text-[10px] opacity-50 shrink-0">{deck.card_count || 0} cards</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
 
-              {/* Attachments preview */}
+              {/* Attachments pills */}
               {(attachedFiles.length > 0 || attachedDecks.length > 0) && (
                 <div className="flex flex-wrap gap-2 mb-2 px-1">
                   {attachedFiles.map((f, i) => (
@@ -1059,71 +1126,47 @@ export default function Chat() {
               {messages.length > 0 && (
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5 px-1">
                   <div className="flex flex-wrap gap-1.5">
-                    <button onClick={() => convertToFlashcards()} disabled={converting || loading}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-violet-600/20 hover:bg-violet-600/30 text-violet-300 border border-violet-500/30 transition-all disabled:opacity-40 shadow-sm">
-                      {converting ? <Loader2 className="w-3.5 h-3.5 animate-spin text-violet-400" /> : <Layers className="w-3.5 h-3.5 text-violet-400" />} Turn into Flashcard Deck
+                    <button onClick={() => convertToFlashcards()} disabled={converting || loading} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-violet-600/20 hover:bg-violet-600/30 text-violet-300 border border-violet-500/30 transition-all shadow-sm">
+                      {converting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Layers className="w-3.5 h-3.5" />} Create Flashcards
                     </button>
-                    {smartActions?.quiz && (
-                      <button onClick={convertToQuiz} disabled={converting || loading}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-blue-600/20 text-blue-300 hover:bg-blue-600/30 border border-blue-500/40 transition-all shadow-sm">
-                        <Target className="w-3.5 h-3.5 text-blue-400" /> Make Quiz
-                      </button>
-                    )}
-                    {smartActions?.code && (
-                      <button onClick={() => handleSmartNavigate("code", smartActions.userPrompt)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25 border border-emerald-500/30 transition-all shadow-sm">
-                        <Code2 className="w-3.5 h-3.5 text-emerald-400" /> Open Code Sandbox
-                      </button>
-                    )}
+                    <button onClick={() => convertToQuiz()} disabled={converting || loading} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 transition-all shadow-sm">
+                      {converting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Target className="w-3.5 h-3.5" />} Generate Quiz
+                    </button>
                   </div>
-                  <button onClick={() => setMode("voice")} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-white/5 hover:bg-white/10 text-pink-300 border border-white/10 transition-all shadow-sm">
-                    <Mic className="w-3.5 h-3.5 text-pink-400" /> Voice Mode
-                  </button>
                 </div>
               )}
 
-              {/* Deck picker dropdown */}
-              {showDeckPicker && (
-                <div className="mb-3 rounded-2xl border shadow-2xl max-h-52 overflow-y-auto backdrop-blur-xl" style={{ background: "var(--app-surface)", borderColor: "var(--app-border)" }}>
-                  <div className="p-2.5 text-xs font-semibold opacity-50 border-b border-white/5 px-4">Select a deck to attach</div>
-                  {userDecks.length === 0 ? <p className="text-xs p-4 opacity-50 text-center">No decks found</p> : userDecks.map(d => (
-                    <button key={d.id} onClick={() => handleAttachDeck(d)} className="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-white/5 text-left transition-all">
-                      <Layers className="w-4 h-4 text-violet-400 shrink-0" />
-                      <span className="truncate font-medium">{d.title}</span>
-                      <span className="text-xs opacity-40 ml-auto bg-white/5 px-2 py-0.5 rounded-full">{d.card_count || 0} cards</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* Sleek prompt box */}
-              <div className={`rounded-3xl border shadow-xl p-2 px-3 flex items-end gap-2 transition-all ${isDictating ? "border-red-500/50 ring-2 ring-red-500/10" : "focus-within:border-violet-500/50 focus-within:ring-2 focus-within:ring-violet-500/10"}`}
-                style={{ background: "var(--app-surface)", borderColor: isDictating ? undefined : "var(--app-border)" }}>
+              {/* Main input card */}
+              <div
+                className={`rounded-3xl border p-2 flex items-end gap-2 transition-all ${isDictating ? "border-red-500/50 ring-2 ring-red-500/20" : "focus-within:border-violet-500/50 focus-within:ring-2 focus-within:ring-violet-500/10"}`}
+                style={{ background: "var(--app-surface)", borderColor: isDictating ? undefined : "var(--app-border)" }}
+              >
                 <input ref={fileInputRef} type="file" accept="image/*,.pdf,.txt,.docx" className="hidden" onChange={handleFileUpload} />
-                
+
                 <div className="flex items-center gap-1 pb-1">
                   <button onClick={() => fileInputRef.current?.click()} disabled={uploadingFile} title="Attach file" className="p-2 rounded-full hover:bg-white/5 opacity-60 hover:opacity-100 transition-all text-violet-300">
-                    {uploadingFile ? <Loader2 className="w-5 h-5 animate-spin" /> : <Paperclip className="w-5 h-5" />}
+                    {uploadingFile ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
                   </button>
-                  <button onClick={() => setShowDeckPicker(p => !p)} title="Attach study deck" className="p-2 rounded-full hover:bg-white/5 opacity-60 hover:opacity-100 transition-all text-blue-300">
-                    <Layers className="w-5 h-5" />
+                  <button onClick={() => setShowDeckPicker(prev => !prev)} title="Attach flashcard deck" className="p-2 rounded-full hover:bg-white/5 opacity-60 hover:opacity-100 transition-all text-blue-300">
+                    <Layers className="w-4 h-4" />
                   </button>
-                  <button
-                    onClick={toggleDictation}
-                    title={isDictating ? "Stop dictation" : "Dictate with voice"}
-                    className={`p-2 rounded-full transition-all ${isDictating ? "bg-red-500/20 text-red-400 animate-pulse border border-red-500/30" : "hover:bg-white/5 opacity-60 hover:opacity-100 text-pink-300"}`}
-                  >
-                    {isDictating ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                  <button onClick={toggleDictation} title={isDictating ? "Stop voice dictation" : "Voice dictation"} className={`p-2 rounded-full transition-all ${isDictating ? "bg-red-500/20 text-red-400 animate-pulse" : "hover:bg-white/5 opacity-60 hover:opacity-100 text-amber-300"}`}>
+                    {isDictating ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
                   </button>
                 </div>
 
                 <textarea
                   value={input}
-                  onChange={e => { setInput(e.target.value); setLimitError(null); }}
-                  onKeyDown={e => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), sendMessage())}
-                  placeholder={isDictating ? "🔴 Ready... speak now" : (t('askAnything') || "Ask Cognita anything...")}
+                  onChange={e => setInput(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      sendMessage();
+                    }
+                  }}
+                  placeholder={isDictating ? "Listening... speak now..." : "Ask Cognita anything..."}
                   rows={1}
-                  className="flex-1 bg-transparent text-sm md:text-base outline-none resize-none py-2.5 px-1 leading-relaxed max-h-32 placeholder:opacity-40 font-normal"
+                  className="flex-1 bg-transparent border-none outline-none resize-none py-2.5 px-1 leading-relaxed max-h-32 placeholder:opacity-40 font-normal"
                   style={{ color: "var(--app-text)" }}
                 />
 
