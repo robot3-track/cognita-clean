@@ -6,6 +6,46 @@ import { createPageUrl } from "@/utils";
 import { useTranslation } from "../hooks/useTranslation";
 import { updateProfile } from "firebase/auth";
 
+// Helper to compress and resize images into small JPEG base64 strings
+const compressImage = (file, maxWidth = 256, maxHeight = 256, quality = 0.7) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Export as JPEG with lower quality for minimal payload size
+        const compressedDataUrl = canvas.toDataURL("image/jpeg", quality);
+        resolve(compressedDataUrl);
+      };
+      img.onerror = (err) => reject(err);
+      img.src = e.target.result;
+    };
+    reader.onerror = (err) => reject(err);
+    reader.readAsDataURL(file);
+  });
+};
+
 export default function Profile() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -30,7 +70,7 @@ export default function Profile() {
   const [uploadingPic, setUploadingPic] = useState(false);
   const picInputRef = useRef(null);
 
-  // Helper to ensure a user record exists in db.entities.User and update/create it safely
+  // Helper to ensure user record exists in db.entities.User
   const upsertUserData = async (currentUser, fieldsToUpdate) => {
     if (!currentUser?.email) return null;
 
@@ -64,13 +104,11 @@ export default function Profile() {
         return;
       }
 
-      // Sync and retrieve full entity record to ensure custom fields are retained
       let dbUserRecord = null;
       try {
         const users = await db.entities.User.list("-created_date", 500).catch(() => []);
         dbUserRecord = users.find(usr => usr.email === u.email);
 
-        // If no entity record exists yet for logged in user, create it now
         if (!dbUserRecord && u.email) {
           await upsertUserData(u, {
             display_name: u.display_name || u.displayName || u.email.split("@")[0],
@@ -83,7 +121,6 @@ export default function Profile() {
         console.warn("Error fetching DB user record:", e);
       }
 
-      // Merge auth user with DB record data
       const mergedUser = {
         ...u,
         id: dbUserRecord?.id || u.id,
@@ -155,37 +192,37 @@ export default function Profile() {
     const file = e.target.files[0];
     if (!file) return;
     setUploadingPic(true);
+    setSaveError("");
+
     try {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
+      // Compress the image before saving
+      const compressedBase64 = await compressImage(file, 256, 256, 0.75);
+
+      // Attempt updating Firebase Auth profile
+      const currentUser = db.auth.getCurrentUser?.();
+      if (currentUser) {
         try {
-          const base64String = reader.result;
-          const currentUser = db.auth.getCurrentUser?.();
-          if (currentUser) {
-            await updateProfile(currentUser, { photoURL: base64String });
-          }
-
-          await upsertUserData(user, { profile_picture_url: base64String });
-
-          const refreshed = await db.auth.me();
-          setUser({
-            ...refreshed,
-            ...user,
-            profile_picture_url: base64String
-          });
-        } catch (err) {
-          console.error("Error saving picture data:", err);
-        } finally {
-          setUploadingPic(false);
+          await updateProfile(currentUser, { photoURL: compressedBase64 });
+        } catch (authErr) {
+          console.warn("Firebase Auth photoURL update warning:", authErr);
         }
-      };
-      reader.onerror = () => {
-        setUploadingPic(false);
-      };
-      reader.readAsDataURL(file);
+      }
+
+      // Persist to custom User DB collection
+      await upsertUserData(user, { profile_picture_url: compressedBase64 });
+
+      // Update state locally
+      setUser(prev => ({
+        ...prev,
+        profile_picture_url: compressedBase64
+      }));
+
     } catch (err) {
-      console.error(err);
+      console.error("Error saving picture data:", err);
+      setSaveError("Failed to process image. Please try a smaller photo.");
+    } finally {
       setUploadingPic(false);
+      if (picInputRef.current) picInputRef.current.value = "";
     }
   };
 
@@ -338,7 +375,9 @@ export default function Profile() {
         <div className="flex items-center gap-4 mb-4">
           <div className="relative shrink-0">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-violet-600 flex items-center justify-center overflow-hidden shadow-md border border-white/10">
-              {loadingUser ? (
+              {uploadingPic ? (
+                <Loader2 className="w-6 h-6 text-white animate-spin" />
+              ) : loadingUser ? (
                 <Loader2 className="w-6 h-6 text-white animate-spin" />
               ) : user?.profile_picture_url ? (
                 <img src={user.profile_picture_url} alt="profile" className="w-full h-full object-cover" />
@@ -349,7 +388,7 @@ export default function Profile() {
             <button
               onClick={() => picInputRef.current?.click()}
               disabled={uploadingPic || loadingUser}
-              className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-blue-600 border-2 flex items-center justify-center hover:bg-blue-500 transition-all shadow"
+              className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-blue-600 border-2 flex items-center justify-center hover:bg-blue-500 transition-all shadow disabled:opacity-50"
               style={{ borderColor: "var(--app-surface)" }}
             >
               {uploadingPic ? <Loader2 className="w-3 h-3 text-white animate-spin" /> : <Camera className="w-3 h-3 text-white" />}
