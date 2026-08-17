@@ -1242,6 +1242,9 @@ function ExamSimulator({ user, onSave }) {
   const [showMcqReview, setShowMcqReview] = useState(false);
   const [expandedExpl, setExpandedExpl] = useState({});
   const [showScoreResult, setShowScoreResult] = useState(false);
+  
+  // Mobile Tab State for Results View: 'summary' | 'mcq' | 'frq'
+  const [mobileTab, setMobileTab] = useState("summary");
 
   const cardStyle = { background: "#ffffff", border: "1px solid rgba(0,0,0,0.1)", color: "#1a1a2e" };
   const mutedStyle = { color: "rgba(0,0,0,0.55)" };
@@ -1307,7 +1310,6 @@ Return JSON "frqs": prompt, parts(array of items)`,
     const mcqCorrect = mcqQuestions.filter((q, i) => mcqAnswers[i] === q.correct).length;
     const mcqPct = mcqQuestions.length > 0 ? Math.round((mcqCorrect / mcqQuestions.length) * 100) : 0;
 
-    // Compile FRQ responses (new key format: `frqIdx_partIdx`)
     const compiledResponses = frqQuestions.map((frq, fi) => {
       if (frq.parts?.length) {
         return frq.parts.map((p, pi) => frqResponses[`${fi}_${pi}`] || "").join("\n\n");
@@ -1349,8 +1351,17 @@ Return JSON "frqs" array, each: { "score": number (0-10), "feedback": string }`,
     }
   };
 
-  const reset = () => { setPhase("setup"); setMcqQuestions([]); setFrqQuestions([]); setMcqAnswers({}); setFrqResponses({}); setResults(null); setShowMcqReview(false); setExpandedExpl({}); };
-  const apScoreColor = { 5: "text-emerald-400", 4: "text-blue-400", 3: "text-amber-400", 2: "text-orange-400", 1: "text-red-400" };
+  const reset = () => { 
+    setPhase("setup"); 
+    setMcqQuestions([]); 
+    setFrqQuestions([]); 
+    setMcqAnswers({}); 
+    setFrqResponses({}); 
+    setResults(null); 
+    setShowMcqReview(false); 
+    setExpandedExpl({});
+    setMobileTab("summary");
+  };
 
   // Fullscreen phases
   if (phase === "mcq" && mcqQuestions.length > 0) {
@@ -1367,6 +1378,86 @@ Return JSON "frqs" array, each: { "score": number (0-10), "feedback": string }`,
       frqResponses={frqResponses} setFrqResponses={setFrqResponses}
       onSubmit={gradeExam} onExit={reset} grading={grading} />;
   }
+
+  // Helper renderers for results
+  const renderSummarySection = () => (
+    <div className="space-y-4">
+      <div className="rounded-lg p-6 text-center border" style={{ background: "#f5f3ff", borderColor: "#ddd6fe" }}>
+        <p className="text-xs font-semibold mb-2 text-gray-500">Predicted AP Score</p>
+        <div className="text-7xl font-black mb-2" style={{ color: { 5: "#059669", 4: "#1a56db", 3: "#d97706", 2: "#ea580c", 1: "#dc2626" }[results.apScore] || "#7c3aed" }}>
+          {results.apScore}
+        </div>
+        <p className="text-sm font-bold mb-1 text-gray-700">
+          {results.apScore >= 4 ? "Qualified for College Credit" : results.apScore === 3 ? "Possibly Qualified" : "Needs Improvement"}
+        </p>
+        <p className="text-xs text-gray-500">Composite: {results.composite}/100</p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="rounded-2xl p-4 text-center" style={cardStyle}>
+          <p className="text-xs" style={mutedStyle}>MCQ Score</p>
+          <p className="text-2xl font-black text-blue-400">{results.mcqPct}%</p>
+          <p className="text-xs" style={mutedStyle}>{results.mcqCorrect}/{results.mcqTotal} correct</p>
+        </div>
+        <div className="rounded-2xl p-4 text-center" style={cardStyle}>
+          <p className="text-xs" style={mutedStyle}>FRQ Score</p>
+          <p className="text-2xl font-black text-pink-400">{results.frqTotal}/{results.frqMax}</p>
+          <p className="text-xs" style={mutedStyle}>{Math.round((results.frqTotal / results.frqMax) * 100)}%</p>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderFrqFeedbackSection = () => (
+    <div className="space-y-3">
+      {results.frqGrades.map((g, i) => (
+        <div key={i} className="rounded-lg p-4 border bg-white" style={{ borderColor: "rgba(0,0,0,0.1)" }}>
+          <div className="flex items-center justify-between mb-2">
+            <p className="font-bold text-sm text-gray-700">FRQ {i + 1} — AI Feedback</p>
+            <span className="font-black text-lg" style={{ color: g.score >= 7 ? "#059669" : g.score >= 5 ? "#d97706" : "#dc2626" }}>
+              {g.score}/10
+            </span>
+          </div>
+          <p className="text-xs leading-relaxed text-gray-500">{g.feedback}</p>
+        </div>
+      ))}
+    </div>
+  );
+
+  const renderMcqReviewSection = () => (
+    <div className="space-y-3">
+      {mcqQuestions.map((q, i) => (
+        <div key={i} className="rounded-lg p-4 bg-white border" style={{ borderColor: "rgba(0,0,0,0.1)" }}>
+          <p className="text-xs font-semibold mb-1 text-gray-400">Q{i + 1}{q.difficulty ? ` · ${q.difficulty}` : ""}</p>
+          <p className="text-sm mb-3 leading-relaxed text-gray-700">{q.question}</p>
+          <div className="space-y-1.5">
+            {(q.options || []).map((opt, j) => {
+              let cls = "border opacity-40 text-gray-400";
+              if (j === q.correct) cls = "border-emerald-500 bg-emerald-50 text-emerald-700 opacity-100";
+              else if (mcqAnswers[i] === j) cls = "border-red-400 bg-red-50 text-red-600 opacity-100";
+              return (
+                <div key={j} className={`flex items-center gap-3 px-3 py-2 rounded-xl text-xs border ${cls}`}
+                  style={{ borderColor: (j !== q.correct && mcqAnswers[i] !== j) ? "var(--app-border)" : undefined }}>
+                  <span className="font-bold w-4 shrink-0">({LETTERS[j]})</span><span>{opt}</span>
+                  {j === q.correct && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 ml-auto shrink-0" />}
+                  {mcqAnswers[i] === j && j !== q.correct && <XCircle className="w-3.5 h-3.5 text-red-400 ml-auto shrink-0" />}
+                </div>
+              );
+            })}
+          </div>
+          {q.explanation && (
+            <div className="mt-2">
+              <button onClick={() => setExpandedExpl(prev => ({ ...prev, [i]: !prev[i] }))}
+                className="flex items-center gap-1 text-xs font-semibold text-violet-400 hover:text-violet-300 transition-colors">
+                {expandedExpl[i] ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />} Explanation
+              </button>
+              {expandedExpl[i] && <p className="mt-2 text-xs leading-relaxed rounded-xl p-3 text-gray-500" style={{ background: "#f8f9fa" }}>{q.explanation}</p>}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
 
   return (
     <div className="space-y-4">
@@ -1462,72 +1553,50 @@ Return JSON "frqs" array, each: { "score": number (0-10), "feedback": string }`,
               </button>
             )}
           </div>
-          <div className="rounded-lg p-6 text-center border" style={{ background: "#f5f3ff", borderColor: "#ddd6fe" }}>
-            <p className="text-xs font-semibold mb-2 text-gray-500">Predicted AP Score</p>
-            <div className="text-7xl font-black mb-2" style={{ color: { 5: "#059669", 4: "#1a56db", 3: "#d97706", 2: "#ea580c", 1: "#dc2626" }[results.apScore] || "#7c3aed" }}>{results.apScore}</div>
-            <p className="text-sm font-bold mb-1 text-gray-700">{results.apScore >= 4 ? "Qualified for College Credit" : results.apScore === 3 ? "Possibly Qualified" : "Needs Improvement"}</p>
-            <p className="text-xs text-gray-500">Composite: {results.composite}/100</p>
+
+          {/* MOBILE NAVIGATION TABS (Visible only on mobile screens) */}
+          <div className="md:hidden flex rounded-xl bg-gray-100 p-1 border text-xs font-bold gap-1" style={{ borderColor: "rgba(0,0,0,0.08)" }}>
+            <button
+              onClick={() => setMobileTab("summary")}
+              className={`flex-1 py-2 rounded-lg transition-all text-center ${mobileTab === "summary" ? "bg-white text-violet-600 shadow-sm" : "text-gray-500"}`}
+            >
+              Summary
+            </button>
+            <button
+              onClick={() => setMobileTab("frq")}
+              className={`flex-1 py-2 rounded-lg transition-all text-center ${mobileTab === "frq" ? "bg-white text-violet-600 shadow-sm" : "text-gray-500"}`}
+            >
+              FRQ Grades
+            </button>
+            <button
+              onClick={() => setMobileTab("mcq")}
+              className={`flex-1 py-2 rounded-lg transition-all text-center ${mobileTab === "mcq" ? "bg-white text-violet-600 shadow-sm" : "text-gray-500"}`}
+            >
+              MCQs
+            </button>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-2xl p-4 text-center" style={cardStyle}>
-              <p className="text-xs" style={mutedStyle}>MCQ Score</p>
-              <p className="text-2xl font-black text-blue-400">{results.mcqPct}%</p>
-              <p className="text-xs" style={mutedStyle}>{results.mcqCorrect}/{results.mcqTotal} correct</p>
-            </div>
-            <div className="rounded-2xl p-4 text-center" style={cardStyle}>
-              <p className="text-xs" style={mutedStyle}>FRQ Score</p>
-              <p className="text-2xl font-black text-pink-400">{results.frqTotal}/{results.frqMax}</p>
-              <p className="text-xs" style={mutedStyle}>{Math.round((results.frqTotal / results.frqMax) * 100)}%</p>
-            </div>
+
+          {/* MOBILE CONTENT DISPLAY (Renders based on selected tab) */}
+          <div className="md:hidden">
+            {mobileTab === "summary" && renderSummarySection()}
+            {mobileTab === "frq" && renderFrqFeedbackSection()}
+            {mobileTab === "mcq" && renderMcqReviewSection()}
           </div>
-          {results.frqGrades.map((g, i) => (
-            <div key={i} className="rounded-lg p-4 border bg-white" style={{ borderColor: "rgba(0,0,0,0.1)" }}>
-              <div className="flex items-center justify-between mb-2">
-                <p className="font-bold text-sm text-gray-700">FRQ {i + 1} — AI Feedback</p>
-                <span className="font-black text-lg" style={{ color: g.score >= 7 ? "#059669" : g.score >= 5 ? "#d97706" : "#dc2626" }}>{g.score}/10</span>
-              </div>
-              <p className="text-xs leading-relaxed text-gray-500">{g.feedback}</p>
-            </div>
-          ))}
-          <button onClick={() => setShowMcqReview(o => !o)}
-            className="w-full flex items-center justify-between px-5 py-3 rounded-2xl text-sm font-semibold transition-all" style={cardStyle}>
-            <span>Review MCQ Answers & Explanations</span>
-            {showMcqReview ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </button>
-          {showMcqReview && (
-            <div className="space-y-3">
-              {mcqQuestions.map((q, i) => (
-                <div key={i} className="rounded-lg p-4 bg-white border" style={{ borderColor: "rgba(0,0,0,0.1)" }}>
-                  <p className="text-xs font-semibold mb-1 text-gray-400">Q{i + 1}{q.difficulty ? ` · ${q.difficulty}` : ""}</p>
-                  <p className="text-sm mb-3 leading-relaxed text-gray-700">{q.question}</p>
-                  <div className="space-y-1.5">
-                    {(q.options || []).map((opt, j) => {
-                      let cls = "border opacity-40 text-gray-400";
-                      if (j === q.correct) cls = "border-emerald-500 bg-emerald-50 text-emerald-700 opacity-100";
-                      else if (mcqAnswers[i] === j) cls = "border-red-400 bg-red-50 text-red-600 opacity-100";
-                      return (
-                        <div key={j} className={`flex items-center gap-3 px-3 py-2 rounded-xl text-xs border ${cls}`}
-                          style={{ borderColor: (j !== q.correct && mcqAnswers[i] !== j) ? "var(--app-border)" : undefined }}>
-                          <span className="font-bold w-4 shrink-0">({LETTERS[j]})</span><span>{opt}</span>
-                          {j === q.correct && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 ml-auto shrink-0" />}
-                          {mcqAnswers[i] === j && j !== q.correct && <XCircle className="w-3.5 h-3.5 text-red-400 ml-auto shrink-0" />}
-                        </div>
-                      );
-                    })}
-                  </div>
-                  {q.explanation && (
-                    <div className="mt-2">
-                      <button onClick={() => setExpandedExpl(prev => ({ ...prev, [i]: !prev[i] }))}
-                        className="flex items-center gap-1 text-xs font-semibold text-violet-400 hover:text-violet-300 transition-colors">
-                        {expandedExpl[i] ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />} Explanation
-                      </button>
-                      {expandedExpl[i] && <p className="mt-2 text-xs leading-relaxed rounded-xl p-3 text-gray-500" style={{ background: "#f8f9fa" }}>{q.explanation}</p>}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+
+          {/* DESKTOP CONTENT DISPLAY (Unchanged full vertical layout on larger screens) */}
+          <div className="hidden md:block space-y-4">
+            {renderSummarySection()}
+            {renderFrqFeedbackSection()}
+            
+            <button onClick={() => setShowMcqReview(o => !o)}
+              className="w-full flex items-center justify-between px-5 py-3 rounded-2xl text-sm font-semibold transition-all" style={cardStyle}>
+              <span>Review MCQ Answers & Explanations</span>
+              {showMcqReview ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
+            
+            {showMcqReview && renderMcqReviewSection()}
+          </div>
+
           <button onClick={reset} className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all" style={cardStyle}>
             <RotateCcw className="w-4 h-4" /> Take Another Exam
           </button>
