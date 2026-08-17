@@ -3,7 +3,7 @@ import { db } from '@/lib/firebase';
 import { useState, useEffect, useRef } from "react";
 
 import { incrementAiUsage } from "../components/aiUsageLimit";
-import { callAI } from "../lib/lynxApi"; // Lynx→Gemini→Cohere→Claude→Base44 fallback chain
+import { callAI } from "../lib/lynxApi";
 import { PenLine, Target, ClipboardList, Loader2, ChevronLeft, CheckCircle2, XCircle, Sparkles, ChevronDown, ChevronUp, RotateCcw, History, Trash2, Code2, Upload, Bookmark, BookmarkCheck, ChevronRight, MoreHorizontal, Highlighter, X, BookOpen } from "lucide-react";
 import APScoreResult from "../components/APScoreResult";
 import { getPremadeMCQ, getPremadeFRQ, hasPremade, getPremadeMCQCount } from "../lib/apPremadeQuestions";
@@ -1382,9 +1382,9 @@ Return JSON "frqs" array, each: { "score": number (0-10), "feedback": string }`,
   // Helper renderers for results
   const renderSummarySection = () => (
     <div className="space-y-4">
-      <div className="rounded-lg p-6 text-center border" style={{ background: "#f5f3ff", borderColor: "#ddd6fe" }}>
+      <div className="rounded-lg p-4 md:p-6 text-center border" style={{ background: "#f5f3ff", borderColor: "#ddd6fe" }}>
         <p className="text-xs font-semibold mb-2 text-gray-500">Predicted AP Score</p>
-        <div className="text-7xl font-black mb-2" style={{ color: { 5: "#059669", 4: "#1a56db", 3: "#d97706", 2: "#ea580c", 1: "#dc2626" }[results.apScore] || "#7c3aed" }}>
+        <div className="text-6xl md:text-7xl font-black mb-2" style={{ color: { 5: "#059669", 4: "#1a56db", 3: "#d97706", 2: "#ea580c", 1: "#dc2626" }[results.apScore] || "#7c3aed" }}>
           {results.apScore}
         </div>
         <p className="text-sm font-bold mb-1 text-gray-700">
@@ -1396,12 +1396,12 @@ Return JSON "frqs" array, each: { "score": number (0-10), "feedback": string }`,
       <div className="grid grid-cols-2 gap-3">
         <div className="rounded-2xl p-4 text-center" style={cardStyle}>
           <p className="text-xs" style={mutedStyle}>MCQ Score</p>
-          <p className="text-2xl font-black text-blue-400">{results.mcqPct}%</p>
+          <p className="text-xl md:text-2xl font-black text-blue-400">{results.mcqPct}%</p>
           <p className="text-xs" style={mutedStyle}>{results.mcqCorrect}/{results.mcqTotal} correct</p>
         </div>
         <div className="rounded-2xl p-4 text-center" style={cardStyle}>
           <p className="text-xs" style={mutedStyle}>FRQ Score</p>
-          <p className="text-2xl font-black text-pink-400">{results.frqTotal}/{results.frqMax}</p>
+          <p className="text-xl md:text-2xl font-black text-pink-400">{results.frqTotal}/{results.frqMax}</p>
           <p className="text-xs" style={mutedStyle}>{Math.round((results.frqTotal / results.frqMax) * 100)}%</p>
         </div>
       </div>
@@ -1414,7 +1414,7 @@ Return JSON "frqs" array, each: { "score": number (0-10), "feedback": string }`,
         <div key={i} className="rounded-lg p-4 border bg-white" style={{ borderColor: "rgba(0,0,0,0.1)" }}>
           <div className="flex items-center justify-between mb-2">
             <p className="font-bold text-sm text-gray-700">FRQ {i + 1} — AI Feedback</p>
-            <span className="font-black text-lg" style={{ color: g.score >= 7 ? "#059669" : g.score >= 5 ? "#d97706" : "#dc2626" }}>
+            <span className="font-black text-base md:text-lg" style={{ color: g.score >= 7 ? "#059669" : g.score >= 5 ? "#d97706" : "#dc2626" }}>
               {g.score}/10
             </span>
           </div>
@@ -1427,20 +1427,21 @@ Return JSON "frqs" array, each: { "score": number (0-10), "feedback": string }`,
   const renderMcqReviewSection = () => (
     <div className="space-y-3">
       {mcqQuestions.map((q, i) => (
-        <div key={i} className="rounded-lg p-4 bg-white border" style={{ borderColor: "rgba(0,0,0,0.1)" }}>
+        <div key={i} className="rounded-lg p-3.5 md:p-4 bg-white border" style={{ borderColor: "rgba(0,0,0,0.1)" }}>
           <p className="text-xs font-semibold mb-1 text-gray-400">Q{i + 1}{q.difficulty ? ` · ${q.difficulty}` : ""}</p>
-          <p className="text-sm mb-3 leading-relaxed text-gray-700">{q.question}</p>
+          <p className="text-xs md:text-sm mb-3 leading-relaxed text-gray-700">{q.question}</p>
           <div className="space-y-1.5">
             {(q.options || []).map((opt, j) => {
               let cls = "border opacity-40 text-gray-400";
               if (j === q.correct) cls = "border-emerald-500 bg-emerald-50 text-emerald-700 opacity-100";
               else if (mcqAnswers[i] === j) cls = "border-red-400 bg-red-50 text-red-600 opacity-100";
               return (
-                <div key={j} className={`flex items-center gap-3 px-3 py-2 rounded-xl text-xs border ${cls}`}
+                <div key={j} className={`flex items-start md:items-center gap-2.5 px-3 py-2 rounded-xl text-xs border ${cls}`}
                   style={{ borderColor: (j !== q.correct && mcqAnswers[i] !== j) ? "var(--app-border)" : undefined }}>
-                  <span className="font-bold w-4 shrink-0">({LETTERS[j]})</span><span>{opt}</span>
-                  {j === q.correct && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 ml-auto shrink-0" />}
-                  {mcqAnswers[i] === j && j !== q.correct && <XCircle className="w-3.5 h-3.5 text-red-400 ml-auto shrink-0" />}
+                  <span className="font-bold w-4 shrink-0 font-mono">({LETTERS[j]})</span>
+                  <span className="break-words flex-1">{opt}</span>
+                  {j === q.correct && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 ml-auto shrink-0 mt-0.5 md:mt-0" />}
+                  {mcqAnswers[i] === j && j !== q.correct && <XCircle className="w-3.5 h-3.5 text-red-400 ml-auto shrink-0 mt-0.5 md:mt-0" />}
                 </div>
               );
             })}
@@ -1448,7 +1449,7 @@ Return JSON "frqs" array, each: { "score": number (0-10), "feedback": string }`,
           {q.explanation && (
             <div className="mt-2">
               <button onClick={() => setExpandedExpl(prev => ({ ...prev, [i]: !prev[i] }))}
-                className="flex items-center gap-1 text-xs font-semibold text-violet-400 hover:text-violet-300 transition-colors">
+                className="flex items-center gap-1 text-xs font-semibold text-violet-400 hover:text-violet-300 transition-colors py-1">
                 {expandedExpl[i] ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />} Explanation
               </button>
               {expandedExpl[i] && <p className="mt-2 text-xs leading-relaxed rounded-xl p-3 text-gray-500" style={{ background: "#f8f9fa" }}>{q.explanation}</p>}
@@ -1460,16 +1461,16 @@ Return JSON "frqs" array, each: { "score": number (0-10), "feedback": string }`,
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 max-w-full overflow-hidden px-1 sm:px-0">
       {phase === "setup" && (
-        <div className="rounded-2xl p-5" style={cardStyle}>
+        <div className="rounded-2xl p-4 md:p-5" style={cardStyle}>
           <h3 className="font-bold text-sm mb-1 flex items-center gap-2"><ClipboardList className="w-4 h-4 text-violet-400" /> Full AP Exam Simulation</h3>
           <p className="text-xs mb-4" style={mutedStyle}>Section I (MCQ) + Section II (FRQ) → predicted AP score 1–5</p>
           <div className="space-y-3">
             <div>
               <label className="text-xs font-semibold mb-1 block" style={mutedStyle}>Subject</label>
               <select value={subject} onChange={e => { setSubject(e.target.value); setMode(hasPremade(e.target.value) ? "premade" : "ai"); }}
-                className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
+                className="w-full px-3 py-2.5 rounded-xl text-xs md:text-sm outline-none touch-manipulation"
                 style={{ background: "#f8f9fa", border: "1px solid rgba(0,0,0,0.15)", color: "#1a1a2e" }}>
                 {AP_SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
@@ -1481,7 +1482,7 @@ Return JSON "frqs" array, each: { "score": number (0-10), "feedback": string }`,
                 Section I: <span className="text-violet-400 font-black">{mcqCount} MCQs</span>
               </label>
               <input type="range" min={20} max={60} step={5} value={mcqCount} onChange={e => setMcqCount(Number(e.target.value))}
-                className="w-full accent-violet-500" />
+                className="w-full accent-violet-500 h-2 touch-none" />
               <div className="flex justify-between text-[10px] mt-0.5" style={mutedStyle}>
                 <span>20</span><span>40</span><span>60</span>
               </div>
@@ -1490,16 +1491,16 @@ Return JSON "frqs" array, each: { "score": number (0-10), "feedback": string }`,
             {/* Mode selector */}
             <div className="grid grid-cols-2 gap-2">
               <button onClick={() => setMode("premade")} disabled={!subjectHasPremade}
-                className={`flex flex-col items-center gap-1 px-3 py-3 rounded-xl border text-xs font-semibold transition-all disabled:opacity-30 ${mode === "premade" ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-400" : ""}`}
-                style={mode !== "premade" ? { borderColor: "var(--app-border)" } : {}}>
-                <BookOpen className="w-4 h-4" />
+                className={`flex flex-col items-center justify-center gap-1 px-2 md:px-3 py-2.5 md:py-3 rounded-xl border text-xs font-semibold transition-all active:scale-[0.98] disabled:opacity-30 ${mode === "premade" ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-600" : ""}`}
+                style={mode !== "premade" ? { borderColor: "rgba(0,0,0,0.1)" } : {}}>
+                <BookOpen className="w-4 h-4 shrink-0" />
                 <span>Premade</span>
-                <span className="text-[9px] opacity-70">Free · Official style</span>
+                <span className="text-[9px] opacity-70">Free · Official</span>
               </button>
               <button onClick={() => setMode("ai")}
-                className={`flex flex-col items-center gap-1 px-3 py-3 rounded-xl border text-xs font-semibold transition-all ${mode === "ai" ? "border-violet-500/50 bg-violet-500/10 text-violet-400" : ""}`}
-                style={mode !== "ai" ? { borderColor: "var(--app-border)" } : {}}>
-                <Sparkles className="w-4 h-4" />
+                className={`flex flex-col items-center justify-center gap-1 px-2 md:px-3 py-2.5 md:py-3 rounded-xl border text-xs font-semibold transition-all active:scale-[0.98] ${mode === "ai" ? "border-violet-500/50 bg-violet-500/10 text-violet-600" : ""}`}
+                style={mode !== "ai" ? { borderColor: "rgba(0,0,0,0.1)" } : {}}>
+                <Sparkles className="w-4 h-4 shrink-0" />
                 <span>AI Generated</span>
                 <span className="text-[9px] opacity-70">3 credits · Unique</span>
               </button>
@@ -1513,7 +1514,7 @@ Return JSON "frqs" array, each: { "score": number (0-10), "feedback": string }`,
               {mode === "premade" && subjectHasPremade && <p>✅ Free — no AI credits used</p>}
             </div>
             <button onClick={startExam}
-              className="w-full flex items-center justify-center gap-2 text-white py-3 rounded-xl font-semibold text-sm transition-all"
+              className="w-full flex items-center justify-center gap-2 text-white py-3 rounded-xl font-semibold text-xs md:text-sm active:scale-[0.99] transition-all touch-manipulation"
               style={{ background: mode === "premade" && subjectHasPremade ? "#059669" : "#7c3aed" }}>
               {mode === "premade" && subjectHasPremade ? <BookOpen className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
               {mode === "premade" && subjectHasPremade ? "Start Premade Exam" : "Generate AI Exam (3 credits)"}
@@ -1523,9 +1524,9 @@ Return JSON "frqs" array, each: { "score": number (0-10), "feedback": string }`,
       )}
 
       {phase === "generating" && (
-        <div className="rounded-2xl p-10 text-center" style={cardStyle}>
-          <Loader2 className="w-10 h-10 text-violet-500 animate-spin mx-auto mb-3" />
-          <p className="font-semibold">Building your {subject} exam...</p>
+        <div className="rounded-2xl p-8 md:p-10 text-center" style={cardStyle}>
+          <Loader2 className="w-8 h-8 md:w-10 md:h-10 text-violet-500 animate-spin mx-auto mb-3" />
+          <p className="font-semibold text-sm md:text-base">Building your {subject} exam...</p>
           <p className="text-xs mt-1" style={mutedStyle}>Generating {mcqCount} MCQs + 2 FRQs</p>
         </div>
       )}
@@ -1544,52 +1545,54 @@ Return JSON "frqs" array, each: { "score": number (0-10), "feedback": string }`,
       {phase === "results" && results && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <p className="text-xs text-emerald-500">✓ Saved to your review history</p>
+            <p className="text-xs text-emerald-500 font-medium">✓ Saved to history</p>
             {!showScoreResult && (
               <button onClick={() => setShowScoreResult(true)}
-                className="px-3 py-1.5 rounded-lg text-xs font-bold text-white transition-all hover:opacity-90"
+                className="px-3 py-1.5 rounded-lg text-xs font-bold text-white transition-all active:scale-95"
                 style={{ background: "#7c3aed" }}>
                 View AP Score
               </button>
             )}
           </div>
 
-          {/* MOBILE NAVIGATION TABS (Visible only on mobile screens) */}
-          <div className="md:hidden flex rounded-xl bg-gray-100 p-1 border text-xs font-bold gap-1" style={{ borderColor: "rgba(0,0,0,0.08)" }}>
-            <button
-              onClick={() => setMobileTab("summary")}
-              className={`flex-1 py-2 rounded-lg transition-all text-center ${mobileTab === "summary" ? "bg-white text-violet-600 shadow-sm" : "text-gray-500"}`}
-            >
-              Summary
-            </button>
-            <button
-              onClick={() => setMobileTab("frq")}
-              className={`flex-1 py-2 rounded-lg transition-all text-center ${mobileTab === "frq" ? "bg-white text-violet-600 shadow-sm" : "text-gray-500"}`}
-            >
-              FRQ Grades
-            </button>
-            <button
-              onClick={() => setMobileTab("mcq")}
-              className={`flex-1 py-2 rounded-lg transition-all text-center ${mobileTab === "mcq" ? "bg-white text-violet-600 shadow-sm" : "text-gray-500"}`}
-            >
-              MCQs
-            </button>
+          {/* MOBILE NAVIGATION TABS */}
+          <div className="md:hidden sticky top-0 z-10 bg-white/95 backdrop-blur-sm pt-1 pb-2">
+            <div className="flex rounded-xl bg-gray-100 p-1 border text-xs font-bold gap-1" style={{ borderColor: "rgba(0,0,0,0.08)" }}>
+              <button
+                onClick={() => setMobileTab("summary")}
+                className={`flex-1 py-2 rounded-lg transition-all text-center touch-manipulation ${mobileTab === "summary" ? "bg-white text-violet-600 shadow-sm" : "text-gray-500"}`}
+              >
+                Summary
+              </button>
+              <button
+                onClick={() => setMobileTab("frq")}
+                className={`flex-1 py-2 rounded-lg transition-all text-center touch-manipulation ${mobileTab === "frq" ? "bg-white text-violet-600 shadow-sm" : "text-gray-500"}`}
+              >
+                FRQ Grades
+              </button>
+              <button
+                onClick={() => setMobileTab("mcq")}
+                className={`flex-1 py-2 rounded-lg transition-all text-center touch-manipulation ${mobileTab === "mcq" ? "bg-white text-violet-600 shadow-sm" : "text-gray-500"}`}
+              >
+                MCQs
+              </button>
+            </div>
           </div>
 
-          {/* MOBILE CONTENT DISPLAY (Renders based on selected tab) */}
+          {/* MOBILE CONTENT DISPLAY */}
           <div className="md:hidden">
             {mobileTab === "summary" && renderSummarySection()}
             {mobileTab === "frq" && renderFrqFeedbackSection()}
             {mobileTab === "mcq" && renderMcqReviewSection()}
           </div>
 
-          {/* DESKTOP CONTENT DISPLAY (Unchanged full vertical layout on larger screens) */}
+          {/* DESKTOP CONTENT DISPLAY */}
           <div className="hidden md:block space-y-4">
             {renderSummarySection()}
             {renderFrqFeedbackSection()}
             
             <button onClick={() => setShowMcqReview(o => !o)}
-              className="w-full flex items-center justify-between px-5 py-3 rounded-2xl text-sm font-semibold transition-all" style={cardStyle}>
+              className="w-full flex items-center justify-between px-5 py-3 rounded-2xl text-sm font-semibold transition-all hover:bg-gray-50" style={cardStyle}>
               <span>Review MCQ Answers & Explanations</span>
               {showMcqReview ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
@@ -1597,7 +1600,7 @@ Return JSON "frqs" array, each: { "score": number (0-10), "feedback": string }`,
             {showMcqReview && renderMcqReviewSection()}
           </div>
 
-          <button onClick={reset} className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all" style={cardStyle}>
+          <button onClick={reset} className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-xs md:text-sm active:scale-[0.99] transition-all touch-manipulation" style={cardStyle}>
             <RotateCcw className="w-4 h-4" /> Take Another Exam
           </button>
         </div>
