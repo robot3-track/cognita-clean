@@ -1,9 +1,16 @@
 import { db } from '@/lib/firebase';
-
 import { useState, useRef, useEffect } from "react";
-
 import { callTutor } from "@/lib/tutorApi";
-import { Send, Loader2, ArrowLeft, Search } from "lucide-react";
+import { 
+  Send, Loader2, ArrowLeft, Search, 
+  Calculator, PieChart, Zap, Microscope, Rocket, TestTube, Dna, Leaf, 
+  PenTool, BookOpen, Landmark, Globe, Castle, Landmark as Government, 
+  DollarSign, TrendingUp, Brain, Coffee, Laptop, Languages, Palette, 
+  Map, Plus, X, Ruler, TrendingDown, Sprout, Telescope, BookMarked, 
+  Scroll, MessageCircle, Cpu, Database, Network, Wrench, Briefcase, 
+  ClipboardList, Megaphone, FileText, Handshake, GitBranch, 
+  Atom, Code, Layers, FileCode, Server, GraduationCap
+} from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
@@ -15,31 +22,31 @@ const TUTOR_CATEGORIES = [
     color: "from-violet-600 to-purple-700",
     textColor: "text-violet-400",
     tutors: [
-      { id: "ap_calc_ab", name: "AP Calc AB", emoji: "📐", subject: "AP Calculus AB", persona: "calculus teacher" },
-      { id: "ap_calc_bc", name: "AP Calc BC", emoji: "∫", subject: "AP Calculus BC", persona: "calculus teacher" },
-      { id: "ap_stats", name: "AP Statistics", emoji: "📊", subject: "AP Statistics", persona: "statistics professor" },
-      { id: "ap_physics1", name: "AP Physics 1", emoji: "⚡", subject: "AP Physics 1", persona: "physics teacher" },
-      { id: "ap_physics2", name: "AP Physics 2", emoji: "🔬", subject: "AP Physics 2", persona: "physics teacher" },
-      { id: "ap_phys_c_mech", name: "AP Physics C: Mech", emoji: "🚀", subject: "AP Physics C: Mechanics", persona: "physics professor" },
-      { id: "ap_chem", name: "AP Chemistry", emoji: "⚗️", subject: "AP Chemistry", persona: "chemistry teacher" },
-      { id: "ap_bio", name: "AP Biology", emoji: "🧬", subject: "AP Biology", persona: "biology teacher" },
-      { id: "ap_enviro", name: "AP Environmental", emoji: "🌿", subject: "AP Environmental Science", persona: "environmental science teacher" },
-      { id: "ap_lang", name: "AP Lang", emoji: "✍️", subject: "AP English Language & Composition", persona: "English teacher" },
-      { id: "ap_lit", name: "AP Literature", emoji: "📚", subject: "AP English Literature & Composition", persona: "English literature teacher" },
-      { id: "ap_ush", name: "AP US History", emoji: "🗽", subject: "AP United States History", persona: "history teacher" },
-      { id: "ap_world", name: "AP World History", emoji: "🌍", subject: "AP World History", persona: "world history teacher" },
-      { id: "ap_euro", name: "AP Euro History", emoji: "🏰", subject: "AP European History", persona: "European history teacher" },
-      { id: "ap_gov_comp", name: "AP Comp Gov", emoji: "🌐", subject: "AP Comparative Government & Politics", persona: "political science teacher" },
-      { id: "ap_gov_us", name: "AP US Gov", emoji: "🏛️", subject: "AP United States Government & Politics", persona: "civics teacher" },
-      { id: "ap_econ_micro", name: "AP Microecon", emoji: "💰", subject: "AP Microeconomics", persona: "economics teacher" },
-      { id: "ap_econ_macro", name: "AP Macroecon", emoji: "📈", subject: "AP Macroeconomics", persona: "economics teacher" },
-      { id: "ap_psych", name: "AP Psychology", emoji: "🧠", subject: "AP Psychology", persona: "psychology teacher" },
-      { id: "ap_cs_a", name: "AP CS A", emoji: "☕", subject: "AP Computer Science A (Java)", persona: "computer science teacher" },
-      { id: "ap_csp", name: "AP CS Principles", emoji: "💻", subject: "AP Computer Science Principles", persona: "computer science teacher" },
-      { id: "ap_spanish", name: "AP Spanish", emoji: "🇪🇸", subject: "AP Spanish Language", persona: "Spanish language teacher" },
-      { id: "ap_french", name: "AP French", emoji: "🇫🇷", subject: "AP French Language", persona: "French language teacher" },
-      { id: "ap_art_hist", name: "AP Art History", emoji: "🎨", subject: "AP Art History", persona: "art history professor" },
-      { id: "ap_human_geo", name: "AP Human Geography", emoji: "🗺️", subject: "AP Human Geography", persona: "geography teacher" },
+      { id: "ap_calc_ab", name: "AP Calc AB", icon: Calculator, subject: "AP Calculus AB", persona: "calculus teacher" },
+      { id: "ap_calc_bc", name: "AP Calc BC", icon: FunctionSquare, subject: "AP Calculus BC", persona: "calculus teacher" },
+      { id: "ap_stats", name: "AP Statistics", icon: PieChart, subject: "AP Statistics", persona: "statistics professor" },
+      { id: "ap_physics1", name: "AP Physics 1", icon: Zap, subject: "AP Physics 1", persona: "physics teacher" },
+      { id: "ap_physics2", name: "AP Physics 2", icon: Microscope, subject: "AP Physics 2", persona: "physics teacher" },
+      { id: "ap_phys_c_mech", name: "AP Physics C: Mech", icon: Rocket, subject: "AP Physics C: Mechanics", persona: "physics professor" },
+      { id: "ap_chem", name: "AP Chemistry", icon: TestTube, subject: "AP Chemistry", persona: "chemistry teacher" },
+      { id: "ap_bio", name: "AP Biology", icon: Dna, subject: "AP Biology", persona: "biology teacher" },
+      { id: "ap_enviro", name: "AP Environmental", icon: Leaf, subject: "AP Environmental Science", persona: "environmental science teacher" },
+      { id: "ap_lang", name: "AP Lang", icon: PenTool, subject: "AP English Language & Composition", persona: "English teacher" },
+      { id: "ap_lit", name: "AP Literature", icon: BookOpen, subject: "AP English Literature & Composition", persona: "English literature teacher" },
+      { id: "ap_ush", name: "AP US History", icon: Landmark, subject: "AP United States History", persona: "history teacher" },
+      { id: "ap_world", name: "AP World History", icon: Globe, subject: "AP World History", persona: "world history teacher" },
+      { id: "ap_euro", name: "AP Euro History", icon: Castle, subject: "AP European History", persona: "European history teacher" },
+      { id: "ap_gov_comp", name: "AP Comp Gov", icon: Network, subject: "AP Comparative Government & Politics", persona: "political science teacher" },
+      { id: "ap_gov_us", name: "AP US Gov", icon: Government, subject: "AP United States Government & Politics", persona: "civics teacher" },
+      { id: "ap_econ_micro", name: "AP Microecon", icon: DollarSign, subject: "AP Microeconomics", persona: "economics teacher" },
+      { id: "ap_econ_macro", name: "AP Macroecon", icon: TrendingUp, subject: "AP Macroeconomics", persona: "economics teacher" },
+      { id: "ap_psych", name: "AP Psychology", icon: Brain, subject: "AP Psychology", persona: "psychology teacher" },
+      { id: "ap_cs_a", name: "AP CS A", icon: Coffee, subject: "AP Computer Science A (Java)", persona: "computer science teacher" },
+      { id: "ap_csp", name: "AP CS Principles", icon: Laptop, subject: "AP Computer Science Principles", persona: "computer science teacher" },
+      { id: "ap_spanish", name: "AP Spanish", icon: Languages, subject: "AP Spanish Language", persona: "Spanish language teacher" },
+      { id: "ap_french", name: "AP French", icon: MessageCircle, subject: "AP French Language", persona: "French language teacher" },
+      { id: "ap_art_hist", name: "AP Art History", icon: Palette, subject: "AP Art History", persona: "art history professor" },
+      { id: "ap_human_geo", name: "AP Human Geography", icon: Map, subject: "AP Human Geography", persona: "geography teacher" },
     ],
   },
   {
@@ -47,19 +54,19 @@ const TUTOR_CATEGORIES = [
     color: "from-blue-600 to-cyan-700",
     textColor: "text-blue-400",
     tutors: [
-      { id: "hs_algebra1", name: "Algebra 1", emoji: "➕", subject: "Algebra 1", persona: "math teacher" },
-      { id: "hs_algebra2", name: "Algebra 2", emoji: "✖️", subject: "Algebra 2", persona: "math teacher" },
-      { id: "hs_geometry", name: "Geometry", emoji: "📏", subject: "Geometry", persona: "math teacher" },
-      { id: "hs_precalc", name: "Precalculus", emoji: "📉", subject: "Precalculus & Trigonometry", persona: "math teacher" },
-      { id: "hs_bio", name: "Biology", emoji: "🌱", subject: "High School Biology", persona: "biology teacher" },
-      { id: "hs_chem", name: "Chemistry", emoji: "🧪", subject: "High School Chemistry", persona: "chemistry teacher" },
-      { id: "hs_physics", name: "Physics", emoji: "🔭", subject: "High School Physics", persona: "physics teacher" },
-      { id: "hs_english", name: "English", emoji: "📖", subject: "High School English", persona: "English teacher" },
-      { id: "hs_history", name: "US History", emoji: "📜", subject: "US History", persona: "history teacher" },
-      { id: "hs_world_hist", name: "World History", emoji: "🌎", subject: "World History", persona: "world history teacher" },
-      { id: "hs_economics", name: "Economics", emoji: "📊", subject: "Economics", persona: "economics teacher" },
-      { id: "hs_spanish", name: "Spanish", emoji: "💬", subject: "Spanish", persona: "Spanish language teacher" },
-      { id: "hs_french", name: "French", emoji: "🥐", subject: "French", persona: "French language teacher" },
+      { id: "hs_algebra1", name: "Algebra 1", icon: Plus, subject: "Algebra 1", persona: "math teacher" },
+      { id: "hs_algebra2", name: "Algebra 2", icon: X, subject: "Algebra 2", persona: "math teacher" },
+      { id: "hs_geometry", name: "Geometry", icon: Ruler, subject: "Geometry", persona: "math teacher" },
+      { id: "hs_precalc", name: "Precalculus", icon: TrendingDown, subject: "Precalculus & Trigonometry", persona: "math teacher" },
+      { id: "hs_bio", name: "Biology", icon: Sprout, subject: "High School Biology", persona: "biology teacher" },
+      { id: "hs_chem", name: "Chemistry", icon: TestTube, subject: "High School Chemistry", persona: "chemistry teacher" },
+      { id: "hs_physics", name: "Physics", icon: Telescope, subject: "High School Physics", persona: "physics teacher" },
+      { id: "hs_english", name: "English", icon: BookMarked, subject: "High School English", persona: "English teacher" },
+      { id: "hs_history", name: "US History", icon: Scroll, subject: "US History", persona: "history teacher" },
+      { id: "hs_world_hist", name: "World History", icon: Globe, subject: "World History", persona: "world history teacher" },
+      { id: "hs_economics", name: "Economics", icon: PieChart, subject: "Economics", persona: "economics teacher" },
+      { id: "hs_spanish", name: "Spanish", icon: MessageCircle, subject: "Spanish", persona: "Spanish language teacher" },
+      { id: "hs_french", name: "French", icon: MessageCircle, subject: "French", persona: "French language teacher" },
     ],
   },
   {
@@ -67,26 +74,26 @@ const TUTOR_CATEGORIES = [
     color: "from-emerald-600 to-teal-700",
     textColor: "text-emerald-400",
     tutors: [
-      { id: "college_calc1", name: "Calculus I", emoji: "📐", subject: "Calculus I (Differential)", persona: "university calculus professor" },
-      { id: "college_calc2", name: "Calculus II", emoji: "∫", subject: "Calculus II (Integral & Series)", persona: "university calculus professor" },
-      { id: "college_calc3", name: "Calculus III", emoji: "🌀", subject: "Multivariable Calculus (Calc III)", persona: "university mathematics professor" },
-      { id: "college_diffeq", name: "Differential Equations", emoji: "Δ", subject: "Ordinary Differential Equations", persona: "mathematics professor" },
-      { id: "college_linalg", name: "Linear Algebra", emoji: "⬡", subject: "Linear Algebra", persona: "mathematics professor" },
-      { id: "college_stats", name: "Statistics", emoji: "📉", subject: "College Statistics & Probability", persona: "statistics professor" },
-      { id: "college_physics1", name: "Physics I", emoji: "⚙️", subject: "University Physics I (Mechanics)", persona: "physics professor" },
-      { id: "college_physics2", name: "Physics II", emoji: "⚡", subject: "University Physics II (E&M, Waves)", persona: "physics professor" },
-      { id: "college_chem1", name: "General Chem I", emoji: "⚗️", subject: "General Chemistry I", persona: "chemistry professor" },
-      { id: "college_chem2", name: "General Chem II", emoji: "🧫", subject: "General Chemistry II", persona: "chemistry professor" },
-      { id: "college_ochem", name: "Organic Chemistry", emoji: "🔬", subject: "Organic Chemistry", persona: "organic chemistry professor" },
-      { id: "college_bio1", name: "Cell Biology", emoji: "🦠", subject: "Cell & Molecular Biology", persona: "biology professor" },
-      { id: "college_genetics", name: "Genetics", emoji: "🧬", subject: "Genetics & Genomics", persona: "genetics professor" },
-      { id: "college_econ", name: "Economics", emoji: "📊", subject: "College Economics (Micro & Macro)", persona: "economics professor" },
-      { id: "college_psych", name: "Psychology", emoji: "🧠", subject: "Introductory Psychology", persona: "psychology professor" },
-      { id: "college_sociology", name: "Sociology", emoji: "👥", subject: "Introductory Sociology", persona: "sociology professor" },
-      { id: "college_english_lit", name: "English Literature", emoji: "📚", subject: "College English Literature", persona: "English literature professor" },
-      { id: "college_writing", name: "Academic Writing", emoji: "✍️", subject: "Academic Writing & Research", persona: "writing professor" },
-      { id: "college_history", name: "World History", emoji: "🌍", subject: "World History", persona: "history professor" },
-      { id: "college_poli_sci", name: "Political Science", emoji: "🏛️", subject: "Political Science", persona: "political science professor" },
+      { id: "college_calc1", name: "Calculus I", icon: Calculator, subject: "Calculus I (Differential)", persona: "university calculus professor" },
+      { id: "college_calc2", name: "Calculus II", icon: FunctionSquare, subject: "Calculus II (Integral & Series)", persona: "university calculus professor" },
+      { id: "college_calc3", name: "Calculus III", icon: Atom, subject: "Multivariable Calculus (Calc III)", persona: "university mathematics professor" },
+      { id: "college_diffeq", name: "Differential Equations", icon: Layers, subject: "Ordinary Differential Equations", persona: "mathematics professor" },
+      { id: "college_linalg", name: "Linear Algebra", icon: Network, subject: "Linear Algebra", persona: "mathematics professor" },
+      { id: "college_stats", name: "Statistics", icon: TrendingDown, subject: "College Statistics & Probability", persona: "statistics professor" },
+      { id: "college_physics1", name: "Physics I", icon: Wrench, subject: "University Physics I (Mechanics)", persona: "physics professor" },
+      { id: "college_physics2", name: "Physics II", icon: Zap, subject: "University Physics II (E&M, Waves)", persona: "physics professor" },
+      { id: "college_chem1", name: "General Chem I", icon: TestTube, subject: "General Chemistry I", persona: "chemistry professor" },
+      { id: "college_chem2", name: "General Chem II", icon: Microscope, subject: "General Chemistry II", persona: "chemistry professor" },
+      { id: "college_ochem", name: "Organic Chemistry", icon: Atom, subject: "Organic Chemistry", persona: "organic chemistry professor" },
+      { id: "college_bio1", name: "Cell Biology", icon: Dna, subject: "Cell & Molecular Biology", persona: "biology professor" },
+      { id: "college_genetics", name: "Genetics", icon: Dna, subject: "Genetics & Genomics", persona: "genetics professor" },
+      { id: "college_econ", name: "Economics", icon: PieChart, subject: "College Economics (Micro & Macro)", persona: "economics professor" },
+      { id: "college_psych", name: "Psychology", icon: Brain, subject: "Introductory Psychology", persona: "psychology professor" },
+      { id: "college_sociology", name: "Sociology", icon: Network, subject: "Introductory Sociology", persona: "sociology professor" },
+      { id: "college_english_lit", name: "English Literature", icon: BookOpen, subject: "College English Literature", persona: "English literature professor" },
+      { id: "college_writing", name: "Academic Writing", icon: PenTool, subject: "Academic Writing & Research", persona: "writing professor" },
+      { id: "college_history", name: "World History", icon: Globe, subject: "World History", persona: "history professor" },
+      { id: "college_poli_sci", name: "Political Science", icon: Government, subject: "Political Science", persona: "political science professor" },
     ],
   },
   {
@@ -94,24 +101,29 @@ const TUTOR_CATEGORIES = [
     color: "from-orange-600 to-red-700",
     textColor: "text-orange-400",
     tutors: [
-      { id: "pro_python", name: "Python", emoji: "🐍", subject: "Python Programming", persona: "senior software engineer" },
-      { id: "pro_javascript", name: "JavaScript", emoji: "🟨", subject: "JavaScript & ES6+", persona: "senior web developer" },
-      { id: "pro_react", name: "React", emoji: "⚛️", subject: "React & Modern Frontend", persona: "senior React engineer" },
-      { id: "pro_java", name: "Java", emoji: "☕", subject: "Java Programming", persona: "software engineer" },
-      { id: "pro_cpp", name: "C++", emoji: "⚙️", subject: "C++ Programming", persona: "systems programming expert" },
-      { id: "pro_sql", name: "SQL & Databases", emoji: "🗄️", subject: "SQL & Database Design", persona: "database engineer" },
-      { id: "pro_dsa", name: "Data Structures", emoji: "🌲", subject: "Data Structures & Algorithms", persona: "computer science expert" },
-      { id: "pro_ml", name: "Machine Learning", emoji: "🤖", subject: "Machine Learning & AI fundamentals", persona: "machine learning engineer" },
-      { id: "pro_webdev", name: "Web Dev", emoji: "🌐", subject: "Full-Stack Web Development (HTML, CSS, JS, backend)", persona: "full-stack web developer" },
-      { id: "pro_git", name: "Git & DevOps", emoji: "🔧", subject: "Git, CI/CD, and DevOps practices", persona: "DevOps engineer" },
-      { id: "pro_finance", name: "Finance", emoji: "💼", subject: "Personal Finance & Investing", persona: "certified financial planner" },
-      { id: "pro_business", name: "Business Strategy", emoji: "📋", subject: "Business Strategy & Management", persona: "MBA professor and business consultant" },
-      { id: "pro_marketing", name: "Marketing", emoji: "📣", subject: "Digital Marketing & Growth", persona: "marketing director" },
-      { id: "pro_accounting", name: "Accounting", emoji: "🧾", subject: "Accounting & Bookkeeping", persona: "certified accountant (CPA)" },
-      { id: "pro_interview", name: "Interview Prep", emoji: "🤝", subject: "Technical & Behavioral Interview Preparation", persona: "experienced hiring manager" },
+      { id: "pro_python", name: "Python", icon: FileCode, subject: "Python Programming", persona: "senior software engineer" },
+      { id: "pro_javascript", name: "JavaScript", icon: Code, subject: "JavaScript & ES6+", persona: "senior web developer" },
+      { id: "pro_react", name: "React", icon: Cpu, subject: "React & Modern Frontend", persona: "senior React engineer" },
+      { id: "pro_java", name: "Java", icon: Coffee, subject: "Java Programming", persona: "software engineer" },
+      { id: "pro_cpp", name: "C++", icon: Wrench, subject: "C++ Programming", persona: "systems programming expert" },
+      { id: "pro_sql", name: "SQL & Databases", icon: Database, subject: "SQL & Database Design", persona: "database engineer" },
+      { id: "pro_dsa", name: "Data Structures", icon: Network, subject: "Data Structures & Algorithms", persona: "computer science expert" },
+      { id: "pro_ml", name: "Machine Learning", icon: Cpu, subject: "Machine Learning & AI fundamentals", persona: "machine learning engineer" },
+      { id: "pro_webdev", name: "Web Dev", icon: Server, subject: "Full-Stack Web Development (HTML, CSS, JS, backend)", persona: "full-stack web developer" },
+      { id: "pro_git", name: "Git & DevOps", icon: GitBranch, subject: "Git, CI/CD, and DevOps practices", persona: "DevOps engineer" },
+      { id: "pro_finance", name: "Finance", icon: Briefcase, subject: "Personal Finance & Investing", persona: "certified financial planner" },
+      { id: "pro_business", name: "Business Strategy", icon: ClipboardList, subject: "Business Strategy & Management", persona: "MBA professor and business consultant" },
+      { id: "pro_marketing", name: "Marketing", icon: Megaphone, subject: "Digital Marketing & Growth", persona: "marketing director" },
+      { id: "pro_accounting", name: "Accounting", icon: FileText, subject: "Accounting & Bookkeeping", persona: "certified accountant (CPA)" },
+      { id: "pro_interview", name: "Interview Prep", icon: Handshake, subject: "Technical & Behavioral Interview Preparation", persona: "experienced hiring manager" },
     ],
   },
 ];
+
+// Helper fallback component if a dynamic icon reference is missing
+function FunctionSquare(props) {
+  return <Calculator {...props} />;
+}
 
 function buildSystemPrompt(tutor) {
   return `You are a dedicated AI tutor for ${tutor.subject} on the Cognita learning platform. You act like a ${tutor.persona} — warm, encouraging, and academically rigorous.
@@ -138,8 +150,9 @@ Start by greeting the student warmly and asking what they'd like to learn or get
 }
 
 function TutorChat({ tutor, user, onBack }) {
+  const IconComponent = tutor.icon || GraduationCap;
   const [messages, setMessages] = useState([
-    { role: "assistant", content: `Hi there! 👋 I'm your ${tutor.name} tutor${tutor.subject !== tutor.name ? ` (${tutor.subject})` : ""}. What would you like to learn or get help with today?` }
+    { role: "assistant", content: `Hi there! I'm your ${tutor.name} tutor${tutor.subject !== tutor.name ? ` (${tutor.subject})` : ""}. What would you like to learn or get help with today?` }
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -196,8 +209,8 @@ function TutorChat({ tutor, user, onBack }) {
         <button onClick={onBack} className="p-2 rounded-xl hover:bg-white/5 transition-all">
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-xl" style={{ background: "rgba(139,92,246,0.15)", border: "1px solid rgba(139,92,246,0.3)" }}>
-          {tutor.emoji}
+        <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: "rgba(139,92,246,0.15)", border: "1px solid rgba(139,92,246,0.3)" }}>
+          <IconComponent className="w-5 h-5 text-violet-400" />
         </div>
         <div>
           <p className="font-bold text-sm">{tutor.name} Tutor</p>
@@ -210,8 +223,8 @@ function TutorChat({ tutor, user, onBack }) {
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} gap-2`}>
             {msg.role === "assistant" && (
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center text-base shrink-0 mt-1" style={{ background: "rgba(139,92,246,0.15)", border: "1px solid rgba(139,92,246,0.2)" }}>
-                {tutor.emoji}
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-1" style={{ background: "rgba(139,92,246,0.15)", border: "1px solid rgba(139,92,246,0.2)" }}>
+                <IconComponent className="w-4 h-4 text-violet-400" />
               </div>
             )}
             <div className={`max-w-[82%] rounded-2xl px-4 py-3 text-sm ${msg.role === "user" ? "bg-violet-600 text-white rounded-br-sm" : "rounded-bl-sm"}`}
@@ -232,7 +245,9 @@ function TutorChat({ tutor, user, onBack }) {
         ))}
         {loading && (
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center text-base shrink-0" style={{ background: "rgba(139,92,246,0.15)", border: "1px solid rgba(139,92,246,0.2)" }}>{tutor.emoji}</div>
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(139,92,246,0.15)", border: "1px solid rgba(139,92,246,0.2)" }}>
+              <IconComponent className="w-4 h-4 text-violet-400" />
+            </div>
             <div className="rounded-2xl rounded-bl-sm px-4 py-3" style={cardStyle}>
               <Loader2 className="w-4 h-4 text-violet-400 animate-spin" />
             </div>
@@ -293,8 +308,8 @@ export default function AITutors() {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-3xl text-3xl mb-4" style={{ background: "rgba(139,92,246,0.15)", border: "1px solid rgba(139,92,246,0.3)" }}>
-            🎓
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-3xl mb-4" style={{ background: "rgba(139,92,246,0.15)", border: "1px solid rgba(139,92,246,0.3)" }}>
+            <GraduationCap className="w-8 h-8 text-violet-400" />
           </div>
           <h1 className="text-3xl font-black tracking-tight mb-2">AI Tutors</h1>
           <p className="text-sm max-w-md mx-auto" style={mutedStyle}>
@@ -323,19 +338,22 @@ export default function AITutors() {
                 <h2 className={`font-bold text-sm uppercase tracking-wider ${cat.textColor}`}>{cat.label}</h2>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                {cat.tutors.map(tutor => (
-                  <button
-                    key={tutor.id}
-                    onClick={() => setSelectedTutor(tutor)}
-                    className="flex flex-col items-center gap-2 p-4 rounded-2xl text-center transition-all hover:scale-[1.03] hover:shadow-lg active:scale-95"
-                    style={cardStyle}
-                  >
-                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl" style={{ background: "rgba(139,92,246,0.1)" }}>
-                      {tutor.emoji}
-                    </div>
-                    <span className="text-xs font-semibold leading-tight">{tutor.name}</span>
-                  </button>
-                ))}
+                {cat.tutors.map(tutor => {
+                  const TutorIcon = tutor.icon || GraduationCap;
+                  return (
+                    <button
+                      key={tutor.id}
+                      onClick={() => setSelectedTutor(tutor)}
+                      className="flex flex-col items-center gap-2 p-4 rounded-2xl text-center transition-all hover:scale-[1.03] hover:shadow-lg active:scale-95"
+                      style={cardStyle}
+                    >
+                      <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: "rgba(139,92,246,0.1)" }}>
+                        <TutorIcon className="w-6 h-6 text-violet-400" />
+                      </div>
+                      <span className="text-xs font-semibold leading-tight">{tutor.name}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           ))}
