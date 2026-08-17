@@ -5,8 +5,8 @@ import { Link, useNavigate } from "react-router-dom";
 
 import {
   Send, Plus, Trash2, MessageSquare, Loader2, Sparkles, ChevronLeft,
-  Layers, Target, Code2, Mic, Paperclip, X,
-  FolderOpen, Folder, Edit3, Check, ChevronDown, ChevronRight, Square, Volume2, MicOff
+  Layers, Target, Mic, Paperclip, X,
+  FolderOpen, Folder, Edit3, Check, ChevronDown, ChevronRight, Square, MicOff
 } from "lucide-react";
 import ChatMessage from "../components/ChatMessage";
 import { createPageUrl } from "@/utils";
@@ -17,7 +17,7 @@ import { generateImageWithMistralFallbacks } from "@/lib/mistralAPI";
 const COGNITA_SYSTEM_PROMPT_VOICE =
   "You are Cognita, a friendly AI study assistant in voice conversation mode. " +
   "Keep all responses short (1-3 sentences), conversational, and warm. " +
-  "Do NOT use markdown, bullet points, or LaTeX — speak in plain natural language. " +
+  "USE LATEX Format for any math equations at all times with $$ that clearly show the section that needs to be rendered for latex formatting" +
   "Be encouraging and helpful. If asked a complex question, give a brief answer and offer to go deeper.";
 
 const ALL_SUGGESTIONS = [
@@ -982,7 +982,7 @@ export default function Chat() {
                     </div>
                   )}
                   <div className={`max-w-[80%] px-5 py-3.5 text-sm rounded-3xl ${msg.role === "user" ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-br-sm shadow-md" : "border rounded-bl-sm shadow-sm"}`} style={msg.role !== "user" ? { background: "var(--app-surface)", borderColor: "var(--app-border)" } : {}}>
-                    {msg.content}
+                    {msg.role === "assistant" ? <ChatMessage content={msg.content} /> : msg.content}
                   </div>
                 </div>
               ))}
