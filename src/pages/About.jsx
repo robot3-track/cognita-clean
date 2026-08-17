@@ -1,4 +1,3 @@
-
 import { MessageSquare, Layers, Camera, Users, Gamepad2, Type, Trophy, BarChart3, Mic, Video, Globe, Gift, Sparkles, Brain, Target, BookOpen, Zap, Shield, Moon, Timer, CalendarDays, Sigma, PenLine, Flag, Volume2, ChevronDown, GraduationCap, Languages, Calculator, BookMarked, FolderOpen, Swords, ClipboardList, Flame, Award, FileText, Database, HelpCircle, NotebookPen, PlayCircle, Lightbulb, UserPlus, FlaskConical, Code2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -573,7 +572,7 @@ export default function About() {
           </Link>
         </div>
 
-      {/* Bottom CTA */}
+        {/* Bottom CTA */}
         <div className="mt-12 rounded-3xl p-10 text-center bg-gradient-to-br from-violet-600/10 to-blue-600/10 border border-violet-500/20">
           <h2 className="text-2xl font-black mb-2">Ready to study smarter?</h2>
           <p className="text-sm mb-6" style={mutedStyle}>Everything is free. No friction. Just open and start learning.</p>
