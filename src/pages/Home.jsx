@@ -2,11 +2,11 @@ import { db } from '@/lib/firebase';
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslation } from "../hooks/useTranslation";
 import { 
-  Sparkles, BookOpen, BarChart3, Layers, ArrowRight, Search, Globe, 
-  Loader2, Clock, Star, Users, Gamepad2, Type, Brain, Timer, 
-  CalendarDays, PenLine, Flag, ChevronDown, Camera, Trophy, 
-  GraduationCap, Calculator, BookMarked, FolderOpen, FileText, 
-  ClipboardList, CheckCircle2, Play, X, FlaskConical, NotebookPen, Code2, Heart, Compass, User
+  Sparkles, BookOpen, Layers, ArrowRight, Search, Globe, 
+  ChevronDown, Camera, Trophy, 
+  Calculator, BookMarked, FolderOpen, FileText, 
+  ClipboardList, CheckCircle2, Play, X, FlaskConical, NotebookPen, Code2, Heart, Compass, User,
+  PenLine, Flag, Gamepad2, Type, CalendarDays, Brain, Users, BarChart3, Timer
 } from "lucide-react";
 import HomeLayoutCustomizer, { getHomeLayout } from "@/components/HomeLayoutCustomizer";
 import VerifiedBadge from "@/components/VerifiedBadge";
@@ -22,13 +22,13 @@ import { addSurveyBonusServer } from "@/components/userCredits";
 
 const TOP_STUDIER_KEY = "cognita_top_studier_rewarded";
 
-const ALL_FEATURES = [
-  { label: "Flashcards", desc: "Review master modules", icon: Layers, page: "Decks", iconColor: "text-amber-500", bgGlow: "from-amber-500/10 to-transparent" },
-  { label: "AI Studio", desc: "AI Video, audio, and tutoring", icon: Sparkles, page: "Media", iconColor: "text-violet-500", bgGlow: "from-violet-500/10 to-transparent" },
-  { label: "AI Chat", desc: "Voice, files, and cards", icon: Brain, page: "Chat", iconColor: "text-blue-500", bgGlow: "from-blue-500/10 to-transparent" },
-  { label: "Scan & Import", desc: "Photo text extractors", icon: Camera, page: "Scan", iconColor: "text-rose-500", bgGlow: "from-rose-500/10 to-transparent" },
-  { label: "Full Exam Prep", desc: "AP, State, SAT, iReady Exam Prep", icon: BookOpen, page: "ExamPrep", iconColor: "text-purple-500", bgGlow: "from-purple-500/10 to-transparent" },
-  { label: "Study Games", desc: "Multiplayer active recall", icon: Gamepad2, page: "TowerDefense", iconColor: "text-emerald-500", bgGlow: "from-emerald-500/10 to-transparent" },
+const MAIN_FEATURES = [
+  { label: "Flashcards", desc: "Review master decks and active recall sets", icon: Layers, page: "Decks", iconColor: "text-amber-500", borderHover: "hover:border-amber-500/50", bgGlow: "from-amber-500/15 via-amber-500/5 to-transparent" },
+  { label: "AI Studio", desc: "Generate AI videos, narration audio & custom tutors", icon: Sparkles, page: "Media", iconColor: "text-violet-500", borderHover: "hover:border-violet-500/50", bgGlow: "from-violet-500/15 via-violet-500/5 to-transparent" },
+  { label: "AI Chat", desc: "Interactive smart tutor with voice & document upload", icon: Brain, page: "Chat", iconColor: "text-blue-500", borderHover: "hover:border-blue-500/50", bgGlow: "from-blue-500/15 via-blue-500/5 to-transparent" },
+  { label: "Scan & Import", desc: "Snap photos or paste text to instantly auto-generate cards", icon: Camera, page: "Scan", iconColor: "text-rose-500", borderHover: "hover:border-rose-500/50", bgGlow: "from-rose-500/15 via-rose-500/5 to-transparent" },
+  { label: "Full Exam Prep", desc: "Targeted practice for AP, SAT, State & iReady exams", icon: BookOpen, page: "ExamPrep", iconColor: "text-purple-500", borderHover: "hover:border-purple-500/50", bgGlow: "from-purple-500/15 via-purple-500/5 to-transparent" },
+  { label: "Study Games", desc: "Interactive multiplayer games & tower defense recall", icon: Gamepad2, page: "TowerDefense", iconColor: "text-emerald-500", borderHover: "hover:border-emerald-500/50", bgGlow: "from-emerald-500/15 via-emerald-500/5 to-transparent" },
 ];
 
 const ROTATING_TIPS = [
@@ -68,28 +68,28 @@ function MoreTools({ cardStyle, mutedStyle }) {
   ];
 
   return (
-    <div className="mb-2">
+    <div className="pt-2">
       <button
         onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between px-5 rounded-xl text-xs font-bold transition-all duration-200 hover:opacity-90 bg-gradient-to-r from-violet-600/10 to-indigo-600/5 border border-violet-500/20 text-[var(--app-text)]"
-        style={{ minHeight: "48px" }}
+        className="w-full flex items-center justify-between px-5 rounded-2xl text-xs font-bold transition-all duration-200 hover:opacity-90 bg-gradient-to-r from-violet-600/10 via-indigo-600/5 to-transparent border border-violet-500/20 text-[var(--app-text)] shadow-sm"
+        style={{ minHeight: "52px" }}
       >
-        <span className="flex items-center gap-2">
+        <span className="flex items-center gap-2 text-sm">
           <Compass className="w-4 h-4 text-violet-400" />
-          <span>{open ? "Hide optional tools" : "View all study tools"}</span>
+          <span>{open ? "Collapse secondary tools" : "Explore all 20+ specialized study tools"}</span>
         </span>
         <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${open ? "rotate-180" : ""}`} style={mutedStyle} />
       </button>
       {open && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mt-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mt-4">
           {tools.map(({ label, desc, icon: Icon, page }) => (
             <Link key={label} to={createPageUrl(page)}>
-              <div className="rounded-xl p-4 cursor-pointer border transition-all duration-150 bg-[var(--app-surface)] hover:opacity-90 hover:border-violet-500/40" style={{ borderColor: "var(--app-border)" }}>
-                <div className="w-8 h-8 rounded-lg bg-[var(--app-bg)] border border-[var(--app-border)] flex items-center justify-center mb-3 text-violet-400">
-                  <Icon className="w-4 h-4" />
+              <div className="rounded-xl p-3.5 cursor-pointer border transition-all duration-150 bg-[var(--app-surface)] hover:opacity-90 hover:border-violet-500/40 shadow-xs" style={{ borderColor: "var(--app-border)" }}>
+                <div className="w-7 h-7 rounded-lg bg-[var(--app-bg)] border border-[var(--app-border)] flex items-center justify-center mb-2.5 text-violet-400">
+                  <Icon className="w-3.5 h-3.5" />
                 </div>
-                <p className="font-bold text-xs text-[var(--app-text)]">{label}</p>
-                <p className="text-[11px] mt-0.5" style={mutedStyle}>{desc}</p>
+                <p className="font-bold text-xs text-[var(--app-text)] truncate">{label}</p>
+                <p className="text-[10px] mt-0.5 truncate" style={mutedStyle}>{desc}</p>
               </div>
             </Link>
           ))}
@@ -237,7 +237,7 @@ export default function Home() {
   }, []);
 
   const ALL_SEARCH_TARGETS = [
-    ...ALL_FEATURES,
+    ...MAIN_FEATURES,
     { label: "Write Mode", desc: "Type answers & text matching training", page: "WriteMode", icon: PenLine },
     { label: "Checkpoint Exams", desc: "Interactive exam simulation testing", page: "CheckpointMode", icon: Flag },
     { label: "Vocabulary Matching", desc: "Match terms card speed run game", page: "MatchingGame", icon: Gamepad2 },
@@ -334,25 +334,16 @@ export default function Home() {
         className="min-h-screen w-full flex flex-col items-center justify-center relative overflow-hidden font-sans antialiased transition-colors duration-200" 
         style={bgStyle}
       >
-        {/* Soft Background Radial Glow */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-violet-500/5 rounded-full blur-3xl pointer-events-none" />
 
         <div className="w-full max-w-[380px] space-y-6 px-4 z-10">
-          
-          {/* Main Card */}
           <div 
             className="rounded-3xl border bg-[var(--app-surface)] backdrop-blur-xl p-6 sm:p-8 shadow-xl flex flex-col items-center text-center space-y-6" 
             style={{ borderColor: "var(--app-border)" }}
           >
-            {/* Logo Brand Pulse Loader */}
             <div className="relative w-20 h-20 flex items-center justify-center my-1">
-              {/* Smooth Rotating Outer Ring */}
               <div className="absolute inset-0 rounded-2xl border-2 border-violet-500/20 border-t-violet-500 animate-spin" />
-              
-              {/* Subtle Pulse Aura */}
               <div className="absolute inset-2 bg-violet-500/10 rounded-xl animate-pulse" />
-
-              {/* Logo Badge */}
               <div 
                 className="relative z-10 w-12 h-12 rounded-xl bg-[var(--app-surface)] border p-2 flex items-center justify-center shadow-sm"
                 style={{ borderColor: "var(--app-border)" }}
@@ -365,7 +356,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Simple Status Message */}
             <div className="space-y-1">
               <h2 className="text-lg font-bold tracking-tight text-[var(--app-text)]">
                 Loading your dashboard
@@ -375,14 +365,12 @@ export default function Home() {
               </p>
             </div>
 
-            {/* Minimal Progress Bar */}
             <div className="w-full px-4">
               <div className="w-full h-1 bg-white/10 dark:bg-white/5 rounded-full overflow-hidden">
                 <div className="h-full bg-violet-500 rounded-full animate-pulse w-3/4 transition-all duration-500" />
               </div>
             </div>
 
-            {/* Study Tip Card */}
             <div 
               className="w-full pt-4 border-t text-left space-y-1.5" 
               style={{ borderColor: "var(--app-border)" }}
@@ -396,11 +384,9 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Footer */}
           <div className="text-center text-[11px] font-medium tracking-wide opacity-70" style={mutedStyle}>
             Made by Yohan Chang • Marina High School • 2026
           </div>
-
         </div>
       </div>
     );
@@ -408,159 +394,176 @@ export default function Home() {
 
   return (
     <PullToRefresh onRefresh={loadData}>
-      <div className="min-h-screen pb-16 px-4 pt-6 sm:px-8 sm:pt-10 transition-colors duration-200 flex flex-col justify-between" style={bgStyle}>
-        <div className="max-w-6xl w-full mx-auto flex-1">
+      <div className="min-h-screen pb-16 px-4 pt-6 sm:px-8 sm:pt-8 transition-colors duration-200 flex flex-col justify-between" style={bgStyle}>
+        <div className="max-w-6xl w-full mx-auto flex-1 space-y-8">
           
-          <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b" style={{ borderColor: "var(--app-border)" }}>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-[var(--app-text)]">
-                  Welcome back{user?.full_name ? `, ${user.full_name.split(" ")[0]}` : ""}
-                </h1>
-                <span className="text-[10px] font-bold text-violet-500 dark:text-violet-400 bg-violet-500/10 border border-violet-500/20 rounded-md px-1.5 py-0.5 tracking-wider">Free account</span>
+          {/* Top Header & Search Bar */}
+          <div className="space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-[var(--app-text)]">
+                    Welcome back{user?.full_name ? `, ${user.full_name.split(" ")[0]}` : ""}
+                  </h1>
+                  <span className="text-[10px] font-bold text-violet-500 dark:text-violet-400 bg-violet-500/10 border border-violet-500/20 rounded-md px-2 py-0.5 tracking-wider shrink-0">Verified</span>
+                </div>
+                <p className="text-xs mt-1 font-medium" style={mutedStyle}>Your primary study hub & active learning workspace.</p>
               </div>
-              <p className="text-xs mt-1 font-medium" style={mutedStyle}>Access your flashcards, notes, and study tools all in one workspace.</p>
+              <div className="flex items-center gap-2 self-start sm:self-center">
+                <HomeLayoutCustomizer layout={homeLayout} onChange={setHomeLayout} />
+              </div>
             </div>
-            <div className="flex items-center gap-2 self-start sm:self-center">
-              <HomeLayoutCustomizer layout={homeLayout} onChange={setHomeLayout} />
+
+            <div className="relative z-50 max-w-2xl" ref={searchRef}>
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 dark:text-slate-500" />
+                <input
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  placeholder="Search features, tools, flashcard decks, or classmates..."
+                  className="w-full pl-11 pr-10 rounded-2xl text-xs outline-none transition-all duration-150 focus:border-violet-500 font-medium shadow-sm"
+                  style={{ background: "var(--app-surface)", border: "1px solid var(--app-border)", color: "var(--app-text)", height: "46px" }}
+                />
+                {search && (
+                  <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full opacity-50 hover:opacity-100 text-slate-400">
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+              
+              {showDropdown && (
+                <div className="absolute top-full left-0 right-0 mt-2 rounded-2xl shadow-2xl z-50 overflow-y-auto max-h-[420px] backdrop-blur-md border"
+                  style={{ background: "var(--app-surface-solid, var(--app-surface))", borderColor: "var(--app-border)" }}>
+                  
+                  {matchedFeatures.length > 0 && (
+                    <div className="border-b pb-1" style={{ borderColor: "var(--app-border)" }}>
+                      <p className="text-[9px] font-bold px-4 pt-2.5 pb-1 opacity-50 tracking-wider uppercase" style={mutedStyle}>Tools & Features</p>
+                      {matchedFeatures.map(f => {
+                        const IconComponent = f.icon;
+                        return (
+                          <Link key={f.page + f.label} to={createPageUrl(f.page)} onClick={() => setSearch("")}>
+                            <div className="flex items-center gap-3 px-4 py-2.5 hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer text-xs">
+                              <IconComponent className="w-4 h-4 text-violet-500 dark:text-violet-400" />
+                              <span className="font-semibold text-[var(--app-text)]">{f.label}</span>
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {matchedMyDecks.length > 0 && (
+                    <div className="border-b pb-1" style={{ borderColor: "var(--app-border)" }}>
+                      <p className="text-[9px] font-bold px-4 pt-2.5 pb-1 opacity-50 tracking-wider uppercase" style={mutedStyle}>Your Decks</p>
+                      {matchedMyDecks.map(deck => (
+                        <Link key={deck.id} to={createPageUrl(`Study?deck_id=${deck.id}`)} onClick={() => setSearch("")}>
+                          <div className="px-4 py-2 hover:bg-black/5 dark:hover:bg-white/5 text-xs truncate font-semibold flex items-center gap-2.5 text-[var(--app-text)]">
+                            {deck.cover_image_url ? (
+                              <img src={deck.cover_image_url} alt="" className="w-5 h-5 rounded object-cover bg-[var(--app-bg)] border" style={{ borderColor: "var(--app-border)" }} />
+                            ) : (
+                              <div className={`w-5 h-5 rounded bg-gradient-to-br ${getFallbackStyle(deck.id)}`} />
+                            )}
+                            <span className="truncate">{deck.title}</span>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+
+                  {matchedCommunityDecks.length > 0 && (
+                    <div className="border-b pb-1" style={{ borderColor: "var(--app-border)" }}>
+                      <p className="text-[9px] font-bold px-4 pt-2.5 pb-1 opacity-50 tracking-wider uppercase" style={mutedStyle}>Community Decks</p>
+                      {matchedCommunityDecks.map(deck => (
+                        <Link key={deck.id} to={createPageUrl(`Study?deck_id=${deck.id}`)} onClick={() => setSearch("")}>
+                          <div className="px-4 py-2 hover:bg-black/5 dark:hover:bg-white/5 text-xs truncate font-semibold flex items-center gap-2.5 text-[var(--app-text)]">
+                            {deck.cover_image_url ? (
+                              <img src={deck.cover_image_url} alt="" className="w-5 h-5 rounded object-cover bg-[var(--app-bg)] border" style={{ borderColor: "var(--app-border)" }} />
+                            ) : (
+                              <div className={`w-5 h-5 rounded bg-gradient-to-br ${getFallbackStyle(deck.id)}`} />
+                            )}
+                            <span className="truncate">{deck.title}</span>
+                            {deck.is_verified && <VerifiedBadge size={10} />}
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+
+                  {matchedUsers.length > 0 && (
+                    <div>
+                      <p className="text-[9px] font-bold px-4 pt-2.5 pb-1 opacity-50 tracking-wider uppercase" style={mutedStyle}>Users</p>
+                      {matchedUsers.map(u => (
+                        <Link key={u.email} to={createPageUrl(`FriendsAndUsers`)} onClick={() => setSearch("")} className="px-4 py-2 hover:bg-black/5 dark:hover:bg-white/5 text-xs flex items-center gap-2.5 text-[var(--app-text)] block transition-colors">
+                          <div className="w-5 h-5 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-[10px] text-violet-500 dark:text-violet-400 font-bold uppercase">
+                            {u.full_name ? u.full_name[0] : <User className="w-2.5 h-2.5" />}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-semibold truncate leading-tight">{u.full_name || "Anonymous Learner"}</p>
+                            <p className="text-[9px] opacity-50 truncate leading-none mt-0.5" style={mutedStyle}>{u.email}</p>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
           <TutorialModal />
-
-          <div className="mb-8 relative z-50 max-w-xl" ref={searchRef}>
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
-              <input
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Search tools, flashcard sets, or active users..."
-                className="w-full pl-11 pr-10 rounded-xl text-xs outline-none transition-all duration-150 focus:border-violet-500 font-medium shadow-sm"
-                style={{ background: "var(--app-surface)", border: "1px solid var(--app-border)", color: "var(--app-text)", height: "42px" }}
-              />
-              {search && (
-                <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full opacity-50 hover:opacity-100 text-slate-400">
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-            
-            {showDropdown && (
-              <div className="absolute top-full left-0 right-0 mt-1.5 rounded-xl shadow-xl z-50 overflow-y-auto max-h-[420px] backdrop-blur-md"
-                style={{ background: "var(--app-surface-solid, var(--app-surface))", border: "1px solid var(--app-border)" }}>
-                
-                {matchedFeatures.length > 0 && (
-                  <div className="border-b pb-1" style={{ borderColor: "var(--app-border)" }}>
-                    <p className="text-[9px] font-bold px-4 pt-2.5 pb-1 opacity-50 tracking-wider" style={mutedStyle}>Tools & Frameworks</p>
-                    {matchedFeatures.map(f => {
-                      const IconComponent = f.icon;
-                      return (
-                        <Link key={f.page + f.label} to={createPageUrl(f.page)} onClick={() => setSearch("")}>
-                          <div className="flex items-center gap-3 px-4 py-2 hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer text-xs">
-                            <IconComponent className="w-3.5 h-3.5 text-violet-500 dark:text-violet-400" />
-                            <span className="font-semibold text-[var(--app-text)]">{f.label}</span>
-                          </div>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {matchedMyDecks.length > 0 && (
-                  <div className="border-b pb-1" style={{ borderColor: "var(--app-border)" }}>
-                    <p className="text-[9px] font-bold px-4 pt-2.5 pb-1 opacity-50 tracking-wider" style={mutedStyle}>Your Decks</p>
-                    {matchedMyDecks.map(deck => (
-                      <Link key={deck.id} to={createPageUrl(`Study?deck_id=${deck.id}`)} onClick={() => setSearch("")}>
-                        <div className="px-4 py-2 hover:bg-black/5 dark:hover:bg-white/5 text-xs truncate font-semibold flex items-center gap-2.5 text-[var(--app-text)]">
-                          {deck.cover_image_url ? (
-                            <img src={deck.cover_image_url} alt="" className="w-5 h-5 rounded object-cover bg-[var(--app-bg)] border" style={{ borderColor: "var(--app-border)" }} />
-                          ) : (
-                            <div className={`w-5 h-5 rounded bg-gradient-to-br ${getFallbackStyle(deck.id)}`} />
-                          )}
-                          <span className="truncate">{deck.title}</span>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-
-                {matchedCommunityDecks.length > 0 && (
-                  <div className="border-b pb-1" style={{ borderColor: "var(--app-border)" }}>
-                    <p className="text-[9px] font-bold px-4 pt-2.5 pb-1 opacity-50 tracking-wider" style={mutedStyle}>Community Decks</p>
-                    {matchedCommunityDecks.map(deck => (
-                      <Link key={deck.id} to={createPageUrl(`Study?deck_id=${deck.id}`)} onClick={() => setSearch("")}>
-                        <div className="px-4 py-2 hover:bg-black/5 dark:hover:bg-white/5 text-xs truncate font-semibold flex items-center gap-2.5 text-[var(--app-text)]">
-                          {deck.cover_image_url ? (
-                            <img src={deck.cover_image_url} alt="" className="w-5 h-5 rounded object-cover bg-[var(--app-bg)] border" style={{ borderColor: "var(--app-border)" }} />
-                          ) : (
-                            <div className={`w-5 h-5 rounded bg-gradient-to-br ${getFallbackStyle(deck.id)}`} />
-                          )}
-                          <span className="truncate">{deck.title}</span>
-                          {deck.is_verified && <VerifiedBadge size={10} />}
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-
-                {matchedUsers.length > 0 && (
-                  <div>
-                    <p className="text-[9px] font-bold px-4 pt-2.5 pb-1 opacity-50 tracking-wider" style={mutedStyle}>Users</p>
-                    {matchedUsers.map(u => (
-                      <Link key={u.email} to={createPageUrl(`FriendsAndUsers`)} onClick={() => setSearch("")} className="px-4 py-2 hover:bg-black/5 dark:hover:bg-white/5 text-xs flex items-center gap-2.5 text-[var(--app-text)] block transition-colors">
-                        <div className="w-5 h-5 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-[10px] text-violet-500 dark:text-violet-400 font-bold uppercase">
-                          {u.full_name ? u.full_name[0] : <User className="w-2.5 h-2.5" />}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="font-semibold truncate leading-tight">{u.full_name || "Anonymous Learner"}</p>
-                          <p className="text-[9px] opacity-50 truncate leading-none mt-0.5" style={mutedStyle}>{u.email}</p>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
           <LiveActivityBar />
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start mt-4">
-            
-            <div className="lg:col-span-2 space-y-8">
-              
-              <div className="space-y-3">
-                <h2 className="font-bold text-xs tracking-wide opacity-60" style={mutedStyle}>Study tools</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  {ALL_FEATURES.map((feat, i) => {
-                    const IconComponent = feat.icon;
-                    return (
-                      <Link key={i} to={createPageUrl(feat.page)} className="block group">
-                        <div className="rounded-xl p-4 border transition-all duration-200 relative overflow-hidden flex flex-col justify-between h-[116px] bg-slate-500/5 dark:bg-slate-900/10 hover:bg-slate-500/10 dark:hover:bg-slate-900/30 hover:border-violet-500/30" style={{ borderColor: "var(--app-border)" }}>
-                          <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl ${feat.bgGlow} blur-2xl pointer-events-none opacity-60`} />
-                          <div className="w-8 h-8 rounded-lg bg-white dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800/60 flex items-center justify-center transition-transform group-hover:scale-105 shadow-sm">
-                            <IconComponent className={`w-4 h-4 ${feat.iconColor}`} />
-                          </div>
-                          <div>
-                            <p className="font-bold text-xs text-[var(--app-text)] flex items-center gap-1 group-hover:text-violet-500 dark:group-hover:text-violet-400 transition-colors">
-                              <span>{feat.label}</span>
-                              <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-all text-violet-500 dark:text-violet-400" />
-                            </p>
-                            <p className="text-[11px] mt-0.5 opacity-60" style={mutedStyle}>{feat.desc}</p>
-                          </div>
+          {/* Prominent Core Features Grid */}
+          <div className="space-y-3">
+            <h2 className="font-bold text-xs tracking-wider uppercase opacity-60 px-1" style={mutedStyle}>
+              Main Study Features
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {MAIN_FEATURES.map((feat, i) => {
+                const IconComponent = feat.icon;
+                return (
+                  <Link key={i} to={createPageUrl(feat.page)} className="block group">
+                    <div 
+                      className={`rounded-2xl p-6 border transition-all duration-300 relative overflow-hidden flex flex-col justify-between min-h-[160px] bg-slate-500/5 dark:bg-slate-900/20 hover:bg-slate-500/10 dark:hover:bg-slate-900/40 hover:shadow-xl hover:-translate-y-0.5 ${feat.borderHover}`} 
+                      style={{ borderColor: "var(--app-border)" }}
+                    >
+                      <div className={`absolute top-0 right-0 w-36 h-36 bg-gradient-to-bl ${feat.bgGlow} blur-2xl pointer-events-none opacity-80`} />
+                      
+                      <div className="flex items-center justify-between z-10">
+                        <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center transition-transform group-hover:scale-110 shadow-md">
+                          <IconComponent className={`w-6 h-6 ${feat.iconColor}`} />
                         </div>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
+                        <div className="w-8 h-8 rounded-full bg-violet-500/10 border border-violet-500/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all text-violet-500 dark:text-violet-400">
+                          <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                        </div>
+                      </div>
 
+                      <div className="z-10 mt-4 space-y-1">
+                        <h3 className="font-extrabold text-base text-[var(--app-text)] group-hover:text-violet-500 dark:group-hover:text-violet-400 transition-colors">
+                          {feat.label}
+                        </h3>
+                        <p className="text-xs leading-relaxed opacity-70 font-medium line-clamp-2" style={mutedStyle}>
+                          {feat.desc}
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Secondary Content & Side Column */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start pt-2">
+            
+            {/* Main Column */}
+            <div className="lg:col-span-2 space-y-8">
               {homeLayout.showTools && <MoreTools cardStyle={cardStyle} mutedStyle={mutedStyle} />}
 
               {homeLayout.showRecentDecks && decks.length > 0 && (
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h2 className="font-bold text-xs tracking-wide opacity-60" style={mutedStyle}>Recent flashcards</h2>
+                  <div className="flex items-center justify-between px-1">
+                    <h2 className="font-bold text-xs tracking-wider uppercase opacity-60" style={mutedStyle}>Recent Flashcards</h2>
                     <Link to={createPageUrl("Decks")} className="text-violet-500 dark:text-violet-400 text-xs font-bold hover:underline">
                       View all sets
                     </Link>
@@ -568,12 +571,12 @@ export default function Home() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {decks.slice(0, 4).map(deck => (
                       <Link key={deck.id} to={createPageUrl(`Study?deck_id=${deck.id}`)} className="block">
-                        <div className="rounded-xl p-3 border transition-all duration-150 flex items-center justify-between group bg-slate-500/5 dark:bg-slate-900/5 hover:bg-slate-500/10 dark:hover:bg-slate-900/20 hover:border-violet-500/30" style={cardStyle}>
-                          <div className="flex items-center gap-3 min-w-0 pr-2">
+                        <div className="rounded-2xl p-4 border transition-all duration-150 flex items-center justify-between group bg-slate-500/5 dark:bg-slate-900/10 hover:bg-slate-500/10 dark:hover:bg-slate-900/30 hover:border-violet-500/30 shadow-xs" style={cardStyle}>
+                          <div className="flex items-center gap-3.5 min-w-0 pr-2">
                             {deck.cover_image_url ? (
-                              <img src={deck.cover_image_url} alt="" className="w-10 h-10 rounded-lg object-cover bg-[var(--app-bg)] border shrink-0" style={{ borderColor: "var(--app-border)" }} />
+                              <img src={deck.cover_image_url} alt="" className="w-11 h-11 rounded-xl object-cover bg-[var(--app-bg)] border shrink-0" style={{ borderColor: "var(--app-border)" }} />
                             ) : (
-                              <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${getFallbackStyle(deck.id)} shrink-0 flex items-center justify-center text-white/50 font-bold text-[10px]`}>
+                              <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${getFallbackStyle(deck.id)} shrink-0 flex items-center justify-center text-white/60 font-bold text-xs shadow-inner`}>
                                 SET
                               </div>
                             )}
@@ -582,10 +585,10 @@ export default function Home() {
                                 <span className="font-bold text-xs text-[var(--app-text)] truncate group-hover:text-violet-500 dark:group-hover:text-violet-400 transition-colors">{deck.title}</span>
                                 {deck.is_verified && <VerifiedBadge size={12} />}
                               </div>
-                              <p className="text-[10px] opacity-60 mt-0.5 font-medium" style={mutedStyle}>{deck.card_count || 0} cards · Personal set</p>
+                              <p className="text-[10px] opacity-60 mt-0.5 font-medium" style={mutedStyle}>{deck.card_count || 0} cards · Personal deck</p>
                             </div>
                           </div>
-                          <ArrowRight className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all text-slate-400 group-hover:text-violet-500 shrink-0" />
+                          <ArrowRight className="w-4 h-4 opacity-40 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all text-slate-400 group-hover:text-violet-500 shrink-0" />
                         </div>
                       </Link>
                     ))}
@@ -595,21 +598,21 @@ export default function Home() {
 
               {homeLayout.showCommunityDecks && trendingDecks.length > 0 && (
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h2 className="font-bold text-xs tracking-wide opacity-60" style={mutedStyle}>Trending study sets</h2>
+                  <div className="flex items-center justify-between px-1">
+                    <h2 className="font-bold text-xs tracking-wider uppercase opacity-60" style={mutedStyle}>Trending Study Sets</h2>
                     <Link to={createPageUrl("PublicDecks")} className="text-violet-500 dark:text-violet-400 text-xs font-bold hover:underline">
-                      Explore community sets
+                      Explore public sets
                     </Link>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {trendingDecks.map(deck => (
                       <Link key={deck.id} to={createPageUrl(`Study?deck_id=${deck.id}`)}>
-                        <div className="rounded-xl p-3 border transition-all h-full flex flex-col justify-between bg-slate-500/5 dark:bg-slate-900/5 hover:bg-slate-500/10 dark:hover:bg-slate-900/20" style={cardStyle}>
+                        <div className="rounded-2xl p-4 border transition-all h-full flex flex-col justify-between bg-slate-500/5 dark:bg-slate-900/10 hover:bg-slate-500/10 dark:hover:bg-slate-900/30 shadow-xs" style={cardStyle}>
                           <div className="flex items-start gap-3">
                             {deck.cover_image_url ? (
-                              <img src={deck.cover_image_url} alt="" className="w-12 h-12 rounded-lg object-cover bg-[var(--app-bg)] border shrink-0" style={{ borderColor: "var(--app-border)" }} />
+                              <img src={deck.cover_image_url} alt="" className="w-12 h-12 rounded-xl object-cover bg-[var(--app-bg)] border shrink-0" style={{ borderColor: "var(--app-border)" }} />
                             ) : (
-                              <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${getFallbackStyle(deck.id)} shrink-0 flex items-center justify-center text-white/50 font-bold text-[10px]`}>
+                              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${getFallbackStyle(deck.id)} shrink-0 flex items-center justify-center text-white/60 font-bold text-xs shadow-inner`}>
                                 TRND
                               </div>
                             )}
@@ -630,51 +633,52 @@ export default function Home() {
               )}
             </div>
 
+            {/* Side Column */}
             <div className="space-y-6">
               
               {user && (
-                <div className="border rounded-xl p-4 bg-slate-500/5 dark:bg-slate-900/10" style={cardStyle}>
+                <div className="border rounded-2xl p-4 bg-slate-500/5 dark:bg-slate-900/10 shadow-xs" style={cardStyle}>
                   <StreakBadges sessions={allSessions} userEmail={user.email} />
                 </div>
               )}
 
               {homeLayout.showLiveCounters && (
-                <div className="border rounded-xl p-4 space-y-4 bg-slate-500/5 dark:bg-slate-900/10" style={cardStyle}>
-                  <h4 className="text-[10px] font-bold tracking-wide opacity-60" style={mutedStyle}>Study analytics</h4>
+                <div className="border rounded-2xl p-5 space-y-4 bg-slate-500/5 dark:bg-slate-900/10 shadow-xs" style={cardStyle}>
+                  <h4 className="text-[10px] font-bold tracking-wider uppercase opacity-60" style={mutedStyle}>Study Analytics</h4>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-lg font-black text-[var(--app-text)]">{totalMinutes.toLocaleString()}</p>
-                      <p className="text-[9px] font-bold opacity-50 tracking-tight mt-0.5" style={mutedStyle}>Minutes spent</p>
+                      <p className="text-xl font-black text-[var(--app-text)]">{totalMinutes.toLocaleString()}</p>
+                      <p className="text-[9px] font-bold opacity-50 tracking-tight mt-0.5 uppercase" style={mutedStyle}>Minutes spent</p>
                     </div>
                     <div>
-                      <p className="text-lg font-black text-[var(--app-text)]">{totalCardsReviewed.toLocaleString()}</p>
-                      <p className="text-[9px] font-bold opacity-50 tracking-tight mt-0.5" style={mutedStyle}>Cards studied</p>
+                      <p className="text-xl font-black text-[var(--app-text)]">{totalCardsReviewed.toLocaleString()}</p>
+                      <p className="text-[9px] font-bold opacity-50 tracking-tight mt-0.5 uppercase" style={mutedStyle}>Cards studied</p>
                     </div>
                   </div>
                 </div>
               )}
 
-              <div className="rounded-xl p-5 border relative overflow-hidden bg-gradient-to-br from-violet-600/10 to-indigo-600/5 border-violet-500/20">
+              <div className="rounded-2xl p-5 border relative overflow-hidden bg-gradient-to-br from-violet-600/10 via-indigo-600/5 to-transparent border-violet-500/20 shadow-xs">
                 <div className="flex items-center gap-2 mb-2 text-violet-600 dark:text-violet-400">
-                  <Heart className="w-3.5 h-3.5 fill-violet-500/10" />
-                  <h4 className="font-bold text-xs tracking-tight">Support open learning</h4>
+                  <Heart className="w-4 h-4 fill-violet-500/10" />
+                  <h4 className="font-bold text-xs tracking-tight">Support Open Learning</h4>
                 </div>
-                <p className="text-[11px] leading-relaxed opacity-80 mb-4" style={mutedStyle}>
-                  Help keep this study environment fast and fully open-access for high school and college student learning pipelines.
+                <p className="text-[11px] leading-relaxed opacity-80 mb-4 font-medium" style={mutedStyle}>
+                  Help keep this study environment fast and fully open-access for high school and college students worldwide.
                 </p>
                 <a 
                   href="https://paypal.me/ycmusicmodels" 
                   target="_blank" 
                   rel="noreferrer" 
-                  className="w-full inline-flex items-center justify-center bg-violet-600 hover:bg-violet-500 text-white text-xs font-bold h-9 rounded-lg transition-all shadow-md active:scale-[0.99]"
+                  className="w-full inline-flex items-center justify-center bg-violet-600 hover:bg-violet-500 text-white text-xs font-bold h-9 rounded-xl transition-all shadow-md active:scale-[0.99]"
                 >
                   Support project
                 </a>
               </div>
 
               {homeLayout.showMyClasses && myClasses.length > 0 && (
-                <div className="border rounded-xl p-4 space-y-3 bg-slate-500/5 dark:bg-slate-900/10" style={cardStyle}>
-                  <h4 className="text-[10px] font-bold tracking-wide opacity-60" style={mutedStyle}>Your classes</h4>
+                <div className="border rounded-2xl p-4 space-y-3 bg-slate-500/5 dark:bg-slate-900/10 shadow-xs" style={cardStyle}>
+                  <h4 className="text-[10px] font-bold tracking-wider uppercase opacity-60" style={mutedStyle}>Your Classes</h4>
                   <div className="space-y-1.5">
                     {myClasses.slice(0, 3).map(cls => (
                       <Link 
@@ -683,13 +687,13 @@ export default function Home() {
                         className="block group"
                       >
                         <div 
-                          className="text-[11px] font-semibold p-2.5 rounded-lg bg-white dark:bg-slate-950/40 border flex items-center justify-between text-[var(--app-text)] hover:border-violet-500/50 hover:bg-violet-500/5 transition-all cursor-pointer" 
+                          className="text-xs font-semibold p-2.5 rounded-xl bg-white dark:bg-slate-950/40 border flex items-center justify-between text-[var(--app-text)] hover:border-violet-500/50 hover:bg-violet-500/5 transition-all cursor-pointer" 
                           style={{ borderColor: "var(--app-border)" }}
                         >
                           <span className="truncate pr-2 group-hover:text-violet-500 dark:group-hover:text-violet-400 transition-colors">
                             {cls.name}
                           </span>
-                          <Play className="w-2.5 h-2.5 opacity-50 shrink-0 text-violet-500 dark:text-violet-400 group-hover:translate-x-0.5 transition-transform" />
+                          <Play className="w-3 h-3 opacity-50 shrink-0 text-violet-500 dark:text-violet-400 group-hover:translate-x-0.5 transition-transform" />
                         </div>
                       </Link>
                     ))}
@@ -697,12 +701,12 @@ export default function Home() {
                 </div>
               )}
 
-              <div className="rounded-xl p-4 border bg-emerald-500/5 border-emerald-500/10 flex gap-3 items-start">
+              <div className="rounded-2xl p-4 border bg-emerald-500/5 border-emerald-500/10 flex gap-3 items-start">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
                 <div className="space-y-0.5">
                   <p className="font-bold text-xs text-emerald-600 dark:text-emerald-400">Student Operated</p>
-                  <p className="text-[11px] leading-relaxed opacity-80" style={mutedStyle}>
-                    Cognita Study is fully operated by students! We don't do this for the profit- but for helping our fellow classmates out! Go to the parternship page if you'd like to partner up for integrations or would like to support us!
+                  <p className="text-[11px] leading-relaxed opacity-80 font-medium" style={mutedStyle}>
+                    Cognita Study is operated entirely by students for students. Reach out via our partnership page for integrations or support!
                   </p>
                 </div>
               </div>
@@ -717,7 +721,7 @@ export default function Home() {
 
         </div>
 
-        <div className="mt-20 border-t pt-8 w-full max-w-6xl mx-auto" style={{ borderColor: "var(--app-border)" }}>
+        <div className="mt-16 border-t pt-8 w-full max-w-6xl mx-auto" style={{ borderColor: "var(--app-border)" }}>
           <Footer userEmail={user?.email} />
         </div>
       </div>
