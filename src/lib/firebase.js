@@ -32,6 +32,7 @@ import {
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { GoogleGenAI } from '@google/genai';
 import jsonConfig from '../../firebase-applet-config.json';
+import { generateReferralCode } from './referrals';
 
 const firebaseConfig = {
   apiKey: jsonConfig?.apiKey || import.meta.env.VITE_FIREBASE_API_KEY,
@@ -67,9 +68,9 @@ setTimeout(async () => {
 function getCollectionName(entityName) {
   if (!entityName) return 'general';
   const name = String(entityName);
-  // Custom mapping if needed
   const map = {
     User: 'users',
+    Referral: 'referrals',
     Deck: 'decks',
     Flashcard: 'flashcards',
     Note: 'notes',
@@ -154,6 +155,7 @@ function createEntityHandler(entityName) {
 
   return {
     async list(sortField, limitVal, skipVal) {
+      const safeSkip = (typeof skipVal === 'number' && skipVal > 0) ? skipVal : 0;
       const safeLimit = (typeof limitVal === 'number' && limitVal > 0) ? Math.min(limitVal, 5000) : null;
       try {
         const collRef = collection(firestore, collName);
@@ -165,18 +167,22 @@ function createEntityHandler(entityName) {
           qConstraints.push(orderBy(cleanField, desc ? 'desc' : 'asc'));
         }
         if (safeLimit) {
-          qConstraints.push(limit(safeLimit));
+          qConstraints.push(limit(safeLimit + safeSkip));
         }
 
         const q = qConstraints.length > 0 ? query(collRef, ...qConstraints) : collRef;
         const snapshot = await getDocs(q);
-        return snapshot.docs.map(doc => formatDoc(doc));
+        let results = snapshot.docs.map(doc => formatDoc(doc));
+        
+        if (safeSkip > 0) {
+          results = results.slice(safeSkip);
+        }
+        return results;
       } catch (err) {
         const isIndexErr = err?.code === 'failed-precondition' || String(err?.message || '').toLowerCase().includes('requires an index');
         if (!isIndexErr) {
           console.warn(`Entity ${entityName} list error:`, err);
         }
-        // Fallback simple fetch without orderBy if index is missing
         try {
           const snapshot = await getDocs(collection(firestore, collName));
           let results = snapshot.docs.map(doc => formatDoc(doc));
@@ -191,6 +197,9 @@ function createEntityHandler(entityName) {
               return 0;
             });
           }
+          if (safeSkip > 0) {
+            results = results.slice(safeSkip);
+          }
           if (safeLimit && results.length > safeLimit) {
             results = results.slice(0, safeLimit);
           }
@@ -202,7 +211,8 @@ function createEntityHandler(entityName) {
       }
     },
 
-    async filter(queryObj = {}, sortField, limitVal) {
+    async filter(queryObj = {}, sortField, limitVal, skipVal) {
+      const safeSkip = (typeof skipVal === 'number' && skipVal > 0) ? skipVal : 0;
       const safeLimit = (typeof limitVal === 'number' && limitVal > 0) ? Math.min(limitVal, 5000) : null;
       try {
         const collRef = collection(firestore, collName);
@@ -220,18 +230,22 @@ function createEntityHandler(entityName) {
           qConstraints.push(orderBy(cleanField, desc ? 'desc' : 'asc'));
         }
         if (safeLimit) {
-          qConstraints.push(limit(safeLimit));
+          qConstraints.push(limit(safeLimit + safeSkip));
         }
 
         const q = qConstraints.length > 0 ? query(collRef, ...qConstraints) : collRef;
         const snapshot = await getDocs(q);
-        return snapshot.docs.map(doc => formatDoc(doc));
+        let results = snapshot.docs.map(doc => formatDoc(doc));
+        
+        if (safeSkip > 0) {
+          results = results.slice(safeSkip);
+        }
+        return results;
       } catch (err) {
         const isIndexErr = err?.code === 'failed-precondition' || String(err?.message || '').toLowerCase().includes('requires an index');
         if (!isIndexErr) {
           console.warn(`Entity ${entityName} filter error:`, err);
         }
-        // Fallback filter in memory if complex Firestore index error
         try {
           const snapshot = await getDocs(collection(firestore, collName));
           let results = snapshot.docs.map(doc => formatDoc(doc));
@@ -250,6 +264,9 @@ function createEntityHandler(entityName) {
               if (valA > valB) return desc ? -1 : 1;
               return 0;
             });
+          }
+          if (safeSkip > 0) {
+            results = results.slice(safeSkip);
           }
           if (safeLimit && results.length > safeLimit) {
             results = results.slice(0, safeLimit);
@@ -423,7 +440,6 @@ async function getCurrentUser() {
     const raw = localStorage.getItem(cacheKey);
     if (raw) {
       const cached = JSON.parse(raw);
-      // Refresh profile doc in background without blocking caller
       entitiesProxy.User.get(firebaseUser.uid).then(doc => {
         if (doc) localStorage.setItem(cacheKey, JSON.stringify({ ...basicUser, ...doc }));
       }).catch(() => {});
@@ -432,7 +448,6 @@ async function getCurrentUser() {
   } catch (e) {}
 
   try {
-    // Race with a quick 800ms timeout so initial load never hangs
     const fetchPromise = entitiesProxy.User.get(firebaseUser.uid);
     const timeoutPromise = new Promise(res => setTimeout(() => res(null), 800));
     const userDoc = await Promise.race([fetchPromise, timeoutPromise]);
@@ -473,13 +488,14 @@ const authHandler = {
     }
 
     const user = result.user;
+    const generatedCode = generateReferralCode(user.displayName || user.email);
 
-    // Ensure User profile exists in Firestore
     await entitiesProxy.User.create({
       id: user.uid,
       email: user.email,
       full_name: user.displayName || user.email?.split('@')[0],
       avatar_url: user.photoURL,
+      referral_code: generatedCode,
       role: 'user'
     });
 
@@ -497,11 +513,15 @@ const authHandler = {
     if (fullName) {
       await updateProfile(user, { displayName: fullName });
     }
+    
+    const generatedCode = generateReferralCode(fullName || email);
+
     await entitiesProxy.User.create({
       id: user.uid,
       email: user.email,
       full_name: fullName || user.email?.split('@')[0],
       avatar_url: user.photoURL || null,
+      referral_code: generatedCode,
       role: 'user'
     });
     return await getCurrentUser();
@@ -523,15 +543,16 @@ const authHandler = {
   },
 
   onAuthStateChanged(callback) {
-    // Process redirect result if returning from signInWithRedirect
     getRedirectResult(auth).then(async (result) => {
       if (result?.user) {
         const u = result.user;
+        const generatedCode = generateReferralCode(u.displayName || u.email);
         await entitiesProxy.User.create({
           id: u.uid,
           email: u.email,
           full_name: u.displayName || u.email?.split('@')[0],
           avatar_url: u.photoURL,
+          referral_code: generatedCode,
           role: 'user'
         });
       }
@@ -599,7 +620,6 @@ const integrationsCore = {
   },
 
   async GenerateImage({ prompt }) {
-    // Generate clean placeholder / Pollinations visual image URL
     const encodedPrompt = encodeURIComponent(prompt || 'learning study background');
     const image_url = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=800&height=600&seed=${Math.floor(Math.random()*10000)}&nologo=true`;
     return { image_url };
@@ -654,7 +674,6 @@ export const db = {
   }
 };
 
-// Assign globally for legacy code compatibility
 if (typeof window !== 'undefined') {
   window.db = db;
   window.__B44_DB__ = db;
