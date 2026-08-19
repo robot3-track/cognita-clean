@@ -261,7 +261,6 @@ export default function Home() {
     { label: "Workflows Layout Notes", desc: "Organize folders & custom notepad rich text", page: "Notes", icon: NotebookPen },
     { label: "Code Compiler Terminal", desc: "Run languages inside sandboxed workspace environments", page: "CodeSandbox", icon: Code2 },
     { label: "User Parameters Settings", desc: "Theme styling configuration profiles", page: "Settings", icon: Sparkles },
-    { label: "Referrals Tracking", desc: "Invite links tracking dashboard stats", page: "Referral", icon: Heart },
   ];
 
   const searchQuery = search.trim().toLowerCase();
