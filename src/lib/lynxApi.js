@@ -25,6 +25,11 @@ export const LYNX_ENABLED_KEY = "cognita_use_lynx_api";
 export const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || "";
 export const OPENROUTER_MODEL = import.meta.env.VITE_OPENROUTER_MODEL || "openrouter/free";
 
+// ─── Hack Club API ───────────────────────────────────────────────────────────
+export const HACKCLUB_API_KEY = import.meta.env.VITE_HACKCLUB_API_KEY || "";
+export const HACKCLUB_DEFAULT_MODEL = import.meta.env.VITE_HACKCLUB_MODEL || "anthropic/claude-opus-5";
+export const HACKCLUB_BASE_URL = "https://ai.hackclub.com/proxy/v1/chat/completions";
+
 export const BIG_PICKLE_API_KEY = import.meta.env.VITE_BIG_PICKLE_API_KEY || "";
 export const BIG_PICKLE_BASE_URL = import.meta.env.VITE_BIG_PICKLE_BASE_URL || "https://opencode.ai/zen/v1";
 export const BIG_PICKLE_MODEL = import.meta.env.VITE_BIG_PICKLE_MODEL || "opencode/big-pickle";
@@ -316,6 +321,78 @@ async function tryOpenRouter({ enhancedPrompt, systemPrompt, response_json_schem
   } catch (err) {
     // Handles unexpected response JSON formatting or parsing exceptions safely
     logAIUsage("openrouter", feature, enhancedPrompt?.length, false);
+    return null;
+  }
+}
+
+/**
+ * Call Hack Club API
+ */
+async function tryHackClub({ enhancedPrompt, systemPrompt, response_json_schema, feature }) {
+  const userContent = response_json_schema
+    ? `${enhancedPrompt}\n\nIMPORTANT: Respond with ONLY valid JSON. No markdown fences, no explanation, no text before or after the JSON object.`
+    : enhancedPrompt;
+
+  let res;
+  try {
+    // Route request through the internal /api/hackclub endpoint to avoid CORS issues
+    res = await fetch("/api/hackclub", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: HACKCLUB_DEFAULT_MODEL,
+        response_format: response_json_schema ? { type: "json_object" } : undefined,
+        messages: [
+          { role: "system", content: systemPrompt || COGNITA_SYSTEM_PROMPT },
+          { role: "user", content: userContent },
+        ],
+      }),
+    });
+  } catch (err) {
+    logAIUsage("hackclub", feature, enhancedPrompt?.length, false);
+    return null;
+  }
+
+  if (!res.ok) {
+    logAIUsage("hackclub", feature, enhancedPrompt?.length, false);
+    return null;
+  }
+
+  try {
+    const data = await res.json();
+    const content = data?.choices?.[0]?.message?.content;
+    if (!content) {
+      logAIUsage("hackclub", feature, enhancedPrompt?.length, false);
+      return null;
+    }
+
+    if (response_json_schema) {
+      try {
+        let cleaned = content.replace(/^```(?:json)?\s*/im, "").replace(/\s*```\s*$/im, "").trim();
+        try { 
+          logAIUsage("hackclub", feature, enhancedPrompt?.length, true); 
+          return JSON.parse(cleaned); 
+        } catch {}
+        
+        const jsonMatch = cleaned.match(/(\{[\s\S]*\})/);
+        if (jsonMatch) { 
+          logAIUsage("hackclub", feature, enhancedPrompt?.length, true); 
+          return JSON.parse(jsonMatch[1]); 
+        }
+        logAIUsage("hackclub", feature, enhancedPrompt?.length, false); 
+        return null;
+      } catch { 
+        logAIUsage("hackclub", feature, enhancedPrompt?.length, false); 
+        return null; 
+      }
+    }
+
+    logAIUsage("hackclub", feature, enhancedPrompt?.length, true);
+    return content;
+  } catch (err) {
+    logAIUsage("hackclub", feature, enhancedPrompt?.length, false);
     return null;
   }
 }
@@ -760,25 +837,30 @@ export async function callAI({ prompt, response_json_schema, add_context_from_in
       if (rOR != null) return rOR;
     } catch (e) { console.warn("OpenRouter fallback failed:", e?.message); }
 
-    // 3. Try Cohere
+    try {
+      const rHackClub = await tryHackClub(args);
+      if (rHackClub != null) return rHackClub;
+    } catch (e) { console.warn("HackClub fallback failed:", e?.message); }
+
+    // 4. Try Cohere
     try {
       const rCohere = await tryCohere(args);
       if (rCohere != null) return rCohere;
     } catch (e) { console.warn("Cohere fallback failed for vision/internet:", e?.message); }
 
-    // 4. Try Big Pickle
+    // 5. Try Big Pickle
     try {
       const rPickle = await tryBigPickle(args);
       if (rPickle != null) return rPickle;
     } catch (e) { console.warn("Big Pickle fallback failed for vision/internet:", e?.message); }
 
-    // 5. Try Claude
+    // 6. Try Claude
     try {
       const rClaude = await tryClaude(args);
       if (rClaude != null) return rClaude;
     } catch (e) { console.warn("Claude fallback failed for vision/internet:", e?.message); }
 
-    // 6. Base44 Final Absolute Fallback
+    // 7. Base44 Final Absolute Fallback
     const result = await db.integrations.Core.InvokeLLM({
       prompt: enhancedPrompt,
       ...(response_json_schema ? { response_json_schema } : {}),
@@ -796,25 +878,28 @@ export async function callAI({ prompt, response_json_schema, add_context_from_in
   const isCodeFeature = feature === "code_sandbox_ai" || feature === "code_helper";
   
   if (isCodeFeature) {
-    // Cohere → Lynx → Nvidia → Gemini → Big Pickle → Claude → Base44
     const r1 = await tryCohere(args).catch(() => null);
     if (r1 != null) return r1;
     const r2 = await tryLynx(args).catch(() => null);
     if (r2 != null) return r2;
     const rOR = await tryOpenRouter(args).catch(() => null);
     if (rOR != null) return rOR;
-    const rNvidia = await tryNvidia(args).catch(() => null); // <-- ADD HERE
+    const rNvidia = await tryNvidia(args).catch(() => null); 
     if (rNvidia != null) return rNvidia;
+    const rHackClub = await tryHackClub(args).catch(() => null);
+    if (rHackClub != null) return rHackClub;
     const r3 = await tryGemini(args).catch(() => null);
     if (r3 != null) return r3;
   } else {
-    // Standard: Lynx → OpenRouter → Groq → Gemini → Cohere → Big Pickle → Claude → Base44
-    const rGroq = await tryGroq(args).catch(() => null); // <-- Added Groq 3rd in line
+    // Standard
+    const rGroq = await tryGroq(args).catch(() => null);
     if (rGroq != null) return rGroq;
     const r1 = await tryLynx(args).catch(() => null);
     if (r1 != null) return r1;
     const rOR = await tryOpenRouter(args).catch(() => null);
     if (rOR != null) return rOR;
+    const rHackClub = await tryHackClub(args).catch(() => null);
+    if (rHackClub != null) return rHackClub;
     const rNvidia = await tryNvidia(args).catch(() => null); // Nvidia update! let's go
     if (rNvidia != null) return rNvidia;
     const r3 = await tryCohere(args).catch(() => null);
