@@ -839,10 +839,12 @@ function AIUsagePanel({ cardStyle, mutedStyle }) {
   const isProvider = (p, name) => {
     const norm = String(p || "").toLowerCase();
     if (name === "mistral") return norm.includes("mistral");
+    if (name === "hackclub") return norm.includes("hackclub");
     return norm === name;
   };
 
   const lynxTotal = logs.filter(l => isProvider(l.provider, "lynx")).length;
+  const hackclubTotal = logs.filter(l => isProvider(l.provider, "hackclub")).length;
   const geminiTotal = logs.filter(l => isProvider(l.provider, "gemini")).length;
   const cohereTotal = logs.filter(l => isProvider(l.provider, "cohere")).length;
   const claudeTotal = logs.filter(l => isProvider(l.provider, "claude")).length;
@@ -854,6 +856,7 @@ function AIUsagePanel({ cardStyle, mutedStyle }) {
   const total = logs.length;
 
   const lynxSuccess = logs.filter(l => isProvider(l.provider, "lynx") && l.success !== false).length;
+  const hackclubSuccess = logs.filter(l => isProvider(l.provider, "hackclub") && l.success !== false).length;
   const geminiSuccess = logs.filter(l => isProvider(l.provider, "gemini") && l.success !== false).length;
   const cohereSuccess = logs.filter(l => isProvider(l.provider, "cohere") && l.success !== false).length;
   const firebaseSuccess = logs.filter(l => isProvider(l.provider, "firebase") && l.success !== false).length;
@@ -867,11 +870,14 @@ function AIUsagePanel({ cardStyle, mutedStyle }) {
   const featureCounts = {};
   logs.forEach(l => {
     const k = l.feature || "unknown";
-    if (!featureCounts[k]) featureCounts[k] = { lynx: 0, gemini: 0, cohere: 0, claude: 0, firebase: 0, openrouter: 0, nvidia: 0, groq: 0, mistral: 0 };
+    if (!featureCounts[k]) {
+      featureCounts[k] = { lynx: 0, hackclub: 0, gemini: 0, cohere: 0, claude: 0, firebase: 0, openrouter: 0, nvidia: 0, groq: 0, mistral: 0 };
+    }
     
     let key = "firebase";
     const raw = String(l.provider || "").toLowerCase();
     if (raw.includes("lynx")) key = "lynx";
+    else if (raw.includes("hackclub")) key = "hackclub";
     else if (raw.includes("gemini")) key = "gemini";
     else if (raw.includes("cohere")) key = "cohere";
     else if (raw.includes("claude")) key = "claude";
@@ -883,10 +889,9 @@ function AIUsagePanel({ cardStyle, mutedStyle }) {
     featureCounts[k][key] = (featureCounts[k][key] || 0) + 1;
   });
   
-  const features = Object.entries(featureCounts).sort((a, b) => 
-    (b[1].lynx + b[1].gemini + b[1].cohere + b[1].claude + (b[1].firebase || 0) + (b[1].openrouter || 0) + (b[1].nvidia || 0) + (b[1].groq || 0) + (b[1].mistral || 0)) - 
-    (a[1].lynx + a[1].gemini + a[1].cohere + a[1].claude + (a[1].firebase || 0) + (a[1].openrouter || 0) + (a[1].nvidia || 0) + (a[1].groq || 0) + (a[1].mistral || 0))
-  );
+  const getFeatureTotal = (c) => (c.lynx || 0) + (c.hackclub || 0) + (c.gemini || 0) + (c.cohere || 0) + (c.claude || 0) + (c.firebase || 0) + (c.openrouter || 0) + (c.nvidia || 0) + (c.groq || 0) + (c.mistral || 0);
+
+  const features = Object.entries(featureCounts).sort((a, b) => getFeatureTotal(b[1]) - getFeatureTotal(a[1]));
 
   // Recent 50 logs
   const recent = logs.slice(0, 50);
@@ -898,13 +903,14 @@ function AIUsagePanel({ cardStyle, mutedStyle }) {
         {[
           { label: "Total AI Calls", value: total, color: "text-white", success: null },
           { label: "⚡ Lynx API", value: lynxTotal, color: "text-amber-400", success: lynxSuccess },
+          { label: "🚩 Hack Club API", value: hackclubTotal, color: "text-red-400", success: hackclubSuccess },
           { label: "🔵 Gemini API", value: geminiTotal, color: "text-blue-400", success: geminiSuccess },
           { label: "🟢 Cohere API", value: cohereTotal, color: "text-teal-400", success: cohereSuccess },
           { label: "🟠 Claude API", value: claudeTotal, color: "text-orange-400", success: claudeSuccess },
           { label: "🔥 Firebase AI", value: firebaseTotal, color: "text-violet-400", success: firebaseSuccess },
           { label: "🧠 OpenRouter", value: openrouterTotal, color: "text-pink-400", success: openrouterSuccess },
           { label: "🟩 NVIDIA API", value: nvidiaTotal, color: "text-green-500", success: nvidiaSuccess },
-          { label: "🚀 Groq API", value: groqTotal, color: "text-red-400", success: groqSuccess },
+          { label: "🚀 Groq API", value: groqTotal, color: "text-rose-400", success: groqSuccess },
           { label: "🦊 Mistral API", value: mistralTotal, color: "text-amber-500", success: mistralSuccess },
         ].map(stat => (
           <div key={stat.label} className="rounded-2xl p-5 text-center" style={cardStyle}>
@@ -923,24 +929,26 @@ function AIUsagePanel({ cardStyle, mutedStyle }) {
           <h3 className="font-bold text-sm mb-3">Provider Split</h3>
           <div className="flex h-6 rounded-full overflow-hidden mb-2">
             <div className="bg-amber-500 transition-all" style={{ width: `${(lynxTotal / total) * 100}%` }} />
+            <div className="bg-red-500 transition-all" style={{ width: `${(hackclubTotal / total) * 100}%` }} />
             <div className="bg-blue-500 transition-all" style={{ width: `${(geminiTotal / total) * 100}%` }} />
             <div className="bg-teal-500 transition-all" style={{ width: `${(cohereTotal / total) * 100}%` }} />
             <div className="bg-orange-500 transition-all" style={{ width: `${(claudeTotal / total) * 100}%` }} />
             <div className="bg-violet-600 transition-all" style={{ width: `${(firebaseTotal / total) * 100}%` }} />
             <div className="bg-pink-500 transition-all" style={{ width: `${(openrouterTotal / total) * 100}%` }} />
             <div className="bg-green-600 transition-all" style={{ width: `${(nvidiaTotal / total) * 100}%` }} />
-            <div className="bg-red-500 transition-all" style={{ width: `${(groqTotal / total) * 100}%` }} />
+            <div className="bg-rose-500 transition-all" style={{ width: `${(groqTotal / total) * 100}%` }} />
             <div className="bg-amber-600 transition-all" style={{ width: `${(mistralTotal / total) * 100}%` }} />
           </div>
           <div className="flex gap-4 text-xs flex-wrap">
             <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-amber-500 inline-block" /><span style={mutedStyle}>Lynx {Math.round((lynxTotal / total) * 100)}%</span></div>
+            <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-red-500 inline-block" /><span style={mutedStyle}>Hack Club {Math.round((hackclubTotal / total) * 100)}%</span></div>
             <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-blue-500 inline-block" /><span style={mutedStyle}>Gemini {Math.round((geminiTotal / total) * 100)}%</span></div>
             <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-teal-500 inline-block" /><span style={mutedStyle}>Cohere {Math.round((cohereTotal / total) * 100)}%</span></div>
             <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-orange-500 inline-block" /><span style={mutedStyle}>Claude {Math.round((claudeTotal / total) * 100)}%</span></div>
             <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-violet-600 inline-block" /><span style={mutedStyle}>Firebase {Math.round((firebaseTotal / total) * 100)}%</span></div>
             <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-pink-500 inline-block" /><span style={mutedStyle}>OpenRouter {Math.round((openrouterTotal / total) * 100)}%</span></div>
             <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-green-600 inline-block" /><span style={mutedStyle}>Nvidia {Math.round((nvidiaTotal / total) * 100)}%</span></div>
-            <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-red-500 inline-block" /><span style={mutedStyle}>Groq {Math.round((groqTotal / total) * 100)}%</span></div>
+            <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-rose-500 inline-block" /><span style={mutedStyle}>Groq {Math.round((groqTotal / total) * 100)}%</span></div>
             <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-amber-600 inline-block" /><span style={mutedStyle}>Mistral {Math.round((mistralTotal / total) * 100)}%</span></div>
           </div>
         </div>
@@ -952,23 +960,24 @@ function AIUsagePanel({ cardStyle, mutedStyle }) {
           <h3 className="font-bold text-sm mb-3">Usage by Feature</h3>
           <div className="space-y-2">
             {features.map(([feature, counts]) => {
-              const ft = (counts.lynx || 0) + (counts.gemini || 0) + (counts.cohere || 0) + (counts.claude || 0) + (counts.firebase || 0) + (counts.openrouter || 0) + (counts.nvidia || 0) + (counts.groq || 0) + (counts.mistral || 0);
+              const ft = getFeatureTotal(counts);
               return (
                 <div key={feature} className="flex items-center gap-3">
                   <span className="text-xs font-mono w-36 truncate" style={mutedStyle}>{feature}</span>
                   <div className="flex-1 flex h-4 rounded-full overflow-hidden" style={{ background: "var(--app-bg)" }}>
                     {counts.lynx > 0 && <div className="bg-amber-500/80" style={{ width: `${(counts.lynx / ft) * 100}%` }} />}
+                    {counts.hackclub > 0 && <div className="bg-red-500/80" style={{ width: `${(counts.hackclub / ft) * 100}%` }} />}
                     {counts.gemini > 0 && <div className="bg-blue-500/80" style={{ width: `${(counts.gemini / ft) * 100}%` }} />}
                     {counts.cohere > 0 && <div className="bg-teal-500/80" style={{ width: `${(counts.cohere / ft) * 100}%` }} />}
                     {counts.claude > 0 && <div className="bg-orange-500/80" style={{ width: `${(counts.claude / ft) * 100}%` }} />}
                     {counts.firebase > 0 && <div className="bg-violet-600/80" style={{ width: `${(counts.firebase / ft) * 100}%` }} />}
                     {counts.openrouter > 0 && <div className="bg-pink-500/80" style={{ width: `${(counts.openrouter / ft) * 100}%` }} />}
                     {counts.nvidia > 0 && <div className="bg-green-600/80" style={{ width: `${(counts.nvidia / ft) * 100}%` }} />}
-                    {counts.groq > 0 && <div className="bg-red-500/80" style={{ width: `${(counts.groq / ft) * 100}%` }} />}
+                    {counts.groq > 0 && <div className="bg-rose-500/80" style={{ width: `${(counts.groq / ft) * 100}%` }} />}
                     {counts.mistral > 0 && <div className="bg-amber-600/80" style={{ width: `${(counts.mistral / ft) * 100}%` }} />}
                   </div>
                   <span className="text-xs font-black w-8 text-right">{ft}</span>
-                  <span className="text-[10px] opacity-60 w-80 text-right">⚡{counts.lynx || 0} 🔵{counts.gemini || 0} 🟢{counts.cohere || 0} 🟠{counts.claude || 0} 🔥{counts.firebase || 0} 🧠{counts.openrouter || 0} 🟩{counts.nvidia || 0} 🚀{counts.groq || 0} 🦊{counts.mistral || 0}</span>
+                  <span className="text-[10px] opacity-60 w-80 text-right">⚡{counts.lynx || 0} 🚩{counts.hackclub || 0} 🔵{counts.gemini || 0} 🟢{counts.cohere || 0} 🟠{counts.claude || 0} 🔥{counts.firebase || 0} 🧠{counts.openrouter || 0} 🟩{counts.nvidia || 0} 🚀{counts.groq || 0} 🦊{counts.mistral || 0}</span>
                 </div>
               );
             })}
@@ -993,6 +1002,7 @@ function AIUsagePanel({ cardStyle, mutedStyle }) {
             {recent.map(log => {
               const p = String(log.provider || "").toLowerCase();
               const isMistral = p.includes("mistral");
+              const isHackClub = p.includes("hackclub");
               const isLynx = p === "lynx";
               const isGemini = p === "gemini";
               const isCohere = p === "cohere";
@@ -1009,16 +1019,18 @@ function AIUsagePanel({ cardStyle, mutedStyle }) {
                   <td className="px-4 py-2">
                     <span className={`px-2 py-0.5 rounded-lg font-bold ${
                       isLynx ? "bg-amber-500/15 text-amber-400" : 
+                      isHackClub ? "bg-red-500/15 text-red-400" :
                       isGemini ? "bg-blue-500/15 text-blue-400" : 
                       isCohere ? "bg-teal-500/15 text-teal-400" : 
                       isClaude ? "bg-orange-500/15 text-orange-400" : 
                       isOpenRouter ? "bg-pink-500/15 text-pink-400" : 
                       isNvidia ? "bg-green-500/15 text-green-400" : 
-                      isGroq ? "bg-red-500/15 text-red-400" :
+                      isGroq ? "bg-rose-500/15 text-rose-400" :
                       isMistral ? "bg-amber-600/15 text-amber-500" :
                       "bg-violet-500/15 text-violet-400"
                     }`}>
                       {isLynx ? "⚡ Lynx" : 
+                       isHackClub ? "🚩 Hack Club" :
                        isGemini ? "🔵 Gemini" : 
                        isCohere ? "🟢 Cohere" : 
                        isClaude ? "🟠 Claude" : 
@@ -1367,17 +1379,17 @@ export default function DevDashboard() {
           db.entities.StudySession.list("-created_date", 20000).catch(() => []),
           db.entities.Deck.list("-updated_date", 20000).catch(() => []),
           db.entities.User.list("-created_date", 20000).catch(() => []), // <-- Safely reads the user directory
-          db.entities.DeckRating.list("-created_date", 5000).catch(() => []),
+          db.entities.DeckRating.list("-created_date", 20000).catch(() => []),
         ]);
 
         // Parallel Batch Fetch 2
         const [suspensions, apps, friendships, apSessions, loginEvents, verifyRequests] = await Promise.all([
           db.entities.SuspendedUser.list("-created_date", 2000).catch(() => []),
-          db.entities.CourseApplication.list("-created_date", 1000).catch(() => []),
-          db.entities.Friendship.list("-created_date", 5000).catch(() => []),
-          db.entities.APSession.list("-created_date", 5000).catch(() => []),
-          db.entities.UserLoginEvent.list("-created_date", 10000).catch(() => []),
-          db.entities.PendingApproval.list("-created_date", 2000).catch(() => []),
+          db.entities.CourseApplication.list("-created_date", 20000).catch(() => []),
+          db.entities.Friendship.list("-created_date", 20000).catch(() => []),
+          db.entities.APSession.list("-created_date", 20000).catch(() => []),
+          db.entities.UserLoginEvent.list("-created_date", 20000).catch(() => []),
+          db.entities.PendingApproval.list("-created_date", 20000).catch(() => []),
         ]);
 
         // Only apply state updates if the user hasn't already closed or switched tabs
