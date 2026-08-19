@@ -715,6 +715,15 @@ export default function Home() {
 
         <div className="mt-16 border-t pt-8 w-full max-w-6xl mx-auto" style={{ borderColor: "var(--app-border)" }}>
           <Footer userEmail={user?.email} />
+          <div className="flex items-center gap-4 text-xs font-medium" style={mutedStyle}>
+            <Link to="/Documentation" className="hover:text-violet-500 transition-colors">
+              Privacy Policy
+            </Link>
+            <span>•</span>
+            <Link to="/Referral" className="hover:text-violet-500 transition-colors">
+              Referrals
+            </Link>
+          </div>
         </div>
       </div>
     </PullToRefresh>
