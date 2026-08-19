@@ -1,23 +1,32 @@
 import { db } from '@/lib/firebase';
-
-// AI Usage Limiter — account-based, server-synced, 20 credits/day
-
 import { addSurveyBonusServer, recordAiUseServer } from "./userCredits";
 
 const EXEMPT_EMAIL = "yychang100@student.hbuhsd.edu";
-const THIEN_EMAIL = "thiennguyentran2006@gmail.com"; // Thien gets 15 credits/day
+const THIEN_EMAIL = "thiennguyentran2006@gmail.com";
 const DAILY_REPLENISH = 8;
 
-function getDailyReplenish(email) {
+export function getDailyReplenish(email) {
+  if (!email) return DAILY_REPLENISH;
   if (email === THIEN_EMAIL) return 15;
   return DAILY_REPLENISH;
 }
 
+export function getMaxAiUses(email) {
+  if (!email) return DAILY_REPLENISH;
+  if (email === EXEMPT_EMAIL) return Infinity;
+  const baseMax = getDailyReplenish(email);
+  const remaining = getCachedCredits(email);
+  return Math.max(baseMax, remaining);
+}
+
 export function dispatchUsageUpdate() {
-  window.dispatchEvent(new Event("ai_usage_update"));
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("ai_usage_update"));
+  }
 }
 
 // ─── Helper: Get Current User Document Reference ──────────────────────────────
+
 async function getUserRecord(email) {
   if (!email) return null;
   const users = await db.entities.User.filter({ email: email });
@@ -33,7 +42,7 @@ function getCacheKey(email) {
 function getCachedCredits(email) {
   if (!email) return 0;
   const val = localStorage.getItem(getCacheKey(email));
-  return val !== null ? parseFloat(val) : DAILY_REPLENISH;
+  return val !== null ? parseFloat(val) : getDailyReplenish(email);
 }
 
 function setCachedCredits(email, amount) {
@@ -139,11 +148,12 @@ export function getRemainingAiUses(email, isUnlimited = false) {
 
 export function getAiUsageCount(email) {
   if (!email) return 0;
-  return Math.max(0, DAILY_REPLENISH - getCachedCredits(email));
+  const replenish = getDailyReplenish(email);
+  return Math.max(0, replenish - getCachedCredits(email));
 }
 
 export function getTotalLimit(email) {
-  return DAILY_REPLENISH + getSurveyBonus(email);
+  return getDailyReplenish(email) + getSurveyBonus(email);
 }
 
 // ─── Survey Bonus ────────────────────────────────────────────────────────────
