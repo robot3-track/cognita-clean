@@ -201,8 +201,7 @@ export default function CustomSignIn() {
                 className="w-9 h-9 object-contain rounded-lg border border-slate-800 p-1 bg-slate-900" 
               />
               <div className="flex items-center gap-2">
-                <span className="font-bold text-xl tracking-tight text-white">Cognita</span>
-                <span className="text-[10px] font-semibold text-violet-400 bg-violet-500/10 border border-violet-500/20 rounded px-1.5 py-0.5 uppercase tracking-wider">Free</span>
+                <span className="font-bold text-xl tracking-tight text-white">Cognita Study</span>
               </div>
             </div>
 
