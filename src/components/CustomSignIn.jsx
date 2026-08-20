@@ -7,84 +7,8 @@ import {
   Eye, 
   EyeOff, 
   Loader2, 
-  AlertCircle, 
-  Sparkles,
-  GraduationCap,
-  Scan,
-  Volume2,
-  Flame,
-  Gamepad2,
-  School,
-  FileSpreadsheet,
-  Users,
-  CheckCircle2
+  AlertCircle
 } from "lucide-react";
-
-const AD_FEATURES = [
-  { icon: Sparkles, title: "AI Flashcards", desc: "Generate full decks from text, links, or photos instantly." },
-  { icon: GraduationCap, title: "80+ AI Tutors", desc: "Get targeted support for high school, AP, and college courses." },
-  { icon: Scan, title: "Scan & Learn", desc: "Turn textbook pages and class notes directly into study sets." },
-  { icon: Volume2, title: "Audio & Video", desc: "Convert study decks into narrated audio and video lessons." },
-  { icon: Flame, title: "Habits & Streaks", desc: "Build daily study routines with streaks and milestone badges." },
-  { icon: Gamepad2, title: "Study Games", desc: "Play Term Invaders, Block Blasters, Jeopardy, and Matching." },
-  { icon: School, title: "Classrooms", desc: "Organize active classes, assign decks, and run live sessions." },
-  { icon: FileSpreadsheet, title: "AP Practice", desc: "Practice with structured multiple-choice and free-response prompts." },
-  { icon: Users, title: "Study Groups", desc: "Collaborate, share decks, and review materials with classmates." },
-  { icon: CheckCircle2, title: "100% Free", desc: "Built by a student, free for everyone forever." },
-];
-
-function FeatureCarousel() {
-  const [activeIdx, setActiveIdx] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveIdx((prev) => (prev + 1) % AD_FEATURES.length);
-    }, 3500);
-    return () => clearInterval(timer);
-  }, []);
-
-  const activeFeature = AD_FEATURES[activeIdx];
-
-  return (
-    <div className="w-full space-y-4">
-      {/* Active Spotlight Card */}
-      <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 transition-all flex items-start gap-3.5 shadow-sm">
-        <div className="p-2 rounded-lg bg-slate-800 text-slate-200 border border-slate-700/50 shrink-0">
-          <activeFeature.icon className="w-4 h-4" />
-        </div>
-        <div className="space-y-0.5">
-          <div className="flex items-center gap-2">
-            <h3 className="text-xs font-semibold text-slate-200">{activeFeature.title}</h3>
-            <span className="text-[10px] text-slate-500 font-mono">{activeIdx + 1}/{AD_FEATURES.length}</span>
-          </div>
-          <p className="text-[11px] text-slate-400 leading-normal">{activeFeature.desc}</p>
-        </div>
-      </div>
-
-      {/* Interactive Grid List */}
-      <div className="grid grid-cols-2 gap-1.5">
-        {AD_FEATURES.map((item, i) => {
-          const Icon = item.icon;
-          const isActive = i === activeIdx;
-          return (
-            <button
-              key={i}
-              onClick={() => setActiveIdx(i)}
-              className={`text-left p-2 rounded-lg border transition-all flex items-center gap-2.5 ${
-                isActive 
-                  ? "bg-slate-800 border-slate-700 text-slate-100" 
-                  : "bg-slate-950/40 border-slate-800/60 text-slate-400 hover:text-slate-300 hover:bg-slate-900/60"
-              }`}
-            >
-              <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-violet-400" : "text-slate-500"}`} />
-              <span className="text-[11px] font-medium truncate">{item.title}</span>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
 
 export default function CustomSignIn() {
   const { isAuthenticated, isLoadingAuth } = useAuth();
@@ -168,21 +92,14 @@ export default function CustomSignIn() {
   return (
     <div className="min-h-screen w-full flex bg-slate-950 text-slate-100 font-sans antialiased selection:bg-violet-500/30">
       
-      {/* LEFT PANEL: Showcase Area */}
-      <div className="hidden lg:flex lg:w-[48%] xl:w-[44%] bg-slate-900/40 border-r border-slate-800/60 p-8 xl:p-12 flex-col justify-between relative overflow-hidden">
-        <div className="z-10 w-full flex-1 flex flex-col justify-center items-center my-4 space-y-6 max-w-lg mx-auto">
-          {/* Frameless raw image preview */}
-          <div className="relative w-full flex items-center justify-center select-none max-h-[340px] xl:max-h-[380px]">
-            <img 
-              src="/signin.png" 
-              alt="Cognita Preview" 
-              className="w-full h-auto max-h-full object-contain"
-            />
-          </div>
-
-          <div className="w-full">
-            <FeatureCarousel />
-          </div>
+      {/* LEFT PANEL: Full-bleed Showcase Image */}
+      <div className="hidden lg:flex lg:w-[50%] xl:w-[55%] bg-slate-900/40 border-r border-slate-800/60 p-6 xl:p-8 flex-col justify-center items-center relative overflow-hidden">
+        <div className="relative w-full h-full flex items-center justify-center select-none">
+          <img 
+            src="/signin.png" 
+            alt="Cognita Preview" 
+            className="w-full h-full object-contain"
+          />
         </div>
       </div>
 
