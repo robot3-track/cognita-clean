@@ -506,6 +506,7 @@ export default function Home() {
           </div>
 
           <TutorialModal />
+          <LiveActivityBar />
 
           <div className="space-y-3">
             <h2 className="font-semibold text-xs tracking-wider uppercase opacity-60 px-1" style={mutedStyle}>
@@ -648,8 +649,6 @@ export default function Home() {
                 </div>
               )}
 
-              <LiveActivityBar />
-
               {homeLayout.showMyClasses && myClasses.length > 0 && (
                 <div className="border rounded-2xl p-4 space-y-3 bg-[var(--app-surface)] shadow-xs" style={cardStyle}>
                   <h4 className="text-[10px] font-semibold tracking-wider uppercase opacity-60" style={mutedStyle}>Your Classes</h4>
@@ -703,17 +702,18 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="text-center opacity-70">
-                <OurPartners />
-              </div>
-
             </div>
 
           </div>
 
         </div>
 
-        <div className="mt-16 border-t pt-8 w-full max-w-6xl mx-auto" style={{ borderColor: "var(--app-border)" }}>
+        {/* Centered Our Partners Section at the Bottom */}
+        <div className="w-full flex justify-center text-center my-8 opacity-80">
+          <OurPartners />
+        </div>
+
+        <div className="border-t pt-8 w-full max-w-6xl mx-auto" style={{ borderColor: "var(--app-border)" }}>
           <Footer userEmail={user?.email} />
           <div className="flex items-center gap-4 text-xs font-medium" style={mutedStyle}>
             <Link to="/Documentation" className="hover:text-violet-500 transition-colors">
