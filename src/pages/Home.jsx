@@ -712,7 +712,7 @@ export default function Home() {
         <div className="pt-8 w-full max-w-6xl mx-auto">
           <Footer userEmail={user?.email} />
           
-          <div className="w-full flex justify-center text-center my-6 opacity-80">
+          <div className="pt-8 w-full max-w-6xl mx-auto">
             <OurPartners />
           </div>
 
