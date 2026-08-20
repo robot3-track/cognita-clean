@@ -709,7 +709,7 @@ export default function Home() {
 
         </div>
 
-        <div className="border-t pt-8 w-full max-w-6xl mx-auto" style={{ borderColor: "var(--app-border)" }}>
+        <div className="pt-8 w-full max-w-6xl mx-auto">
           <Footer userEmail={user?.email} />
           
           <div className="w-full flex justify-center text-center my-6 opacity-80">
