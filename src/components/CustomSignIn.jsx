@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
 import { 
@@ -8,8 +8,6 @@ import {
   EyeOff, 
   Loader2, 
   AlertCircle, 
-  ChevronLeft, 
-  ChevronRight,
   Sparkles,
   GraduationCap,
   Scan,
@@ -19,71 +17,76 @@ import {
   School,
   FileSpreadsheet,
   Users,
-  CheckCircle2
+  CheckCircle2,
+  ArrowRight
 } from "lucide-react";
 
 const AD_FEATURES = [
-  { icon: Sparkles, title: "AI Flashcards", desc: "Generate full decks from any text, link, or picture in seconds." },
-  { icon: GraduationCap, title: "80+ AI Tutors", desc: "Get targeted help across high school, AP, and college courses." },
-  { icon: Scan, title: "Scan & Learn", desc: "Capture notes or textbook pages to create study decks instantly." },
-  { icon: Volume2, title: "Audio & Video Lessons", desc: "Convert your flashcard decks into narrated audio and video." },
-  { icon: Flame, title: "Streaks & Badges", desc: "Build consistent habits with daily streaks, rewards, and rankings." },
-  { icon: Gamepad2, title: "Interactive Games", desc: "Study with Term Invaders, Block Blasters, Jeopardy, and Matching." },
-  { icon: School, title: "Classroom Mode", desc: "Set up classes, assign decks, and organize live study sessions." },
-  { icon: FileSpreadsheet, title: "AP Exam Practice", desc: "Practice with realistic multiple-choice and free-response questions." },
-  { icon: Users, title: "Study Groups", desc: "Share decks, chat, and review study materials with classmates." },
-  { icon: CheckCircle2, title: "100% Free", desc: "Every feature is completely free forever. Created by a student." },
+  { icon: Sparkles, title: "AI Flashcards", desc: "Generate full decks from text, links, or photos instantly." },
+  { icon: GraduationCap, title: "80+ AI Tutors", desc: "Get targeted support for high school, AP, and college courses." },
+  { icon: Scan, title: "Scan & Learn", desc: "Turn textbook pages and class notes directly into study sets." },
+  { icon: Volume2, title: "Audio & Video", desc: "Convert study decks into narrated audio and video lessons." },
+  { icon: Flame, title: "Habits & Streaks", desc: "Build daily study routines with streaks and milestone badges." },
+  { icon: Gamepad2, title: "Study Games", desc: "Play Term Invaders, Block Blasters, Jeopardy, and Matching." },
+  { icon: School, title: "Classrooms", desc: "Organize active classes, assign decks, and run live sessions." },
+  { icon: FileSpreadsheet, title: "AP Practice", desc: "Practice with structured multiple-choice and free-response prompts." },
+  { icon: Users, title: "Study Groups", desc: "Collaborate, share decks, and review materials with classmates." },
+  { icon: CheckCircle2, title: "100% Free", desc: "Built by a student, free for everyone forever." },
 ];
 
 function FeatureCarousel() {
-  const [idx, setIdx] = useState(0);
-  const timer = useRef(null);
+  const [activeIdx, setActiveIdx] = useState(0);
 
-  const start = () => {
-    timer.current = setInterval(() => setIdx(i => (i + 1) % AD_FEATURES.length), 4000);
-  };
-  useEffect(() => { start(); return () => clearInterval(timer.current); }, []);
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveIdx((prev) => (prev + 1) % AD_FEATURES.length);
+    }, 4500);
+    return () => clearInterval(timer);
+  }, []);
 
-  const go = (dir) => {
-    clearInterval(timer.current);
-    setIdx(i => (i + dir + AD_FEATURES.length) % AD_FEATURES.length);
-    start();
-  };
-
-  const f = AD_FEATURES[idx];
-  const IconComponent = f.icon;
+  const active = AD_FEATURES[activeIdx];
+  const ActiveIcon = active.icon;
 
   return (
-    <div className="rounded-xl bg-slate-900/80 border border-slate-800 p-5 relative overflow-hidden min-h-[130px] flex flex-col justify-between shadow-md">
-      <div className="flex items-start gap-3.5 pr-12">
-        <div className="p-2 rounded-lg bg-violet-500/10 border border-violet-500/20 text-violet-400 shrink-0 select-none">
-          <IconComponent className="w-5 h-5" />
-        </div>
-        <div className="space-y-1">
-          <p className="font-semibold text-sm text-slate-100">{f.title}</p>
-          <p className="text-xs text-slate-400 leading-relaxed">{f.desc}</p>
+    <div className="w-full space-y-4">
+      {/* Featured Card Display */}
+      <div className="rounded-xl bg-slate-900/90 border border-slate-800 p-5 backdrop-blur-sm transition-all duration-300">
+        <div className="flex items-start gap-4">
+          <div className="p-2.5 rounded-lg bg-violet-500/10 border border-violet-500/20 text-violet-400 shrink-0">
+            <ActiveIcon className="w-5 h-5" />
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-sm text-slate-100">{active.title}</h3>
+              <span className="text-[10px] font-medium tracking-wide uppercase px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700/50">
+                {activeIdx + 1} of {AD_FEATURES.length}
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 leading-relaxed">{active.desc}</p>
+          </div>
         </div>
       </div>
-      
-      <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-800/80">
-        <div className="flex items-center gap-1.5">
-          {AD_FEATURES.map((_, i) => (
-            <button 
-              key={i} 
-              onClick={() => { clearInterval(timer.current); setIdx(i); start(); }}
-              className={`h-1.5 rounded-full transition-all duration-300 ${i === idx ? "w-5 bg-violet-500" : "w-1.5 bg-slate-700 hover:bg-slate-600"}`} 
-            />
-          ))}
-        </div>
-        
-        <div className="flex gap-1">
-          <button onClick={() => go(-1)} className="w-6 h-6 flex items-center justify-center rounded bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 transition-all border border-slate-700/50">
-            <ChevronLeft className="w-3.5 h-3.5" />
-          </button>
-          <button onClick={() => go(1)} className="w-6 h-6 flex items-center justify-center rounded bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 transition-all border border-slate-700/50">
-            <ChevronRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
+
+      {/* Interactive Bento Feature Grid */}
+      <div className="grid grid-cols-5 gap-1.5">
+        {AD_FEATURES.map((item, i) => {
+          const ItemIcon = item.icon;
+          const isActive = i === activeIdx;
+          return (
+            <button
+              key={i}
+              onClick={() => setActiveIdx(i)}
+              title={item.title}
+              className={`h-9 rounded-lg flex items-center justify-center transition-all border ${
+                isActive 
+                  ? "bg-violet-600/20 border-violet-500/50 text-violet-300 shadow-sm" 
+                  : "bg-slate-900/40 border-slate-800/80 text-slate-500 hover:text-slate-300 hover:bg-slate-800/50"
+              }`}
+            >
+              <ItemIcon className="w-4 h-4" />
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -171,14 +174,14 @@ export default function CustomSignIn() {
   return (
     <div className="min-h-screen w-full flex bg-slate-950 text-slate-100 font-sans antialiased selection:bg-violet-500/30">
       
-      {/* LEFT PANEL: Clean Showcase Area (Hidden on mobile) */}
-      <div className="hidden lg:flex lg:w-[48%] xl:w-[44%] bg-slate-900 border-r border-slate-800 p-12 flex-col justify-between relative overflow-hidden">
+      {/* LEFT PANEL: Showcase Area */}
+      <div className="hidden lg:flex lg:w-[48%] xl:w-[44%] bg-slate-900/60 border-r border-slate-800/80 p-12 flex-col justify-between relative overflow-hidden">
         <div className="z-10 w-full flex-1 flex flex-col justify-center items-center my-8 space-y-8 max-w-lg mx-auto">
           <div className="relative w-full flex items-center justify-center select-none max-h-[400px] xl:max-h-[460px]">
             <img 
               src="/signin.png" 
               alt="Cognita Preview" 
-              className="w-full h-auto max-h-full object-contain drop-shadow-2xl rounded-lg"
+              className="w-full h-auto max-h-full object-contain rounded-xl border border-slate-800/80 shadow-2xl"
             />
           </div>
 
@@ -200,9 +203,7 @@ export default function CustomSignIn() {
                 alt="Cognita" 
                 className="w-9 h-9 object-contain rounded-lg border border-slate-800 p-1 bg-slate-900" 
               />
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-xl tracking-tight text-white">Cognita Study</span>
-              </div>
+              <span className="font-bold text-xl tracking-tight text-white">Cognita Study</span>
             </div>
 
             <div className="space-y-1">
@@ -210,13 +211,13 @@ export default function CustomSignIn() {
                 {mode === "signup" ? "Create an account" : mode === "signin" ? "Welcome back" : "Sign in to Cognita"}
               </h1>
               <p className="text-xs text-slate-400 leading-relaxed">
-                Your AI-powered study companion. Always free.
+                Your study companion. Built by students, free forever.
               </p>
             </div>
           </div>
 
           {/* Form Card */}
-          <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 sm:p-6 shadow-xl">
+          <div className="rounded-xl border border-slate-800/80 bg-slate-900/40 p-5 sm:p-6 shadow-xl backdrop-blur-sm">
             
             {/* SOCIAL MODE */}
             {mode === "social" && (
@@ -224,7 +225,7 @@ export default function CustomSignIn() {
                 <button 
                   onClick={() => handleProvider("google")} 
                   disabled={loading}
-                  className="w-full flex items-center justify-center gap-3 h-11 rounded-lg font-medium text-xs text-slate-200 bg-slate-800 hover:bg-slate-700/80 border border-slate-700/60 transition-all active:scale-[0.99] disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-3 h-11 rounded-lg font-medium text-xs text-slate-200 bg-slate-800/90 hover:bg-slate-800 border border-slate-700/60 transition-all active:scale-[0.99] disabled:opacity-50"
                 >
                   {loading ? (
                     <Loader2 className="w-4 h-4 animate-spin text-violet-400" />
@@ -255,7 +256,7 @@ export default function CustomSignIn() {
                 <div className="grid grid-cols-2 gap-2.5">
                   <button 
                     onClick={() => { setMode("signin"); setError(""); }}
-                    className="h-10 rounded-lg text-xs font-medium transition-all border border-slate-700/60 bg-slate-800/50 hover:bg-slate-800 text-slate-200"
+                    className="h-10 rounded-lg text-xs font-medium transition-all border border-slate-700/60 bg-slate-800/40 hover:bg-slate-800 text-slate-200"
                   >
                     Sign In
                   </button>
@@ -283,7 +284,7 @@ export default function CustomSignIn() {
                       placeholder="you@example.com" 
                       autoComplete="email" 
                       required
-                      className="w-full pl-9 pr-3 h-10 rounded-lg text-xs border border-slate-800 bg-slate-950 text-slate-100 placeholder-slate-600 focus:border-violet-500 focus:outline-none transition-all" 
+                      className="w-full pl-9 pr-3 h-10 rounded-lg text-xs border border-slate-800 bg-slate-950 text-slate-100 placeholder-slate-600 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 focus:outline-none transition-all" 
                     />
                   </div>
                 </div>
@@ -299,7 +300,7 @@ export default function CustomSignIn() {
                       placeholder="••••••••" 
                       autoComplete="current-password" 
                       required
-                      className="w-full pl-9 pr-9 h-10 rounded-lg text-xs border border-slate-800 bg-slate-950 text-slate-100 placeholder-slate-600 focus:border-violet-500 focus:outline-none transition-all" 
+                      className="w-full pl-9 pr-9 h-10 rounded-lg text-xs border border-slate-800 bg-slate-950 text-slate-100 placeholder-slate-600 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 focus:outline-none transition-all" 
                     />
                     <button type="button" onClick={() => setShowPass(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
                       {showPass ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
@@ -323,7 +324,7 @@ export default function CustomSignIn() {
                   <span>{loading ? "Signing in..." : "Sign In"}</span>
                 </button>
 
-                <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-800">
+                <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-800/80">
                   <button type="button" onClick={() => { setMode("social"); setError(""); }} className="text-slate-400 hover:text-slate-200">← Back</button>
                   <button type="button" onClick={() => { setMode("signup"); setError(""); }} className="text-violet-400 hover:text-violet-300">Need an account?</button>
                 </div>
@@ -344,7 +345,7 @@ export default function CustomSignIn() {
                       placeholder="you@example.com" 
                       autoComplete="email" 
                       required
-                      className="w-full pl-9 pr-3 h-10 rounded-lg text-xs border border-slate-800 bg-slate-950 text-slate-100 placeholder-slate-600 focus:border-violet-500 focus:outline-none transition-all" 
+                      className="w-full pl-9 pr-3 h-10 rounded-lg text-xs border border-slate-800 bg-slate-950 text-slate-100 placeholder-slate-600 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 focus:outline-none transition-all" 
                     />
                   </div>
                 </div>
@@ -360,7 +361,7 @@ export default function CustomSignIn() {
                       placeholder="At least 6 characters" 
                       autoComplete="new-password" 
                       required
-                      className="w-full pl-9 pr-9 h-10 rounded-lg text-xs border border-slate-800 bg-slate-950 text-slate-100 placeholder-slate-600 focus:border-violet-500 focus:outline-none transition-all" 
+                      className="w-full pl-9 pr-9 h-10 rounded-lg text-xs border border-slate-800 bg-slate-950 text-slate-100 placeholder-slate-600 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 focus:outline-none transition-all" 
                     />
                     <button type="button" onClick={() => setShowPass(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
                       {showPass ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
@@ -379,7 +380,7 @@ export default function CustomSignIn() {
                       placeholder="Re-enter password" 
                       autoComplete="new-password" 
                       required
-                      className="w-full pl-9 pr-3 h-10 rounded-lg text-xs border border-slate-800 bg-slate-950 text-slate-100 placeholder-slate-600 focus:border-violet-500 focus:outline-none transition-all" 
+                      className="w-full pl-9 pr-3 h-10 rounded-lg text-xs border border-slate-800 bg-slate-950 text-slate-100 placeholder-slate-600 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 focus:outline-none transition-all" 
                     />
                   </div>
                 </div>
@@ -400,7 +401,7 @@ export default function CustomSignIn() {
                   <span>{loading ? "Creating account..." : "Sign Up"}</span>
                 </button>
 
-                <div className="text-center pt-2 border-t border-slate-800">
+                <div className="text-center pt-2 border-t border-slate-800/80">
                   <button type="button" onClick={() => { setMode("social"); setError(""); }} className="text-xs text-slate-400 hover:text-slate-200">← Back to options</button>
                 </div>
               </form>
