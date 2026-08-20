@@ -50,7 +50,7 @@ export default function WelcomeSplash({ isBackendLoading }) {
       setVisible(true);
       const timer = setTimeout(() => {
         setMinTimerDone(true);
-      }, 1800);
+      }, 3500);
       return () => clearTimeout(timer);
     }
   }, []);
@@ -121,7 +121,7 @@ export default function WelcomeSplash({ isBackendLoading }) {
                 <div 
                   className="absolute inset-y-0 bg-violet-500 rounded-full"
                   style={{
-                    animation: "loading-bar 1.4s ease-in-out infinite"
+                    animation: "loading-bar 1.8s ease-in-out infinite"
                   }}
                 />
                 <style>{`
