@@ -9,7 +9,6 @@ import { AuthProvider } from '@/lib/AuthContext';
 import ProtectedRouteComponent from '@/components/ProtectedRoute';
 import { Analytics } from '@vercel/analytics/react';
 
-// Lazy load route components
 const PublicDecks = lazy(() => import('./pages/PublicDecks'));
 const Surveys = lazy(() => import('./pages/Surveys'));
 const RewardHistory = lazy(() => import('./pages/RewardHistory'));
@@ -62,18 +61,11 @@ const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
 const MainPage = mainPageKey ? Pages[mainPageKey] : <></>;
 
-// Clean & Unique Page Fallback Loader
 const PageFallback = () => (
   <div className="flex flex-col items-center justify-center min-h-[60vh] w-full p-8 text-center space-y-4">
-    {/* Logo Spinner Badge */}
     <div className="relative w-16 h-16 flex items-center justify-center">
-      {/* Smooth Rotating Outer Ring */}
       <div className="absolute inset-0 rounded-2xl border-2 border-violet-500/20 border-t-violet-500 animate-spin" />
-      
-      {/* Subtle Inner Glow */}
       <div className="absolute inset-2 bg-violet-500/10 rounded-xl animate-pulse" />
-
-      {/* Cognita Logo */}
       <div 
         className="relative z-10 w-10 h-10 rounded-xl bg-[var(--app-surface)] border p-1.5 flex items-center justify-center shadow-sm"
         style={{ borderColor: "var(--app-border)" }}
@@ -86,7 +78,6 @@ const PageFallback = () => (
       </div>
     </div>
 
-    {/* Subtitle */}
     <span className="text-xs font-semibold tracking-wide text-neutral-400">
       Loading page...
     </span>
@@ -105,13 +96,11 @@ const AuthenticatedApp = () => {
   return (
     <Suspense fallback={<PageFallback />}>
       <Routes>
-        {/* Public auth routes */}
         <Route path="/login" element={<CustomSignIn />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
 
-        {/* All protected app routes */}
         <Route element={<ProtectedRouteComponent />}>
           <Route path="/" element={
             <LayoutWrapper currentPageName={mainPageKey}>
@@ -163,10 +152,7 @@ const AuthenticatedApp = () => {
           <Route path="/PeriodicTable" element={<LayoutWrapper currentPageName="PeriodicTable"><PeriodicTable /></LayoutWrapper>} />
           <Route path="/iReadyPrep" element={<LayoutWrapper currentPageName="iReadyPrep"><IReadyPrep /></LayoutWrapper>} />
           <Route path="/StateTestPrep" element={<LayoutWrapper currentPageName="StateTestPrep"><StateTestPrep /></LayoutWrapper>} />
-          
-          {/* Matches page: "SATPrep" in ExamPrep.jsx while rendering SATExamInterface */}
           <Route path="/SATPrep" element={<LayoutWrapper currentPageName="SATPrep"><SATExamInterface /></LayoutWrapper>} />
-          
           <Route path="/Partnership" element={<LayoutWrapper currentPageName="Partnership"><Partnership /></LayoutWrapper>} />
           <Route path="/MLAFormatter" element={<LayoutWrapper currentPageName="MLAFormatter"><MLAFormatter /></LayoutWrapper>} />
           <Route path="/FriendsAndUsers" element={<LayoutWrapper currentPageName="FriendsAndUsers"><FriendsAndUsers /></LayoutWrapper>} />
@@ -174,7 +160,7 @@ const AuthenticatedApp = () => {
           <Route path="/DevApprovals" element={<LayoutWrapper currentPageName="DevApprovals"><DevApprovals /></LayoutWrapper>} />
           <Route path="/AITutors" element={<LayoutWrapper currentPageName="AITutors"><AITutors /></LayoutWrapper>} />
           <Route path="/Badges" element={<LayoutWrapper currentPageName="Badges"><Badges /></LayoutWrapper>} />
-        </Route>{/* end ProtectedRoute */}
+        </Route>
         <Route path="*" element={<PageNotFound />} />
       </Routes>
     </Suspense>
