@@ -92,22 +92,19 @@ export default function CustomSignIn() {
   return (
     <div className="min-h-screen w-full flex bg-slate-950 text-slate-100 font-sans antialiased selection:bg-violet-500/30">
       
-      {/* LEFT PANEL: Full-bleed Showcase Image */}
-      <div className="hidden lg:flex lg:w-[50%] xl:w-[55%] bg-slate-900/40 border-r border-slate-800/60 p-6 xl:p-8 flex-col justify-center items-center relative overflow-hidden">
-        <div className="relative w-full h-full flex items-center justify-center select-none">
+      <div className="hidden lg:flex lg:w-[50%] xl:w-[55%] h-screen sticky top-0 bg-slate-900/40 border-r border-slate-800/60 p-8 flex-col justify-center items-center overflow-hidden">
+        <div className="relative w-full h-full flex items-center justify-center select-none p-4">
           <img 
             src="/signin.png" 
             alt="Cognita Preview" 
-            className="w-full h-full object-contain"
+            className="max-w-full max-h-[85vh] w-auto h-auto object-contain drop-shadow-2xl"
           />
         </div>
       </div>
 
-      {/* RIGHT PANEL: Sign-in Workspace */}
       <div className="flex-1 flex flex-col justify-center items-center px-4 sm:px-8 py-8 relative bg-slate-950 min-h-screen">
         <div className="w-full max-w-[380px] space-y-6">
           
-          {/* Header & Logo */}
           <div className="flex flex-col items-center lg:items-start text-center lg:text-left space-y-3">
             <div className="flex items-center gap-2.5">
               <img 
