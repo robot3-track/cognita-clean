@@ -506,7 +506,6 @@ export default function Home() {
           </div>
 
           <TutorialModal />
-          <LiveActivityBar />
 
           <div className="space-y-3">
             <h2 className="font-semibold text-xs tracking-wider uppercase opacity-60 px-1" style={mutedStyle}>
@@ -648,6 +647,8 @@ export default function Home() {
                   </div>
                 </div>
               )}
+
+              <LiveActivityBar />
 
               {homeLayout.showMyClasses && myClasses.length > 0 && (
                 <div className="border rounded-2xl p-4 space-y-3 bg-[var(--app-surface)] shadow-xs" style={cardStyle}>
