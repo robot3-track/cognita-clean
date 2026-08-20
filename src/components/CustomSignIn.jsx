@@ -17,8 +17,7 @@ import {
   School,
   FileSpreadsheet,
   Users,
-  CheckCircle2,
-  ArrowRight
+  CheckCircle2
 } from "lucide-react";
 
 const AD_FEATURES = [
@@ -40,7 +39,7 @@ function FeatureCarousel() {
   useEffect(() => {
     const timer = setInterval(() => {
       setActiveIdx((prev) => (prev + 1) % AD_FEATURES.length);
-    }, 4500);
+    }, 4000);
     return () => clearInterval(timer);
   }, []);
 
@@ -48,45 +47,30 @@ function FeatureCarousel() {
   const ActiveIcon = active.icon;
 
   return (
-    <div className="w-full space-y-4">
-      {/* Featured Card Display */}
-      <div className="rounded-xl bg-slate-900/90 border border-slate-800 p-5 backdrop-blur-sm transition-all duration-300">
-        <div className="flex items-start gap-4">
-          <div className="p-2.5 rounded-lg bg-violet-500/10 border border-violet-500/20 text-violet-400 shrink-0">
+    <div className="w-full space-y-3">
+      <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800/60 flex flex-col justify-between min-h-[110px] transition-all">
+        <div className="flex items-start gap-3.5">
+          <div className="p-2 rounded-lg bg-violet-500/10 text-violet-400 shrink-0">
             <ActiveIcon className="w-5 h-5" />
           </div>
           <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-sm text-slate-100">{active.title}</h3>
-              <span className="text-[10px] font-medium tracking-wide uppercase px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700/50">
-                {activeIdx + 1} of {AD_FEATURES.length}
-              </span>
-            </div>
+            <h3 className="text-sm font-semibold text-slate-100">{active.title}</h3>
             <p className="text-xs text-slate-400 leading-relaxed">{active.desc}</p>
           </div>
         </div>
-      </div>
 
-      {/* Interactive Bento Feature Grid */}
-      <div className="grid grid-cols-5 gap-1.5">
-        {AD_FEATURES.map((item, i) => {
-          const ItemIcon = item.icon;
-          const isActive = i === activeIdx;
-          return (
+        {/* Minimal segmented progress bar */}
+        <div className="flex items-center gap-1.5 pt-4">
+          {AD_FEATURES.map((_, i) => (
             <button
               key={i}
               onClick={() => setActiveIdx(i)}
-              title={item.title}
-              className={`h-9 rounded-lg flex items-center justify-center transition-all border ${
-                isActive 
-                  ? "bg-violet-600/20 border-violet-500/50 text-violet-300 shadow-sm" 
-                  : "bg-slate-900/40 border-slate-800/80 text-slate-500 hover:text-slate-300 hover:bg-slate-800/50"
+              className={`h-1 rounded-full transition-all duration-300 ${
+                i === activeIdx ? "w-6 bg-violet-500" : "w-1.5 bg-slate-800 hover:bg-slate-700"
               }`}
-            >
-              <ItemIcon className="w-4 h-4" />
-            </button>
-          );
-        })}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -174,14 +158,15 @@ export default function CustomSignIn() {
   return (
     <div className="min-h-screen w-full flex bg-slate-950 text-slate-100 font-sans antialiased selection:bg-violet-500/30">
       
-      {/* LEFT PANEL: Showcase Area */}
-      <div className="hidden lg:flex lg:w-[48%] xl:w-[44%] bg-slate-900/60 border-r border-slate-800/80 p-12 flex-col justify-between relative overflow-hidden">
+      {/* LEFT PANEL: Clean Showcase Area */}
+      <div className="hidden lg:flex lg:w-[48%] xl:w-[44%] bg-slate-900/40 border-r border-slate-800/60 p-12 flex-col justify-between relative overflow-hidden">
         <div className="z-10 w-full flex-1 flex flex-col justify-center items-center my-8 space-y-8 max-w-lg mx-auto">
+          {/* Frameless raw image preview */}
           <div className="relative w-full flex items-center justify-center select-none max-h-[400px] xl:max-h-[460px]">
             <img 
               src="/signin.png" 
               alt="Cognita Preview" 
-              className="w-full h-auto max-h-full object-contain rounded-xl border border-slate-800/80 shadow-2xl"
+              className="w-full h-auto max-h-full object-contain"
             />
           </div>
 
