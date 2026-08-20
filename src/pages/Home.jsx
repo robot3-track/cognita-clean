@@ -219,7 +219,7 @@ export default function Home() {
       await rewardTopStudierIfNeeded(sessions, me).catch(() => {});
     } catch (e) {
       console.error(e);
-    } finally {
+    } fontally {
       setLoading(false);
     }
   }, []);
@@ -259,7 +259,7 @@ export default function Home() {
     { label: "Chemistry Engine", desc: "Balance element reactions instantly", page: "ChemBalance", icon: FlaskConical },
     { label: "Periodic Matrix Grid", desc: "Element interactive guide data sheet", page: "PeriodicTable", icon: Layers },
     { label: "Workflows Layout Notes", desc: "Organize folders & custom notepad rich text", page: "Notes", icon: NotebookPen },
-    { label: "Code Compiler Terminal", desc: "Run languages inside sandboxed workspace environments", page: "CodeSandbox", icon: Code2 },
+    { label: "Code Sandbox Terminal", desc: "Run languages inside sandboxed workspace environments", page: "CodeSandbox", icon: Code2 },
     { label: "User Parameters Settings", desc: "Theme styling configuration profiles", page: "Settings", icon: Sparkles },
   ];
 
@@ -506,7 +506,6 @@ export default function Home() {
           </div>
 
           <TutorialModal />
-          <LiveActivityBar />
 
           <div className="space-y-3">
             <h2 className="font-semibold text-xs tracking-wider uppercase opacity-60 px-1" style={mutedStyle}>
@@ -649,6 +648,8 @@ export default function Home() {
                 </div>
               )}
 
+              <LiveActivityBar />
+
               {homeLayout.showMyClasses && myClasses.length > 0 && (
                 <div className="border rounded-2xl p-4 space-y-3 bg-[var(--app-surface)] shadow-xs" style={cardStyle}>
                   <h4 className="text-[10px] font-semibold tracking-wider uppercase opacity-60" style={mutedStyle}>Your Classes</h4>
@@ -708,13 +709,13 @@ export default function Home() {
 
         </div>
 
-        {/* Centered Our Partners Section at the Bottom */}
-        <div className="w-full flex justify-center text-center my-8 opacity-80">
-          <OurPartners />
-        </div>
-
         <div className="border-t pt-8 w-full max-w-6xl mx-auto" style={{ borderColor: "var(--app-border)" }}>
           <Footer userEmail={user?.email} />
+          
+          <div className="w-full flex justify-center text-center my-6 opacity-80">
+            <OurPartners />
+          </div>
+
           <div className="flex items-center gap-4 text-xs font-medium" style={mutedStyle}>
             <Link to="/Documentation" className="hover:text-violet-500 transition-colors">
               Privacy Policy
