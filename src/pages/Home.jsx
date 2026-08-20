@@ -694,16 +694,6 @@ export default function Home() {
                 </a>
               </div>
 
-              <div className="rounded-2xl p-4 border bg-emerald-500/5 border-emerald-500/10 flex gap-3 items-start">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-                <div className="space-y-0.5">
-                  <p className="font-semibold text-xs text-emerald-600 dark:text-emerald-400">Student Built</p>
-                  <p className="text-[11px] leading-relaxed opacity-70" style={mutedStyle}>
-                    Cognita is built and maintained by students. Reach out via our partners page for feedback or integrations.
-                  </p>
-                </div>
-              </div>
-
             </div>
 
           </div>
