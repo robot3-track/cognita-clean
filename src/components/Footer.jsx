@@ -57,7 +57,7 @@ export default function Footer() {
               <FeedbackWidget />
               <div className="flex items-center gap-1.5 text-[11px] text-[var(--app-text-muted)]">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                <span>Encrypted & Safe Account Hub</span>
+                <span>Encrypted & 100% Safe Data</span>
               </div>
             </div>
           </div>
@@ -70,9 +70,6 @@ export default function Footer() {
             &copy; {new Date().getFullYear()} {t('copyrightText') || "Cognita. All rights reserved."}
           </p>
           <div className="flex items-center gap-4 text-[11px]">
-            <span className="hover:text-[var(--app-text)] transition-colors cursor-pointer">Privacy Policy</span>
-            <span>•</span>
-            <span className="hover:text-[var(--app-text)] transition-colors cursor-pointer">Terms of Service</span>
           </div>
         </div>
 
