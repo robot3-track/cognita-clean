@@ -6,7 +6,7 @@ import {
   ChevronDown, Camera, Trophy, 
   Calculator, BookMarked, FolderOpen, FileText, 
   ClipboardList, CheckCircle2, Play, X, FlaskConical, NotebookPen, Code2, Heart, Compass, User,
-  PenLine, Flag, Gamepad2, Type, CalendarDays, Brain, Users, BarChart3, Timer
+  PenLine, Flag, Gamepad2, Type, CalendarDays, Brain, Users, BarChart3, Timer, FlaskRound
 } from "lucide-react";
 import HomeLayoutCustomizer, { getHomeLayout } from "@/components/HomeLayoutCustomizer";
 import VerifiedBadge from "@/components/VerifiedBadge";
@@ -24,7 +24,7 @@ const TOP_STUDIER_KEY = "cognita_top_studier_rewarded";
 
 const MAIN_FEATURES = [
   { label: "Flashcards", desc: "Study decks with active recall and SRS mode", icon: Layers, page: "Decks", iconColor: "text-amber-500", borderHover: "hover:border-amber-500/50", bgGlow: "from-amber-500/15 via-amber-500/5 to-transparent" },
-  { label: "Media Lab", desc: "Create narrated videos, audio recaps, and study guides", icon: Sparkles, page: "Media", iconColor: "text-violet-500", borderHover: "hover:border-violet-500/50", bgGlow: "from-violet-500/15 via-violet-500/5 to-transparent" },
+  { label: "Media Lab", desc: "Create narrated videos, audio recaps, and study guides", icon: FlaskRound, page: "Media", iconColor: "text-violet-500", borderHover: "hover:border-violet-500/50", bgGlow: "from-violet-500/15 via-violet-500/5 to-transparent" },
   { label: "Study Chat", desc: "Ask questions, talk via voice, or upload course files", icon: Brain, page: "Chat", iconColor: "text-blue-500", borderHover: "hover:border-blue-500/50", bgGlow: "from-blue-500/15 via-blue-500/5 to-transparent" },
   { label: "Scan & Import", desc: "Turn photo notes or pasted text into cards", icon: Camera, page: "Scan", iconColor: "text-rose-500", borderHover: "hover:border-rose-500/50", bgGlow: "from-rose-500/15 via-rose-500/5 to-transparent" },
   { label: "Test Prep", desc: "Practice sets for AP, SAT, state tests, and exams", icon: BookOpen, page: "ExamPrep", iconColor: "text-purple-500", borderHover: "hover:border-purple-500/50", bgGlow: "from-purple-500/15 via-purple-500/5 to-transparent" },
