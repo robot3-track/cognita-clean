@@ -356,15 +356,23 @@ export default function Home() {
             </div>
 
             <div className="w-full space-y-1.5">
-              <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-violet-500 rounded-full transition-all duration-300 ease-out"
-                  style={{ width: `${Math.min(100, Math.max(15, ((tipIndex + 1) / ROTATING_TIPS.length) * 100))}%` }}
+              <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden relative">
+                <div className="absolute inset-y-0 bg-violet-500 rounded-full w-1/3 animate-[shimmer_1.5s_infinite_linear] [animation:progress_1.8s_ease-in-out_infinite]" 
+                  style={{
+                    animation: "loading-bar 1.6s ease-in-out infinite"
+                  }}
                 />
+                <style>{`
+                  @keyframes loading-bar {
+                    0% { left: -35%; width: 30%; }
+                    50% { left: 35%; width: 40%; }
+                    100% { left: 100%; width: 30%; }
+                  }
+                `}</style>
               </div>
               <div className="flex justify-between items-center text-[10px] font-medium" style={mutedStyle}>
                 <span>Syncing workspace</span>
-                <span>{Math.min(100, Math.max(15, Math.round(((tipIndex + 1) / ROTATING_TIPS.length) * 100)))}%</span>
+                <span className="animate-pulse">Loading...</span>
               </div>
             </div>
 
