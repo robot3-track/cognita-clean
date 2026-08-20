@@ -121,13 +121,13 @@ const CATEGORIES = [
     ],
   },
   {
-    label: "Media Studio",
+    label: "Media Lab",
     color: "text-emerald-400",
     features: [
       {
         icon: Sparkles,
         color: "from-violet-600 to-blue-700",
-        title: "Media Studio",
+        title: "Media Lab",
         desc: "The all-in-one AI content creation hub. Generate audio lessons, video lessons, and podcasts from any study material — paste notes, upload a file, or use a flashcard deck.",
         page: "Media",
       },
