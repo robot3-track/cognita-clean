@@ -219,7 +219,7 @@ export default function Home() {
       await rewardTopStudierIfNeeded(sessions, me).catch(() => {});
     } catch (e) {
       console.error(e);
-    } fontally {
+    } finally {
       setLoading(false);
     }
   }, []);
