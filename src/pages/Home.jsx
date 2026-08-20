@@ -354,7 +354,7 @@ export default function Home() {
 
             <div className="space-y-1">
               <h2 className="text-base font-semibold tracking-tight text-[var(--app-text)]">
-                Preparing workspace
+                Preparing Your Workspace
               </h2>
               <p className="text-xs" style={mutedStyle}>
                 Retrieving your study tools
