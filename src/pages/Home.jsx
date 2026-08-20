@@ -333,37 +333,38 @@ export default function Home() {
         className="min-h-screen w-full flex flex-col items-center justify-center relative overflow-hidden font-sans antialiased transition-colors duration-200" 
         style={bgStyle}
       >
-        <div className="w-full max-w-[380px] space-y-6 px-4 z-10">
+        <div className="w-full max-w-[360px] space-y-6 px-4 z-10">
           <div 
-            className="rounded-3xl border bg-[var(--app-surface)] p-6 sm:p-8 shadow-sm flex flex-col items-center text-center space-y-6" 
+            className="rounded-2xl border bg-[var(--app-surface)] p-6 shadow-xs flex flex-col items-center text-center space-y-5" 
             style={{ borderColor: "var(--app-border)" }}
           >
-            <div className="relative w-16 h-16 flex items-center justify-center my-1">
-              <div className="absolute inset-0 rounded-2xl border-2 border-violet-500/20 border-t-violet-500 animate-spin" />
-              <div 
-                className="relative z-10 w-10 h-10 rounded-xl bg-[var(--app-surface)] border p-2 flex items-center justify-center"
-                style={{ borderColor: "var(--app-border)" }}
-              >
-                <img 
-                  src="https://media.base44.com/images/public/69b097f35579053a78af47a3/43f8b728d_9e9c4097b_logo1.png" 
-                  alt="Cognita" 
-                  className="w-full h-full object-contain" 
-                />
-              </div>
+            <div className="w-12 h-12 rounded-xl bg-[var(--app-bg)] border p-2 flex items-center justify-center shadow-xs" style={{ borderColor: "var(--app-border)" }}>
+              <img 
+                src="https://media.base44.com/images/public/69b097f35579053a78af47a3/43f8b728d_9e9c4097b_logo1.png" 
+                alt="Cognita" 
+                className="w-full h-full object-contain" 
+              />
             </div>
 
             <div className="space-y-1">
-              <h2 className="text-base font-semibold tracking-tight text-[var(--app-text)]">
+              <h2 className="text-xl font-bold tracking-tight text-[var(--app-text)]">
                 Loading Cognita
               </h2>
               <p className="text-xs" style={mutedStyle}>
-                Getting your sets ready
+                Getting your sets ready...
               </p>
             </div>
 
-            <div className="w-full px-4">
-              <div className="w-full h-1 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                <div className="h-full bg-violet-500 rounded-full animate-pulse w-3/4 transition-all duration-500" />
+            <div className="w-full space-y-1.5">
+              <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-violet-500 rounded-full transition-all duration-300 ease-out"
+                  style={{ width: `${Math.min(100, Math.max(15, ((tipIndex + 1) / ROTATING_TIPS.length) * 100))}%` }}
+                />
+              </div>
+              <div className="flex justify-between items-center text-[10px] font-medium" style={mutedStyle}>
+                <span>Syncing workspace</span>
+                <span>{Math.min(100, Math.max(15, Math.round(((tipIndex + 1) / ROTATING_TIPS.length) * 100)))}%</span>
               </div>
             </div>
 
@@ -380,7 +381,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="text-center text-[11px] opacity-60" style={mutedStyle}>
+          <div className="text-center text-[11px] opacity-60 font-medium" style={mutedStyle}>
             Cognita Platform • Marina High School
           </div>
         </div>
