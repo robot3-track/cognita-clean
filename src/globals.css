@@ -1,21 +1,15 @@
-/* Global Reset */
-*,
-*::before,
-*::after {
+* {
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
-
 *::-webkit-scrollbar {
   display: none;
 }
 
-/* Accessibility / Dynamic Theme Variables */
 :root {
   --dyslexia-font: inherit;
   --dyslexia-size: 1rem;
 }
-
 body {
   font-family: var(--dyslexia-font);
   font-size: var(--dyslexia-size);
