@@ -121,13 +121,13 @@ const CATEGORIES = [
     ],
   },
   {
-    label: "AI Studio & Media",
+    label: "Media Studio",
     color: "text-emerald-400",
     features: [
       {
         icon: Sparkles,
         color: "from-violet-600 to-blue-700",
-        title: "AI Studio",
+        title: "Media Studio",
         desc: "The all-in-one AI content creation hub. Generate audio lessons, video lessons, and podcasts from any study material — paste notes, upload a file, or use a flashcard deck.",
         page: "Media",
       },
