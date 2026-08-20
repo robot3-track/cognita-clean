@@ -24,8 +24,8 @@ const TOP_STUDIER_KEY = "cognita_top_studier_rewarded";
 
 const MAIN_FEATURES = [
   { label: "Flashcards", desc: "Review master decks and active recall sets", icon: Layers, page: "Decks", iconColor: "text-amber-500", borderHover: "hover:border-amber-500/50", bgGlow: "from-amber-500/15 via-amber-500/5 to-transparent" },
-  { label: "AI Studio", desc: "Generate AI videos, narration audio & custom tutors", icon: Sparkles, page: "Media", iconColor: "text-violet-500", borderHover: "hover:border-violet-500/50", bgGlow: "from-violet-500/15 via-violet-500/5 to-transparent" },
-  { label: "AI Chat", desc: "Interactive smart tutor with voice & document upload", icon: Brain, page: "Chat", iconColor: "text-blue-500", borderHover: "hover:border-blue-500/50", bgGlow: "from-blue-500/15 via-blue-500/5 to-transparent" },
+  { label: "Creative Studio", desc: "Generate narrated videos, audio & custom tutors", icon: Sparkles, page: "Media", iconColor: "text-violet-500", borderHover: "hover:border-violet-500/50", bgGlow: "from-violet-500/15 via-violet-500/5 to-transparent" },
+  { label: "Smart Assistant", desc: "Interactive tutor with voice & document upload", icon: Brain, page: "Chat", iconColor: "text-blue-500", borderHover: "hover:border-blue-500/50", bgGlow: "from-blue-500/15 via-blue-500/5 to-transparent" },
   { label: "Scan & Import", desc: "Snap photos or paste text to instantly auto-generate cards", icon: Camera, page: "Scan", iconColor: "text-rose-500", borderHover: "hover:border-rose-500/50", bgGlow: "from-rose-500/15 via-rose-500/5 to-transparent" },
   { label: "Full Exam Prep", desc: "Targeted practice for AP, SAT, State & iReady exams", icon: BookOpen, page: "ExamPrep", iconColor: "text-purple-500", borderHover: "hover:border-purple-500/50", bgGlow: "from-purple-500/15 via-purple-500/5 to-transparent" },
   { label: "Study Games", desc: "Interactive multiplayer games & tower defense recall", icon: Gamepad2, page: "TowerDefense", iconColor: "text-emerald-500", borderHover: "hover:border-emerald-500/50", bgGlow: "from-emerald-500/15 via-emerald-500/5 to-transparent" },
@@ -34,7 +34,7 @@ const MAIN_FEATURES = [
 const ROTATING_TIPS = [
   "Maximize your learning retention by reviewing sets using Spaced Repetition (SRS).",
   "Take a picture of written notes or insert public urls to instantly generate flashcards.",
-  "Turn any regular dataset or flashcard deck into fully narrated AI audio and video lessons.",
+  "Turn any regular dataset or flashcard deck into fully narrated audio and video lessons.",
   "Sync your interactive flashcards to your Classroom module to launch live multiplayer study games."
 ];
 
@@ -45,7 +45,7 @@ function MoreTools({ cardStyle, mutedStyle }) {
     { label: "Checkpoint", desc: "Exam simulation", icon: Flag, page: "CheckpointMode" },
     { label: "Matching Game", desc: "Match terms", icon: Gamepad2, page: "MatchingGame" },
     { label: "Word Scramble", desc: "Unscramble", icon: Type, page: "MatchingGame" },
-    { label: "Study Roadmap", desc: "AI exam plan", icon: CalendarDays, page: "StudyRoadmap" },
+    { label: "Study Roadmap", desc: "Smart exam plan", icon: CalendarDays, page: "StudyRoadmap" },
     { label: "Voice Brain Dump", desc: "Speak & capture", icon: Brain, page: "BrainDump" },
     { label: "Video Lessons", desc: "Visual learning", icon: BarChart3, page: "Media" },
     { label: "Audio Lessons", desc: "Audio Narration", icon: BookOpen, page: "Media"},
@@ -54,11 +54,11 @@ function MoreTools({ cardStyle, mutedStyle }) {
     { label: "Progress Stats", desc: "Your metrics", icon: BarChart3, page: "Progress" },
     { label: "Calculator", desc: "Scientific calc", icon: Calculator, page: "Calculator" },
     { label: "Dictionary", desc: "Word definitions", icon: BookMarked, page: "Dictionary" },
-    { label: "Practice Test", desc: "Full AI test", icon: ClipboardList, page: "Decks" },
+    { label: "Practice Test", desc: "Full practice test", icon: ClipboardList, page: "Decks" },
     { label: "Resource Hub", desc: "Share study files", icon: FolderOpen, page: "ResourceHub" },
     { label: "Pomodoro", desc: "Focus timer", icon: Timer, page: "Pomodoro" },
     { label: "Public Decks", desc: "Browse community", icon: Globe, page: "PublicDecks" },
-    { label: "Resource Library", desc: "AI topic cards", icon: BookOpen, page: "ResourceLibrary" },
+    { label: "Resource Library", desc: "Topic cards", icon: BookOpen, page: "ResourceLibrary" },
     { label: "MLA Formatter", desc: "MLA citations", icon: FileText, page: "MLAFormatter" },
     { label: "Chem Balancer", desc: "Balance equations", icon: FlaskConical, page: "ChemBalance" },
     { label: "Periodic Table", desc: "Element reference", icon: Layers, page: "PeriodicTable" },
@@ -146,14 +146,14 @@ export default function Home() {
     const sorted = Object.entries(byUser).sort((a, b) => b[1] - a[1]);
     if (sorted.length > 0 && sorted[0][0] === me.email) {
       if (hour >= 23) {
-        await addSurveyBonusServer(3, "Top studier bonus rewarded — +3 AI credits applied.");
+        await addSurveyBonusServer(3, "Top studier bonus rewarded — +3 bonus credits applied.");
         localStorage.setItem(rewardedKey, "1");
       } else {
         const msUntil11pm = new Date(now).setHours(23, 0, 0, 0) - now.getTime();
         if (msUntil11pm > 0) {
           setTimeout(() => {
             if (!localStorage.getItem(rewardedKey)) {
-              addSurveyBonusServer(3, "Top studier bonus rewarded — +3 AI credits applied.")
+              addSurveyBonusServer(3, "Top studier bonus rewarded — +3 bonus credits applied.")
                 .then(() => localStorage.setItem(rewardedKey, "1"))
                 .catch(() => {});
             }
@@ -242,7 +242,7 @@ export default function Home() {
     { label: "Checkpoint Exams", desc: "Interactive exam simulation testing", page: "CheckpointMode", icon: Flag },
     { label: "Vocabulary Matching", desc: "Match terms card speed run game", page: "MatchingGame", icon: Gamepad2 },
     { label: "Word Scramble", desc: "Unscramble dataset vocabulary strings", page: "MatchingGame", icon: Type },
-    { label: "AI Exam Planners", desc: "Custom study schedules & timelines", page: "StudyRoadmap", icon: CalendarDays },
+    { label: "Exam Planners", desc: "Custom study schedules & timelines", page: "StudyRoadmap", icon: CalendarDays },
     { label: "Voice Brain Dump", desc: "Speak & capture automated transcripts", page: "BrainDump", icon: Brain },
     { label: "Video Lessons", desc: "Visual interactive learning timelines", page: "Media", icon: BookOpen },
     { label: "Study Communities", desc: "Collaborative flashcard channels", page: "StudyGroups", icon: Users },
@@ -250,9 +250,9 @@ export default function Home() {
     { label: "Analytics Insights", desc: "Your progress metrics & data charts", page: "Progress", icon: BarChart3 },
     { label: "Scientific Calculator", desc: "Formula calculator solver layout", page: "Calculator", icon: Calculator },
     { label: "Terminology Reference", desc: "Dictionary definitions matching panel", page: "Dictionary", icon: BookMarked },
-    { label: "Practice Tests", desc: "Full AI customized evaluation exams", page: "Decks", icon: ClipboardList },
-    { label: "Resource Shared Library", desc: "AI topics, notes & file sharing hubs", page: "ResourceHub", icon: FolderOpen },
-    { label: "Resource Library Index", desc: "AI pre-made topic study materials", page: "ResourceLibrary", icon: BookOpen },
+    { label: "Practice Tests", desc: "Full customized evaluation exams", page: "Decks", icon: ClipboardList },
+    { label: "Resource Shared Library", desc: "Topics, notes & file sharing hubs", page: "ResourceHub", icon: FolderOpen },
+    { label: "Resource Library Index", desc: "Pre-made topic study materials", page: "ResourceLibrary", icon: BookOpen },
     { label: "Focus Pomodoro Timer", desc: "Customized intervals study timers", page: "Pomodoro", icon: Timer },
     { label: "Public Repositories", desc: "Browse community shared card datasets", page: "PublicDecks", icon: Globe },
     { label: "MLA Format Builder", desc: "Research citation helper layouts", page: "MLAFormatter", icon: FileText },
