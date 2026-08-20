@@ -89,9 +89,9 @@ const buildNavGroups = (t, userEmail) => [
     label: t('studyTools'),
     subGroups: [
       {
-        label: "Media Studio",
+        label: "Media Lab",
         pages: [
-          { label: "Media Studio", icon: Sparkles, page: "Media" },
+          { label: "Media Lab", icon: Sparkles, page: "Media" },
           { label: "AI Tutors", icon: GraduationCap, page: "AITutors" },
         ],
       },
