@@ -73,7 +73,7 @@ export default function WelcomeSplash({ isBackendLoading }) {
       // Enforce 5s minimum splash display buffer
       const timer = setTimeout(() => {
         setMinTimerDone(true);
-      }, 8000);
+      }, 5000);
       return () => clearTimeout(timer);
     }
   }, []);
