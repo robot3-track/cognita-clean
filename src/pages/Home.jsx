@@ -628,7 +628,6 @@ export default function Home() {
               {user && (
                 <div className="border rounded-2xl p-4 bg-[var(--app-surface)] shadow-xs" style={cardStyle}>
                   <div className="mb-2 px-1">
-                    <h3 className="text-xs font-semibold text-[var(--app-text)]">Active Study Streak</h3>
                   </div>
                   <StreakBadges sessions={allSessions} userEmail={user.email} />
                 </div>
@@ -636,7 +635,7 @@ export default function Home() {
 
               {homeLayout.showLiveCounters && (
                 <div className="border rounded-2xl p-5 space-y-4 bg-[var(--app-surface)] shadow-xs" style={cardStyle}>
-                  <h4 className="text-[10px] font-semibold tracking-wider uppercase opacity-60" style={mutedStyle}>Study Overview</h4>
+                  <h4 className="text-[10px] font-semibold tracking-wider uppercase opacity-60" style={mutedStyle}>Study Overview By All Users</h4>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-xl font-bold text-[var(--app-text)]">{totalMinutes.toLocaleString()}</p>
