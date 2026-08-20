@@ -1,54 +1,62 @@
-const CACHE_NAME = "cognita-v3";
-const STATIC_ASSETS = ["/cognita-offline.html"];
+const CACHE_NAME = "cognita-v2";
+const STATIC_ASSETS = [
+  "/"
+];
 
-self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
+self.addEventListener("install", (e) => {
+  e.waitUntil(
+    caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS)).catch(() => {})
   );
   self.skipWaiting();
 });
 
-self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))
+self.addEventListener("activate", (e) => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
     )
   );
   self.clients.claim();
 });
 
-self.addEventListener("fetch", (event) => {
-  if (event.request.method !== "GET" || !event.request.url.startsWith("http")) return;
+self.addEventListener("fetch", (e) => {
+  if (e.request.method !== "GET") return;
+  if (!e.request.url.startsWith("http")) return;
 
-  const url = new URL(event.request.url);
-
+  const url = e.request.url;
+  
   if (
-    url.origin !== self.location.origin ||
-    url.pathname.startsWith("/api/") ||
-    url.hostname.includes("firebase") ||
-    url.hostname.includes("googleapis")
+    !url.startsWith(self.location.origin) ||
+    url.includes("/api/") ||
+    url.includes("firebase") ||
+    url.includes("googleapis.com") ||
+    url.includes("identitytoolkit") ||
+    url.includes("firestore")
   ) {
     return;
   }
 
-  event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        if (response.ok && response.type === "basic") {
+  e.respondWith(
+    fetch(e.request)
+      .then(response => {
+        if (response && response.status === 200 && response.type === "basic") {
           const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
         }
         return response;
       })
       .catch(async () => {
-        const cached = await caches.match(event.request);
+        const cached = await caches.match(e.request);
         if (cached) return cached;
-
-        if (event.request.mode === "navigate") {
-          return caches.match("/cognita-offline.html");
+        if (e.request.mode === "navigate") {
+          const rootPage = await caches.match("/");
+          if (rootPage) return rootPage;
         }
-
-        return new Response("Offline", { status: 503, statusText: "Service Unavailable" });
+        return new Response("Offline - No cached version available", { 
+          status: 503, 
+          statusText: "Service Unavailable",
+          headers: { "Content-Type": "text/plain" }
+        });
       })
   );
 });
