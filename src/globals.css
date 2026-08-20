@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
 * {
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -7,9 +9,10 @@
 }
 
 :root {
-  --dyslexia-font: inherit;
+  --dyslexia-font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --dyslexia-size: 1rem;
 }
+
 body {
   font-family: var(--dyslexia-font);
   font-size: var(--dyslexia-size);
