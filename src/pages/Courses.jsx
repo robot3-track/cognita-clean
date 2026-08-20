@@ -13,7 +13,6 @@ import { useTranslation } from "@/hooks/useTranslation";
 
 const DEV_EMAIL = "yychang100@student.hbuhsd.edu";
 
-// ── Theme-aware style helpers ─────────────────────────────────────────────────
 const S = {
   bg:          "var(--app-bg)",
   surface:     "var(--app-surface)",
@@ -31,7 +30,6 @@ const FS = ({ children }) => (
   </div>
 );
 
-// Map categories to professional Lucide Icons as secondary backups
 const CATEGORY_ICONS = {
   all: Compass,
   Programming: PlayCircle,
@@ -45,7 +43,6 @@ const CATEGORY_ICONS = {
   "Coding Skills": Zap,
 };
 
-// ── Course Review Panel ───────────────────────────────────────────────────────
 function CourseReviewPanel({ course, user, allReviews, onReviewSubmitted }) {
   const myReview = allReviews.find(r => r.course_id === course.id && r.user_email === user?.email);
   const courseReviews = allReviews.filter(r => r.course_id === course.id);
@@ -130,7 +127,6 @@ function CourseReviewPanel({ course, user, allReviews, onReviewSubmitted }) {
   );
 }
 
-// ── Course Publishing Tool ────────────────────────────────────────────────────
 function CoursePublisher({ user, t }) {
   const EMPTY_MODULE = { id: "", title: "", videoId: "", summary: "" };
   const [form, setForm] = useState({
@@ -246,7 +242,7 @@ function CoursePublisher({ user, t }) {
           <div className="col-span-2">
             <label className="text-xs font-bold block mb-1.5" style={{ color: S.muted }}>{t("courseDescription")} *</label>
             <textarea rows={3} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-              placeholder="What metrics will students complete? Who is this course for?"
+              placeholder="What will students learn? Who is this course for?"
               className="w-full px-4 py-2.5 rounded-xl text-sm outline-none resize-none focus:border-violet-500"
               style={inputStyle} />
           </div>
@@ -256,7 +252,7 @@ function CoursePublisher({ user, t }) {
           <div className="flex items-center justify-between mb-4">
             <p className="text-xs font-bold uppercase tracking-widest" style={{ color: S.muted }}>Course Lessons ({form.modules.length})</p>
             <button onClick={addModule} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-violet-400 transition-all hover:bg-violet-500/10 border border-violet-500/30">
-              <Plus className="w-3.5 h-3.5" /> Append Lesson
+              <Plus className="w-3.5 h-3.5" /> Add Lesson
             </button>
           </div>
           <div className="space-y-4">
@@ -272,9 +268,9 @@ function CoursePublisher({ user, t }) {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="col-span-2">
-                    <label className="text-[10px] font-bold block mb-1" style={{ color: S.muted }}>Lesson Title Header *</label>
+                    <label className="text-[10px] font-bold block mb-1" style={{ color: S.muted }}>Lesson Title *</label>
                     <input value={mod.title} onChange={e => updateModule(i, "title", e.target.value)}
-                      placeholder="e.g. Introduction to Structural Mechanics" className="w-full px-3 py-2 rounded-xl text-xs outline-none"
+                      placeholder="e.g. Structural Mechanics Basics" className="w-full px-3 py-2 rounded-xl text-xs outline-none"
                       style={inputStyle} />
                   </div>
                   <div>
@@ -286,7 +282,7 @@ function CoursePublisher({ user, t }) {
                   <div>
                     <label className="text-[10px] font-bold block mb-1" style={{ color: S.muted }}>Lesson Summary</label>
                     <input value={mod.summary} onChange={e => updateModule(i, "summary", e.target.value)}
-                      placeholder="Core educational items taught..." className="w-full px-3 py-2 rounded-xl text-xs outline-none"
+                      placeholder="Key concepts covered..." className="w-full px-3 py-2 rounded-xl text-xs outline-none"
                       style={inputStyle} />
                   </div>
                 </div>
@@ -298,14 +294,13 @@ function CoursePublisher({ user, t }) {
         <button onClick={publishCourse}
           disabled={publishing || !form.title || !form.description || form.modules.some(m => !m.title || !m.videoId)}
           className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm text-white transition-all disabled:opacity-40 bg-violet-600 hover:bg-violet-500 shadow-md">
-          {publishing ? <><Loader2 className="w-4 h-4 animate-spin" /> Finalizing Course Catalog...</> : <><Upload className="w-4 h-4" /> Publish to Course Catalog</>}
+          {publishing ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving Course...</> : <><Upload className="w-4 h-4" /> Publish to Catalog</>}
         </button>
       </div>
     </div>
   );
 }
 
-// ── MAIN EXPORTABLE COMPONENT ─────────────────────────────────────────────────
 export default function Courses() {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -384,7 +379,7 @@ export default function Courses() {
     });
     await db.entities.AppNotification.create({
       recipient_email: DEV_EMAIL,
-      title: "📝 New Course Application",
+      title: "📝 New Course Proposal",
       message: `${user?.full_name || user?.email} applied to create "${applyForm.proposed_title}". Review in DevDashboard > Course Apps.`,
       icon: "📝",
       link: "/DevDashboard",
@@ -410,18 +405,17 @@ export default function Courses() {
   const hasApprovedApp = myApplications.some(a => a.status === "approved");
 
   const shareOnLinkedIn = (course) => {
-    const text = encodeURIComponent(`I just completed "${course.title}" on Cognita Learning! 🎓`);
+    const text = encodeURIComponent(`I completed "${course.title}" on Cognita! 🎓`);
     window.open(`https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fcognita.app&summary=${text}`, "_blank");
   };
   const shareOnFacebook = (course) => {
-    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent("https://cognita.app")}&quote=${encodeURIComponent(`I just completed "${course.title}" on Cognita Learning! 🎓`)}`, "_blank");
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent("https://cognita.app")}&quote=${encodeURIComponent(`I completed "${course.title}" on Cognita! 🎓`)}`, "_blank");
   };
 
   const inputStyle = { background: S.surface, border: `1px solid ${S.border}`, color: S.text };
 
   return (
     <FS>
-      {/* ── SIDEBAR ─────────────────────────────────────────────────────── */}
       {sidebarOpen && (
         <div className="md:hidden fixed inset-0 z-[55] bg-black/60 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
       )}
@@ -431,21 +425,21 @@ export default function Courses() {
       >
         <div className="flex items-center gap-3 px-6 py-5 border-b shrink-0" style={{ borderColor: S.border }}>
           <img src="https://media.base44.com/images/public/69b097f35579053a78af47a3/43f8b728d_9e9c4097b_logo1.png" alt="Cognita" className="w-6 h-6 rounded-md object-cover shrink-0" />
-          <span className="font-black text-sm tracking-wider uppercase text-violet-500">Cognita Academy</span>
+          <span className="font-bold text-sm tracking-wide text-violet-500">Cognita Academy</span>
         </div>
 
         <button onClick={() => navigate("/")}
           className="flex items-center gap-2 mx-4 mt-4 px-3 py-2 rounded-xl text-xs font-semibold transition-all hover:bg-black/5 dark:hover:bg-white/5 opacity-70 hover:opacity-100"
           style={{ color: S.text }}>
-          <Home className="w-3.5 h-3.5" /> Return to Hub
+          <Home className="w-3.5 h-3.5" /> Back to Dashboard
         </button>
 
         <div className="px-4 mt-6 space-y-1">
-          <p className="text-[10px] font-bold uppercase tracking-widest px-2 mb-2" style={{ color: S.muted }}>Navigation</p>
+          <p className="text-[10px] font-bold uppercase tracking-wider px-2 mb-2" style={{ color: S.muted }}>Navigation</p>
           {[
             { id: "browse", label: t("browseCourses"), icon: Compass },
-            { id: "completed", label: `Completed Classes (${myCompleted.length})`, icon: Trophy },
-            { id: "apply", label: hasApprovedApp ? "Creator Sandbox" : "Propose Course Syllabus", icon: Award },
+            { id: "completed", label: `Completed (${myCompleted.length})`, icon: Trophy },
+            { id: "apply", label: hasApprovedApp ? "Creator Studio" : "Propose a Course", icon: Award },
           ].map(tab => {
             const IconComponent = tab.icon;
             return (
@@ -461,7 +455,7 @@ export default function Courses() {
 
         {activeTab === "browse" && (
           <div className="px-4 mt-6 space-y-1">
-            <p className="text-[10px] font-bold uppercase tracking-widest px-2 mb-2" style={{ color: S.muted }}>{t("categories")}</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider px-2 mb-2" style={{ color: S.muted }}>{t("categories")}</p>
             {COURSE_CATEGORIES.map(cat => {
               const IconComponent = CATEGORY_ICONS[cat.id] || BookOpen;
               return (
@@ -478,7 +472,7 @@ export default function Courses() {
 
         {myInProgress.length > 0 && activeTab === "browse" && (
           <div className="px-4 mt-6 mb-2">
-            <p className="text-[10px] font-bold uppercase tracking-widest px-2 mb-2" style={{ color: S.muted }}>Active Classes</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider px-2 mb-2" style={{ color: S.muted }}>In Progress</p>
             {myInProgress.slice(0, 4).map(c => {
               const prog = progress[c.id];
               const pct = Math.round(((prog?.completed_lessons?.length || 0) / c.modules.length) * 100);
@@ -502,12 +496,11 @@ export default function Courses() {
         <div className="mt-auto mx-4 mb-4 px-4 py-3 rounded-xl shrink-0 border border-amber-500/20" style={{ background: "rgba(251,191,36,0.04)" }}>
           <div className="flex items-center gap-2">
             <Award className="w-4 h-4 text-amber-500 shrink-0" />
-            <p className="text-[10px] text-amber-500 font-bold leading-tight uppercase tracking-wider">CPD Certification Pending</p>
+            <p className="text-[10px] text-amber-500 font-bold leading-tight uppercase tracking-wider">Certificates Available</p>
           </div>
         </div>
       </aside>
 
-      {/* ── MAIN CONTENT AREA ──────────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <div className="flex items-center gap-4 px-6 py-4 border-b shrink-0" style={{ borderColor: S.border, background: S.navBg }}>
           <button onClick={() => setSidebarOpen(o => !o)} className="md:hidden p-1 rounded-lg opacity-70 hover:opacity-100" style={{ color: S.text }}>
@@ -517,7 +510,7 @@ export default function Courses() {
           {activeTab === "browse" && (
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: S.muted }} />
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search catalog classes..."
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search courses..."
                 className="w-full pl-10 pr-4 py-2 rounded-xl text-xs outline-none focus:border-violet-500 transition-all shadow-sm"
                 style={inputStyle} />
             </div>
@@ -525,26 +518,25 @@ export default function Courses() {
           
           {activeTab === "browse" && (
             <span className="text-xs font-semibold shrink-0 ml-auto flex items-center gap-1.5" style={{ color: S.muted }}>
-              <TrendingUp className="w-4 h-4 text-violet-400" /> Catalog Count: {filtered.length}
+              <TrendingUp className="w-4 h-4 text-violet-400" /> {filtered.length} courses
             </span>
           )}
           {activeTab !== "browse" && (
-            <h1 className="font-black text-sm uppercase tracking-wider ml-auto text-violet-400" style={{ color: S.text }}>
-              {activeTab === "completed" ? "Academic Milestones" : hasApprovedApp ? "Publish Class" : "Submit Course Syllabus"}
+            <h1 className="font-bold text-sm ml-auto text-violet-400" style={{ color: S.text }}>
+              {activeTab === "completed" ? "Completed Courses" : hasApprovedApp ? "Publish Course" : "Submit Course Proposal"}
             </h1>
           )}
         </div>
 
-        {/* ── BROWSE TAB ── */}
         {activeTab === "browse" && (
           <div className="flex-1 overflow-y-auto px-8 py-6">
             <div className="flex items-center gap-3 mb-6">
-              <h1 className="text-lg font-black tracking-tight" style={{ color: S.text }}>
-                {COURSE_CATEGORIES.find(c => c.id === selectedCat)?.label || "Main Catalog Ledger"}
+              <h1 className="text-lg font-bold tracking-tight" style={{ color: S.text }}>
+                {COURSE_CATEGORIES.find(c => c.id === selectedCat)?.label || "All Courses"}
               </h1>
               {selectedCat === "all" && !search && (
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-violet-500/10 text-violet-400 border border-violet-500/25">
-                  {combinedCoursesList.length} Integrated
+                  {combinedCoursesList.length} Total
                 </span>
               )}
             </div>
@@ -553,16 +545,16 @@ export default function Courses() {
               <div className="mb-6 p-4 rounded-xl border border-amber-500/20" style={{ background: "rgba(251,191,36,0.03)" }}>
                 <div className="flex items-center gap-2 mb-1">
                   <Zap className="w-4 h-4 text-amber-500" />
-                  <p className="text-xs font-bold text-amber-500 uppercase tracking-wider">Micro-Learning Classes</p>
+                  <p className="text-xs font-bold text-amber-500 uppercase tracking-wider">Short Courses</p>
                 </div>
-                <p className="text-xs" style={{ color: S.muted }}>Accelerated single-session lessons for targeted architectural engineering and development procedures.</p>
+                <p className="text-xs" style={{ color: S.muted }}>Quick, focused lessons for specific practical skills.</p>
               </div>
             )}
 
             {filtered.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-24 text-center" style={{ color: S.muted }}>
                 <BookOpen className="w-12 h-12 mb-3 opacity-20" />
-                <p className="text-sm font-medium opacity-60">No classes match this classification.</p>
+                <p className="text-sm font-medium opacity-60">No courses match your search.</p>
               </div>
             ) : (
               <CourseGrid courses={filtered} progress={progress} enrollCounts={courseEnrollCounts} allReviews={allReviews} isAllView={selectedCat === "all" || !!search.trim()} t={t} />
@@ -570,19 +562,18 @@ export default function Courses() {
           </div>
         )}
 
-        {/* ── COMPLETED TAB ── */}
         {activeTab === "completed" && (
           <div className="flex-1 overflow-y-auto px-8 py-6">
             {myCompleted.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-32 text-center" style={{ color: S.muted }}>
                 <Trophy className="w-12 h-12 mb-3 opacity-20" />
-                <p className="text-sm font-bold">No Completed Records Found</p>
-                <p className="text-xs mt-1 opacity-60">Fulfill all instructional lessons inside a course to generate institutional certificates.</p>
+                <p className="text-sm font-bold">No Completed Courses Yet</p>
+                <p className="text-xs mt-1 opacity-60">Finish all lessons in a course to earn your certificate.</p>
               </div>
             ) : (
               <div className="space-y-4 max-w-4xl">
-                <p className="text-xs uppercase font-bold tracking-widest" style={{ color: S.muted }}>
-                  Verified Signatures ({myCompleted.length})
+                <p className="text-xs uppercase font-bold tracking-wider" style={{ color: S.muted }}>
+                  Your Achievements ({myCompleted.length})
                 </p>
                 {myCompleted.map(course => {
                   const prog = progress[course.id];
@@ -593,7 +584,7 @@ export default function Courses() {
                         <div>
                           <p className="font-bold text-sm" style={{ color: S.text }}>{course.title}</p>
                           <p className="text-[11px] mt-0.5 font-mono" style={{ color: S.muted }}>
-                            Issued: {issuedAt ? new Date(issuedAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) : "Pending Verification"}
+                            Completed: {issuedAt ? new Date(issuedAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) : "In Progress"}
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
@@ -623,36 +614,28 @@ export default function Courses() {
           </div>
         )}
 
-        {/* ── APPLY / PUBLISH TAB ── */}
         {activeTab === "apply" && (
           <div className="flex-1 overflow-y-auto px-8 py-6 max-w-3xl mx-auto w-full">
-            {user?.email === DEV_EMAIL && (
-              <div className="mb-6 p-4 rounded-xl border border-violet-500/30" style={{ background: "rgba(139,92,246,0.04)" }}>
-                <p className="text-xs font-bold text-violet-400 uppercase tracking-wider">Root Developer Override Authorized</p>
-                <p className="text-[11px] mt-1" style={{ color: S.muted }}>Your administrative email maps straight to active catalog execution. Peer apps will route safely to your Dev Dashboard.</p>
-              </div>
-            )}
-
             {hasApprovedApp ? (
               <CoursePublisher user={user} t={t} />
             ) : applyDone ? (
               <div className="text-center py-16 border rounded-xl" style={{ borderColor: S.border }}>
                 <Send className="w-10 h-10 text-violet-400 mx-auto mb-3" />
-                <h2 className="text-xl font-black mb-1" style={{ color: S.text }}>Syllabus Logged</h2>
-                <p className="text-xs max-w-sm mx-auto" style={{ color: S.muted }}>Your proposal has indexed successfully. Administrative parameters will confirm class compliance soon.</p>
+                <h2 className="text-xl font-bold mb-1" style={{ color: S.text }}>Proposal Submitted</h2>
+                <p className="text-xs max-w-sm mx-auto" style={{ color: S.muted }}>Your course proposal has been submitted. We will review it shortly.</p>
                 <button onClick={() => { setApplyDone(false); setApplyForm({ proposed_title: "", proposed_description: "", proposed_category: "", qualifications: "", sample_outline: "", video_links: "" }); }}
                   className="mt-6 px-5 py-2 rounded-xl text-xs font-bold bg-violet-600 hover:bg-violet-500 text-white transition-all">
-                  File New Outline
+                  Submit Another
                 </button>
               </div>
             ) : (
               <>
-                <h2 className="text-lg font-black tracking-tight mb-1" style={{ color: S.text }}>Propose New Course Syllabus</h2>
-                <p className="text-xs mb-6" style={{ color: S.muted }}>Submit architectural outlines, system qualifications, and initial training files below.</p>
+                <h2 className="text-lg font-bold tracking-tight mb-1" style={{ color: S.text }}>Propose a New Course</h2>
+                <p className="text-xs mb-6" style={{ color: S.muted }}>Fill in your course details and outline below.</p>
                 
                 {myApplications.length > 0 && (
                   <div className="mb-6 space-y-2">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-left" style={{ color: S.muted }}>Pipeline Registries</p>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-left" style={{ color: S.muted }}>Your Submissions</p>
                     {myApplications.map((app, i) => (
                       <div key={i} className="flex items-center justify-between px-4 py-3 rounded-xl border" style={{ background: S.surface, borderColor: S.border }}>
                         <div className="flex items-center gap-3 min-w-0">
@@ -672,8 +655,8 @@ export default function Courses() {
                 
                 <div className="space-y-4">
                   {[
-                    { label: "Proposed Title", key: "proposed_title", placeholder: "e.g. Introduction to Machine Learning Protocols" },
-                    { label: "Syllabus Category", key: "proposed_category", placeholder: "e.g. Programming, Engineering, AP Sciences..." },
+                    { label: "Proposed Title", key: "proposed_title", placeholder: "e.g. Introduction to Web Development" },
+                    { label: "Category", key: "proposed_category", placeholder: "e.g. Programming, Engineering, AP Sciences..." },
                   ].map(({ label, key, placeholder }) => (
                     <div key={key}>
                       <label className="text-xs font-bold block mb-1.5" style={{ color: S.muted }}>{label}</label>
@@ -683,10 +666,10 @@ export default function Courses() {
                     </div>
                   ))}
                   {[
-                    { label: "Target Scope / Course Description", key: "proposed_description", placeholder: "Fulfillment conditions, targeted audience layers..." },
-                    { label: "Instructional Qualifications", key: "qualifications", placeholder: "Why are you certified to lead this course?" },
-                    { label: "Structural Lesson Layout Outline", key: "sample_outline", placeholder: "Enumerate 3–6 proposed sub-lesson headers..." },
-                    { label: "YouTube Resource References", key: "video_links", placeholder: "Paste full YouTube URLs for reference training videos, line-separated." },
+                    { label: "Course Description", key: "proposed_description", placeholder: "What will students learn in this course?" },
+                    { label: "Qualifications", key: "qualifications", placeholder: "Your background or experience with this topic" },
+                    { label: "Lesson Outline", key: "sample_outline", placeholder: "List the main lessons or topics..." },
+                    { label: "Video Links (Optional)", key: "video_links", placeholder: "YouTube links for reference, one per line" },
                   ].map(({ label, key, placeholder }) => (
                     <div key={key}>
                       <label className="text-xs font-bold block mb-1.5" style={{ color: S.muted }}>{label}</label>
@@ -695,9 +678,9 @@ export default function Courses() {
                         style={inputStyle} />
                     </div>
                   ))}
-                  <button onClick={submitApplication} disabled={applySubmitting || !applyForm.proposed_title || !applyForm.qualifications || !applyForm.proposed_description || !(applyForm.video_links || "").trim()}
+                  <button onClick={submitApplication} disabled={applySubmitting || !applyForm.proposed_title || !applyForm.qualifications || !applyForm.proposed_description}
                     className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-xs text-white uppercase tracking-wider transition-all disabled:opacity-40 bg-violet-600 hover:bg-violet-500">
-                    {applySubmitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Storing Course Blueprint...</> : <><Send className="w-4 h-4" /> Commit Course Proposal</>}
+                    {applySubmitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Submitting...</> : <><Send className="w-4 h-4" /> Submit Proposal</>}
                   </button>
                 </div>
               </>
@@ -709,7 +692,6 @@ export default function Courses() {
   );
 }
 
-// ── AUXILIARY GRIDS AND CARDS ──────────────────────────────────────────────────
 function CourseGrid({ courses, progress, enrollCounts, allReviews, isAllView, t }) {
   if (isAllView) {
     return (
@@ -726,8 +708,8 @@ function CourseGrid({ courses, progress, enrollCounts, allReviews, isAllView, t 
   return (
     <div className="space-y-10">
       {Object.entries(groups).map(([cat, list]) => (
-        <div key={cat} className="border-t pt-6 dynamic-group-node" style={{ borderColor: S.border }}>
-          <h2 className="text-xs font-bold mb-4 uppercase tracking-widest opacity-60" style={{ color: "var(--app-muted)" }}>{cat}</h2>
+        <div key={cat} className="border-t pt-6" style={{ borderColor: S.border }}>
+          <h2 className="text-xs font-bold mb-4 uppercase tracking-wider opacity-60" style={{ color: "var(--app-muted)" }}>{cat}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {list.map(c => <CourseCard key={c.id} course={c} prog={progress[c.id]} enrollCount={enrollCounts[c.id] || 0} reviews={allReviews.filter(r => r.course_id === c.id)} t={t} />)}
           </div>
@@ -748,7 +730,6 @@ function CourseCard({ course, prog, enrollCount, reviews, t }) {
   const isTrending = enrollCount >= 2;
   const avgRating = reviews.length ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : null;
 
-  // Resolves the link dynamically, fallback to standard icon if no link is provided
   const coverImageUrl = course.link || course.image;
   const CategoryFallbackIcon = CATEGORY_ICONS[course.category] || BookOpen;
 
@@ -762,7 +743,6 @@ function CourseCard({ course, prog, enrollCount, reviews, t }) {
         }}>
         <div>
           <div className="flex items-start justify-between mb-3">
-            {/* Display the image link directly, utilizing an icon backup if missing */}
             <div className="w-10 h-10 rounded-lg flex items-center justify-center overflow-hidden shrink-0 bg-neutral-500/15 border border-neutral-500/20">
               {coverImageUrl ? (
                 <img 
@@ -794,7 +774,7 @@ function CourseCard({ course, prog, enrollCount, reviews, t }) {
         </div>
 
         <div>
-          <div className="flex items-center gap-3 text-[10px] uppercase font-mono tracking-wider mb-3 flex-wrap" style={{ color: "var(--app-muted)" }}>
+          <div className="flex items-center gap-3 text-[10px] font-medium tracking-wider mb-3 flex-wrap" style={{ color: "var(--app-muted)" }}>
             <span className="flex items-center gap-1"><PlayCircle className="w-3 h-3" /> {total} Lessons</span>
             <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {course.duration}</span>
             {avgRating && (
@@ -807,7 +787,7 @@ function CourseCard({ course, prog, enrollCount, reviews, t }) {
           {started && !done && (
             <div className="mb-3">
               <div className="flex justify-between text-[9px] font-mono mb-1" style={{ color: "var(--app-muted)" }}>
-                <span>Course Progress</span><span>{pct}%</span>
+                <span>Progress</span><span>{pct}%</span>
               </div>
               <div className="h-1 rounded-full overflow-hidden" style={{ background: "var(--app-border)" }}>
                 <div className="h-full rounded-full transition-all duration-300" style={{ width: `${pct}%`, background: course.color }} />
@@ -817,7 +797,7 @@ function CourseCard({ course, prog, enrollCount, reviews, t }) {
           
           <div className="flex items-center justify-between border-t pt-3" style={{ borderColor: "var(--app-border)" }}>
             <span className="text-xs font-bold transition-all group-hover:underline" style={{ color: course.color }}>
-              {done ? "Completed ✓" : started ? "Resume Class →" : isMini ? "Start Quick Class →" : "Start Course →"}
+              {done ? "Completed ✓" : started ? "Resume →" : isMini ? "Start Lesson →" : "Start Course →"}
             </span>
             <ChevronRight className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" style={{ color: "var(--app-text)" }} />
           </div>
