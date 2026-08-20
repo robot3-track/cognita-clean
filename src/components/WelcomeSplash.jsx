@@ -11,7 +11,7 @@ const SPLASH_KEY = "cognita_welcome_seen_v8";
 const PREF_ROLE_KEY = "cognita_user_role";
 
 const HUMOROUS_MESSAGES = [
-  "Reticulating study splines and caffeinating AI models... lol",
+  "Creating study splines and caffeinating AI models... lol",
   "Negotiating with your upcoming midterms... gl",
   "Formatting rich-text equations. Please don't divide by zero...",
   "Bribing the servers with digital index cards...",
@@ -45,13 +45,11 @@ export default function WelcomeSplash({ isBackendLoading }) {
   const navigate = useNavigate();
   const [visible, setVisible] = useState(false);
   
-  // Steps: 1: Splash Loader, 2: Role Selection, 3: Quick Action Hub
   const [step, setStep] = useState(1); 
   const [selectedRole, setSelectedRole] = useState("");
   const [jokeIndex, setJokeIndex] = useState(0);
   const [minTimerDone, setMinTimerDone] = useState(false);
 
-  // Cycle humorous loading messages
   useEffect(() => {
     if (step !== 1) return;
     const interval = setInterval(() => {
@@ -60,7 +58,6 @@ export default function WelcomeSplash({ isBackendLoading }) {
     return () => clearInterval(interval);
   }, [step]);
 
-  // Check onboarding status
   useEffect(() => {
     const alreadySeen = 
       localStorage.getItem(SPLASH_KEY) ||
@@ -70,7 +67,6 @@ export default function WelcomeSplash({ isBackendLoading }) {
 
     if (!alreadySeen) {
       setVisible(true);
-      // Enforce 5s minimum splash display buffer
       const timer = setTimeout(() => {
         setMinTimerDone(true);
       }, 5000);
@@ -78,7 +74,6 @@ export default function WelcomeSplash({ isBackendLoading }) {
     }
   }, []);
 
-  // Transition from step 1 when data + minimum timer are complete
   useEffect(() => {
     if (visible && step === 1 && minTimerDone && !isBackendLoading) {
       setStep(2);
@@ -114,7 +109,6 @@ export default function WelcomeSplash({ isBackendLoading }) {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
       >
-        {/* Subtle Background Surface Grid & Soft Lighting */}
         <div 
           className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b15_1px,transparent_1px),linear-gradient(to_bottom,#1e293b15_1px,transparent_1px)] bg-[size:4rem_4rem] pointer-events-none" 
         />
@@ -122,7 +116,6 @@ export default function WelcomeSplash({ isBackendLoading }) {
 
         <div className="w-full max-w-lg bg-slate-900/60 border border-slate-800/80 backdrop-blur-xl rounded-3xl p-6 sm:p-8 shadow-2xl relative z-10 flex flex-col justify-between min-h-[460px]">
           
-          {/* STEP 1: RESTORED ORIGINAL LOADER */}
           {step === 1 && (
             <motion.div 
               className="flex flex-col items-center justify-center text-center my-auto py-8 space-y-6"
@@ -132,11 +125,10 @@ export default function WelcomeSplash({ isBackendLoading }) {
               transition={{ duration: 0.25 }}
             >
               <div className="relative">
-                <div className="absolute -inset-1 rounded-2xl bg-violet-500/20 blur-lg animate-pulse" />
                 <img 
                   src="https://media.base44.com/images/public/69b097f35579053a78af47a3/43f8b728d_9e9c4097b_logo1.png" 
                   alt="Cognita Logo" 
-                  className="w-16 h-16 rounded-2xl border border-slate-700/50 shadow-xl relative z-10 p-2 bg-slate-900"
+                  className="w-16 h-16 rounded-2xl border border-slate-800 shadow-xl relative z-10 p-2 bg-slate-900"
                 />
               </div>
 
@@ -149,7 +141,6 @@ export default function WelcomeSplash({ isBackendLoading }) {
                 </p>
               </div>
 
-              {/* Dynamic Joke Engine */}
               <div className="h-10 px-4 flex items-center justify-center">
                 <AnimatePresence mode="wait">
                   <motion.p 
@@ -172,7 +163,6 @@ export default function WelcomeSplash({ isBackendLoading }) {
             </motion.div>
           )}
 
-          {/* STEP 2: ROLE SELECTION */}
           {step === 2 && (
             <motion.div 
               className="flex flex-col justify-between flex-1 space-y-6"
@@ -192,10 +182,8 @@ export default function WelcomeSplash({ isBackendLoading }) {
                   const RoleIcon = role.icon;
                   const isSelected = selectedRole === role.id;
                   return (
-                    <motion.button
+                    <button
                       key={role.id}
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 0.99 }}
                       onClick={() => setSelectedRole(role.id)}
                       className={`w-full text-left p-3.5 rounded-2xl border transition-all flex items-center justify-between ${
                         isSelected 
@@ -220,7 +208,7 @@ export default function WelcomeSplash({ isBackendLoading }) {
                       }`}>
                         {isSelected && <Check className="w-2.5 h-2.5 stroke-[3]" />}
                       </div>
-                    </motion.button>
+                    </button>
                   );
                 })}
               </div>
@@ -238,7 +226,6 @@ export default function WelcomeSplash({ isBackendLoading }) {
             </motion.div>
           )}
 
-          {/* STEP 3: TOUR ACTION HUB */}
           {step === 3 && (
             <motion.div 
               className="flex flex-col justify-between flex-1 space-y-6"
@@ -325,7 +312,6 @@ export default function WelcomeSplash({ isBackendLoading }) {
             </motion.div>
           )}
 
-          {/* FOOTER SIGNATURE */}
           <div className="mt-6 pt-4 border-t border-slate-800/50 text-center">
             <p className="text-[10px] text-slate-500">
               Cognita Platform • Yohan Chang • Marina High School
