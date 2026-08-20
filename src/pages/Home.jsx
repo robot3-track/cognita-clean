@@ -23,48 +23,48 @@ import { addSurveyBonusServer } from "@/components/userCredits";
 const TOP_STUDIER_KEY = "cognita_top_studier_rewarded";
 
 const MAIN_FEATURES = [
-  { label: "Flashcards", desc: "Review master decks and active recall sets", icon: Layers, page: "Decks", iconColor: "text-amber-500", borderHover: "hover:border-amber-500/50", bgGlow: "from-amber-500/15 via-amber-500/5 to-transparent" },
-  { label: "Creative Studio", desc: "Generate narrated videos, audio & custom tutors", icon: Sparkles, page: "Media", iconColor: "text-violet-500", borderHover: "hover:border-violet-500/50", bgGlow: "from-violet-500/15 via-violet-500/5 to-transparent" },
-  { label: "Smart Assistant", desc: "Interactive tutor with voice & document upload", icon: Brain, page: "Chat", iconColor: "text-blue-500", borderHover: "hover:border-blue-500/50", bgGlow: "from-blue-500/15 via-blue-500/5 to-transparent" },
-  { label: "Scan & Import", desc: "Snap photos or paste text to instantly auto-generate cards", icon: Camera, page: "Scan", iconColor: "text-rose-500", borderHover: "hover:border-rose-500/50", bgGlow: "from-rose-500/15 via-rose-500/5 to-transparent" },
-  { label: "Full Exam Prep", desc: "Targeted practice for AP, SAT, State & iReady exams", icon: BookOpen, page: "ExamPrep", iconColor: "text-purple-500", borderHover: "hover:border-purple-500/50", bgGlow: "from-purple-500/15 via-purple-500/5 to-transparent" },
-  { label: "Study Games", desc: "Interactive multiplayer games & tower defense recall", icon: Gamepad2, page: "TowerDefense", iconColor: "text-emerald-500", borderHover: "hover:border-emerald-500/50", bgGlow: "from-emerald-500/15 via-emerald-500/5 to-transparent" },
+  { label: "Flashcards", desc: "Study decks with active recall and SRS mode", icon: Layers, page: "Decks", iconColor: "text-amber-500", borderHover: "hover:border-amber-500/50", bgGlow: "from-amber-500/15 via-amber-500/5 to-transparent" },
+  { label: "Media Studio", desc: "Create narrated videos, audio recaps, and study guides", icon: Sparkles, page: "Media", iconColor: "text-violet-500", borderHover: "hover:border-violet-500/50", bgGlow: "from-violet-500/15 via-violet-500/5 to-transparent" },
+  { label: "Study Chat", desc: "Ask questions, talk via voice, or upload course files", icon: Brain, page: "Chat", iconColor: "text-blue-500", borderHover: "hover:border-blue-500/50", bgGlow: "from-blue-500/15 via-blue-500/5 to-transparent" },
+  { label: "Scan & Import", desc: "Turn photo notes or pasted text into cards", icon: Camera, page: "Scan", iconColor: "text-rose-500", borderHover: "hover:border-rose-500/50", bgGlow: "from-rose-500/15 via-rose-500/5 to-transparent" },
+  { label: "Test Prep", desc: "Practice sets for AP, SAT, state tests, and exams", icon: BookOpen, page: "ExamPrep", iconColor: "text-purple-500", borderHover: "hover:border-purple-500/50", bgGlow: "from-purple-500/15 via-purple-500/5 to-transparent" },
+  { label: "Study Games", desc: "Play tower defense and term matching with classmates", icon: Gamepad2, page: "TowerDefense", iconColor: "text-emerald-500", borderHover: "hover:border-emerald-500/50", bgGlow: "from-emerald-500/15 via-emerald-500/5 to-transparent" },
 ];
 
 const ROTATING_TIPS = [
-  "Maximize your learning retention by reviewing sets using Spaced Repetition (SRS).",
-  "Take a picture of written notes or insert public urls to instantly generate flashcards.",
-  "Turn any regular dataset or flashcard deck into fully narrated audio and video lessons.",
-  "Sync your interactive flashcards to your Classroom module to launch live multiplayer study games."
+  "Review sets with Spaced Repetition (SRS) to keep concepts in long-term memory.",
+  "Upload photos of handwritten notes to generate review sets.",
+  "Turn regular sets into audio narrations or video lessons for studying on the go.",
+  "Share study decks directly to your classroom group for study sessions."
 ];
 
 function MoreTools({ cardStyle, mutedStyle }) {
   const [open, setOpen] = useState(false);
   const tools = [
     { label: "Write Mode", desc: "Type answers", icon: PenLine, page: "WriteMode" },
-    { label: "Checkpoint", desc: "Exam simulation", icon: Flag, page: "CheckpointMode" },
+    { label: "Practice Exams", desc: "Test simulation", icon: Flag, page: "CheckpointMode" },
     { label: "Matching Game", desc: "Match terms", icon: Gamepad2, page: "MatchingGame" },
     { label: "Word Scramble", desc: "Unscramble", icon: Type, page: "MatchingGame" },
-    { label: "Study Roadmap", desc: "Smart exam plan", icon: CalendarDays, page: "StudyRoadmap" },
-    { label: "Voice Brain Dump", desc: "Speak & capture", icon: Brain, page: "BrainDump" },
-    { label: "Video Lessons", desc: "Visual learning", icon: BarChart3, page: "Media" },
-    { label: "Audio Lessons", desc: "Audio Narration", icon: BookOpen, page: "Media"},
-    { label: "Study Groups", desc: "Collaborate", icon: Users, page: "StudyGroups" },
-    { label: "Compete", desc: "Leaderboard", icon: Trophy, page: "Compete" },
+    { label: "Study Schedule", desc: "Exam timeline", icon: CalendarDays, page: "StudyRoadmap" },
+    { label: "Voice Notes", desc: "Speak and save", icon: Brain, page: "BrainDump" },
+    { label: "Video Lessons", desc: "Visual review", icon: BarChart3, page: "Media" },
+    { label: "Audio Lessons", desc: "Audio recaps", icon: BookOpen, page: "Media"},
+    { label: "Study Groups", desc: "Group study", icon: Users, page: "StudyGroups" },
+    { label: "Leaderboard", desc: "Weekly ranks", icon: Trophy, page: "Compete" },
     { label: "Progress Stats", desc: "Your metrics", icon: BarChart3, page: "Progress" },
     { label: "Calculator", desc: "Scientific calc", icon: Calculator, page: "Calculator" },
-    { label: "Dictionary", desc: "Word definitions", icon: BookMarked, page: "Dictionary" },
-    { label: "Practice Test", desc: "Full practice test", icon: ClipboardList, page: "Decks" },
-    { label: "Resource Hub", desc: "Share study files", icon: FolderOpen, page: "ResourceHub" },
-    { label: "Pomodoro", desc: "Focus timer", icon: Timer, page: "Pomodoro" },
-    { label: "Public Decks", desc: "Browse community", icon: Globe, page: "PublicDecks" },
-    { label: "Resource Library", desc: "Topic cards", icon: BookOpen, page: "ResourceLibrary" },
-    { label: "MLA Formatter", desc: "MLA citations", icon: FileText, page: "MLAFormatter" },
+    { label: "Dictionary", desc: "Word lookup", icon: BookMarked, page: "Dictionary" },
+    { label: "Practice Test", desc: "Full test", icon: ClipboardList, page: "Decks" },
+    { label: "Shared Files", desc: "Resource hub", icon: FolderOpen, page: "ResourceHub" },
+    { label: "Pomodoro Timer", desc: "Focus timer", icon: Timer, page: "Pomodoro" },
+    { label: "Public Decks", desc: "Community sets", icon: Globe, page: "PublicDecks" },
+    { label: "Resource Library", desc: "Topic guides", icon: BookOpen, page: "ResourceLibrary" },
+    { label: "MLA Citation", desc: "Format sources", icon: FileText, page: "MLAFormatter" },
     { label: "Chem Balancer", desc: "Balance equations", icon: FlaskConical, page: "ChemBalance" },
-    { label: "Periodic Table", desc: "Element reference", icon: Layers, page: "PeriodicTable" },
-    { label: "Notes Grid", desc: "Organize workflows", icon: NotebookPen, page: "Notes" },
-    { label: "Code Sandbox", desc: "Run environments", icon: Code2, page: "CodeSandbox" },
-    { label: "Classroom", desc: "Setup Classes", icon: Users, page: "Classroom" },
+    { label: "Periodic Table", desc: "Elements guide", icon: Layers, page: "PeriodicTable" },
+    { label: "Notepad", desc: "Quick notes", icon: NotebookPen, page: "Notes" },
+    { label: "Code Sandbox", desc: "Run code", icon: Code2, page: "CodeSandbox" },
+    { label: "Classroom", desc: "Manage classes", icon: Users, page: "Classroom" },
   ];
 
   return (
@@ -76,7 +76,7 @@ function MoreTools({ cardStyle, mutedStyle }) {
       >
         <span className="flex items-center gap-2 text-xs font-medium">
           <Compass className="w-4 h-4 text-violet-500" />
-          <span>{open ? "Hide specialized tools" : "View all study tools and utilities"}</span>
+          <span>{open ? "Hide additional tools" : "Browse all study tools"}</span>
         </span>
         <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${open ? "rotate-180" : ""}`} style={mutedStyle} />
       </button>
@@ -146,14 +146,14 @@ export default function Home() {
     const sorted = Object.entries(byUser).sort((a, b) => b[1] - a[1]);
     if (sorted.length > 0 && sorted[0][0] === me.email) {
       if (hour >= 23) {
-        await addSurveyBonusServer(3, "Top studier bonus rewarded — +3 bonus credits applied.");
+        await addSurveyBonusServer(3, "Daily study bonus unlocked: 3 extra credits.");
         localStorage.setItem(rewardedKey, "1");
       } else {
         const msUntil11pm = new Date(now).setHours(23, 0, 0, 0) - now.getTime();
         if (msUntil11pm > 0) {
           setTimeout(() => {
             if (!localStorage.getItem(rewardedKey)) {
-              addSurveyBonusServer(3, "Top studier bonus rewarded — +3 bonus credits applied.")
+              addSurveyBonusServer(3, "Daily study bonus unlocked: 3 extra credits.")
                 .then(() => localStorage.setItem(rewardedKey, "1"))
                 .catch(() => {});
             }
@@ -238,29 +238,29 @@ export default function Home() {
 
   const ALL_SEARCH_TARGETS = [
     ...MAIN_FEATURES,
-    { label: "Write Mode", desc: "Type answers & text matching training", page: "WriteMode", icon: PenLine },
-    { label: "Checkpoint Exams", desc: "Interactive exam simulation testing", page: "CheckpointMode", icon: Flag },
-    { label: "Vocabulary Matching", desc: "Match terms card speed run game", page: "MatchingGame", icon: Gamepad2 },
-    { label: "Word Scramble", desc: "Unscramble dataset vocabulary strings", page: "MatchingGame", icon: Type },
-    { label: "Exam Planners", desc: "Custom study schedules & timelines", page: "StudyRoadmap", icon: CalendarDays },
-    { label: "Voice Brain Dump", desc: "Speak & capture automated transcripts", page: "BrainDump", icon: Brain },
-    { label: "Video Lessons", desc: "Visual interactive learning timelines", page: "Media", icon: BookOpen },
-    { label: "Study Communities", desc: "Collaborative flashcard channels", page: "StudyGroups", icon: Users },
-    { label: "Live Scoreboards", desc: "Compete with leaderboard trackers", page: "Compete", icon: Trophy },
-    { label: "Analytics Insights", desc: "Your progress metrics & data charts", page: "Progress", icon: BarChart3 },
-    { label: "Scientific Calculator", desc: "Formula calculator solver layout", page: "Calculator", icon: Calculator },
-    { label: "Terminology Reference", desc: "Dictionary definitions matching panel", page: "Dictionary", icon: BookMarked },
-    { label: "Practice Tests", desc: "Full customized evaluation exams", page: "Decks", icon: ClipboardList },
-    { label: "Resource Shared Library", desc: "Topics, notes & file sharing hubs", page: "ResourceHub", icon: FolderOpen },
-    { label: "Resource Library Index", desc: "Pre-made topic study materials", page: "ResourceLibrary", icon: BookOpen },
-    { label: "Focus Pomodoro Timer", desc: "Customized intervals study timers", page: "Pomodoro", icon: Timer },
-    { label: "Public Repositories", desc: "Browse community shared card datasets", page: "PublicDecks", icon: Globe },
-    { label: "MLA Format Builder", desc: "Research citation helper layouts", page: "MLAFormatter", icon: FileText },
-    { label: "Chemistry Engine", desc: "Balance element reactions instantly", page: "ChemBalance", icon: FlaskConical },
-    { label: "Periodic Matrix Grid", desc: "Element interactive guide data sheet", page: "PeriodicTable", icon: Layers },
-    { label: "Workflows Layout Notes", desc: "Organize folders & custom notepad rich text", page: "Notes", icon: NotebookPen },
-    { label: "Code Sandbox Terminal", desc: "Run languages inside sandboxed workspace environments", page: "CodeSandbox", icon: Code2 },
-    { label: "User Parameters Settings", desc: "Theme styling configuration profiles", page: "Settings", icon: Sparkles },
+    { label: "Write Mode", desc: "Type answers and practice terms", page: "WriteMode", icon: PenLine },
+    { label: "Practice Exams", desc: "Simulated exam practice", page: "CheckpointMode", icon: Flag },
+    { label: "Matching Game", desc: "Fast term matching", page: "MatchingGame", icon: Gamepad2 },
+    { label: "Word Scramble", desc: "Unscramble term vocabulary", page: "MatchingGame", icon: Type },
+    { label: "Study Schedule", desc: "Custom exam study plans", page: "StudyRoadmap", icon: CalendarDays },
+    { label: "Voice Notes", desc: "Audio notes and transcription", page: "BrainDump", icon: Brain },
+    { label: "Video Lessons", desc: "Visual review timelines", page: "Media", icon: BookOpen },
+    { label: "Study Groups", desc: "Shared study groups", page: "StudyGroups", icon: Users },
+    { label: "Leaderboard", desc: "Study rankings and points", page: "Compete", icon: Trophy },
+    { label: "Progress Stats", desc: "Study stats and charts", page: "Progress", icon: BarChart3 },
+    { label: "Calculator", desc: "Scientific calculator", page: "Calculator", icon: Calculator },
+    { label: "Dictionary", desc: "Definitions and lookup", page: "Dictionary", icon: BookMarked },
+    { label: "Practice Tests", desc: "Custom evaluation tests", page: "Decks", icon: ClipboardList },
+    { label: "Shared Files", desc: "Notes and file uploads", page: "ResourceHub", icon: FolderOpen },
+    { label: "Resource Library", desc: "Premade study materials", page: "ResourceLibrary", icon: BookOpen },
+    { label: "Pomodoro Timer", desc: "Focus timer", page: "Pomodoro", icon: Timer },
+    { label: "Public Decks", desc: "Community flashcard sets", page: "PublicDecks", icon: Globe },
+    { label: "MLA Formatter", desc: "Citation generator", page: "MLAFormatter", icon: FileText },
+    { label: "Chem Balancer", desc: "Balance chemical equations", page: "ChemBalance", icon: FlaskConical },
+    { label: "Periodic Table", desc: "Interactive element reference", page: "PeriodicTable", icon: Layers },
+    { label: "Notepad", desc: "Notes and outline workspace", page: "Notes", icon: NotebookPen },
+    { label: "Code Sandbox", desc: "Code editor and workspace", page: "CodeSandbox", icon: Code2 },
+    { label: "Settings", desc: "Preferences and settings", page: "Settings", icon: Sparkles },
   ];
 
   const searchQuery = search.trim().toLowerCase();
@@ -354,10 +354,10 @@ export default function Home() {
 
             <div className="space-y-1">
               <h2 className="text-base font-semibold tracking-tight text-[var(--app-text)]">
-                Preparing Your Workspace
+                Loading Cognita
               </h2>
               <p className="text-xs" style={mutedStyle}>
-                Retrieving your study tools
+                Getting your sets ready
               </p>
             </div>
 
@@ -372,7 +372,7 @@ export default function Home() {
               style={{ borderColor: "var(--app-border)" }}
             >
               <span className="text-[10px] font-semibold text-violet-500 uppercase tracking-wider block">
-                Study Insight
+                Study Tip
               </span>
               <p className="text-xs leading-relaxed transition-opacity duration-300 text-[var(--app-text)] min-h-[36px]">
                 {ROTATING_TIPS[tipIndex]}
@@ -402,7 +402,7 @@ export default function Home() {
                   </h1>
                   <span className="text-[10px] font-semibold text-violet-600 dark:text-violet-400 bg-violet-500/10 border border-violet-500/20 rounded-md px-2 py-0.5 tracking-wide shrink-0">Verified</span>
                 </div>
-                <p className="text-xs mt-1" style={mutedStyle}>Your primary study dashboard & learning hub.</p>
+                <p className="text-xs mt-1" style={mutedStyle}>Your main dashboard and study overview.</p>
               </div>
               <div className="flex items-center gap-2 self-start sm:self-center">
                 <HomeLayoutCustomizer layout={homeLayout} onChange={setHomeLayout} />
@@ -415,7 +415,7 @@ export default function Home() {
                 <input
                   value={search}
                   onChange={e => setSearch(e.target.value)}
-                  placeholder="Search features, tools, flashcard decks, or classmates..."
+                  placeholder="Search tools, decks, subjects, or classmates..."
                   className="w-full pl-11 pr-10 rounded-2xl text-xs outline-none transition-all duration-150 focus:border-violet-500 font-medium shadow-xs"
                   style={{ background: "var(--app-surface)", border: "1px solid var(--app-border)", color: "var(--app-text)", height: "46px" }}
                 />
@@ -486,14 +486,14 @@ export default function Home() {
 
                   {matchedUsers.length > 0 && (
                     <div>
-                      <p className="text-[9px] font-bold px-4 pt-2.5 pb-1 opacity-50 tracking-wider uppercase" style={mutedStyle}>Users</p>
+                      <p className="text-[9px] font-bold px-4 pt-2.5 pb-1 opacity-50 tracking-wider uppercase" style={mutedStyle}>Classmates</p>
                       {matchedUsers.map(u => (
                         <Link key={u.email} to={createPageUrl(`FriendsAndUsers`)} onClick={() => setSearch("")} className="px-4 py-2 hover:bg-black/5 dark:hover:bg-white/5 text-xs flex items-center gap-2.5 text-[var(--app-text)] block transition-colors">
                           <div className="w-5 h-5 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-[10px] text-violet-500 font-bold uppercase">
                             {u.full_name ? u.full_name[0] : <User className="w-2.5 h-2.5" />}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="font-medium truncate leading-tight">{u.full_name || "Anonymous Learner"}</p>
+                            <p className="font-medium truncate leading-tight">{u.full_name || "Student"}</p>
                             <p className="text-[9px] opacity-50 truncate leading-none mt-0.5" style={mutedStyle}>{u.email}</p>
                           </div>
                         </Link>
@@ -509,7 +509,7 @@ export default function Home() {
 
           <div className="space-y-3">
             <h2 className="font-semibold text-xs tracking-wider uppercase opacity-60 px-1" style={mutedStyle}>
-              Main Study Features
+              Main Features
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {MAIN_FEATURES.map((feat, i) => {
@@ -517,25 +517,25 @@ export default function Home() {
                 return (
                   <Link key={i} to={createPageUrl(feat.page)} className="block group">
                     <div 
-                      className={`rounded-2xl p-5 border transition-all duration-200 relative overflow-hidden flex flex-col justify-between min-h-[150px] bg-[var(--app-surface)] hover:border-violet-500/30 hover:shadow-sm ${feat.borderHover}`} 
+                      className={`rounded-2xl p-5 border transition-all duration-200 relative overflow-hidden flex flex-col justify-between min-h-[140px] bg-[var(--app-surface)] hover:border-violet-500/30 hover:shadow-sm ${feat.borderHover}`} 
                       style={{ borderColor: "var(--app-border)" }}
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center transition-transform group-hover:scale-105">
-                          <IconComponent className={`w-5 h-5 ${feat.iconColor}`} />
-                        </div>
-                        <div className="w-7 h-7 rounded-full border border-slate-200 dark:border-slate-800 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all text-violet-500">
-                          <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                      <div className="flex items-start justify-between gap-3">
+                        <h3 className="font-bold text-base sm:text-lg tracking-tight text-[var(--app-text)] group-hover:text-violet-500 transition-colors">
+                          {feat.label}
+                        </h3>
+                        <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
+                          <IconComponent className={`w-4 h-4 ${feat.iconColor}`} />
                         </div>
                       </div>
 
-                      <div className="mt-4 space-y-1">
-                        <h3 className="font-bold text-sm text-[var(--app-text)] group-hover:text-violet-500 transition-colors">
-                          {feat.label}
-                        </h3>
+                      <div className="mt-3 flex items-end justify-between gap-2">
                         <p className="text-xs leading-relaxed opacity-70 line-clamp-2" style={mutedStyle}>
                           {feat.desc}
                         </p>
+                        <div className="w-6 h-6 rounded-full border border-slate-200 dark:border-slate-800 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all text-violet-500 shrink-0">
+                          <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                        </div>
                       </div>
                     </div>
                   </Link>
@@ -552,9 +552,9 @@ export default function Home() {
               {homeLayout.showRecentDecks && decks.length > 0 && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between px-1">
-                    <h2 className="font-semibold text-xs tracking-wider uppercase opacity-60" style={mutedStyle}>Recent Flashcards</h2>
+                    <h2 className="font-semibold text-xs tracking-wider uppercase opacity-60" style={mutedStyle}>Recent Decks</h2>
                     <Link to={createPageUrl("Decks")} className="text-violet-500 text-xs font-semibold hover:underline">
-                      View all sets
+                      View all
                     </Link>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -574,7 +574,7 @@ export default function Home() {
                                 <span className="font-semibold text-xs text-[var(--app-text)] truncate group-hover:text-violet-500 transition-colors">{deck.title}</span>
                                 {deck.is_verified && <VerifiedBadge size={12} />}
                               </div>
-                              <p className="text-[10px] opacity-60 mt-0.5" style={mutedStyle}>{deck.card_count || 0} cards · Personal deck</p>
+                              <p className="text-[10px] opacity-60 mt-0.5" style={mutedStyle}>{deck.card_count || 0} cards</p>
                             </div>
                           </div>
                           <ArrowRight className="w-4 h-4 opacity-30 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all text-slate-400 group-hover:text-violet-500 shrink-0" />
@@ -588,9 +588,9 @@ export default function Home() {
               {homeLayout.showCommunityDecks && trendingDecks.length > 0 && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between px-1">
-                    <h2 className="font-semibold text-xs tracking-wider uppercase opacity-60" style={mutedStyle}>Trending Study Sets</h2>
+                    <h2 className="font-semibold text-xs tracking-wider uppercase opacity-60" style={mutedStyle}>Popular Study Sets</h2>
                     <Link to={createPageUrl("PublicDecks")} className="text-violet-500 text-xs font-semibold hover:underline">
-                      Explore public sets
+                      Browse all
                     </Link>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -634,15 +634,15 @@ export default function Home() {
 
               {homeLayout.showLiveCounters && (
                 <div className="border rounded-2xl p-5 space-y-4 bg-[var(--app-surface)] shadow-xs" style={cardStyle}>
-                  <h4 className="text-[10px] font-semibold tracking-wider uppercase opacity-60" style={mutedStyle}>Study Overview By All Users</h4>
+                  <h4 className="text-[10px] font-semibold tracking-wider uppercase opacity-60" style={mutedStyle}>Overall Activity</h4>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-xl font-bold text-[var(--app-text)]">{totalMinutes.toLocaleString()}</p>
-                      <p className="text-[9px] font-semibold opacity-60 tracking-tight mt-0.5 uppercase" style={mutedStyle}>Minutes spent</p>
+                      <p className="text-[9px] font-semibold opacity-60 tracking-tight mt-0.5 uppercase" style={mutedStyle}>Minutes studied</p>
                     </div>
                     <div>
                       <p className="text-xl font-bold text-[var(--app-text)]">{totalCardsReviewed.toLocaleString()}</p>
-                      <p className="text-[9px] font-semibold opacity-60 tracking-tight mt-0.5 uppercase" style={mutedStyle}>Cards studied</p>
+                      <p className="text-[9px] font-semibold opacity-60 tracking-tight mt-0.5 uppercase" style={mutedStyle}>Cards reviewed</p>
                     </div>
                   </div>
                 </div>
@@ -678,10 +678,10 @@ export default function Home() {
               <div className="rounded-2xl p-5 border relative overflow-hidden bg-[var(--app-surface)] border-violet-500/20 shadow-xs">
                 <div className="flex items-center gap-2 mb-2 text-violet-600 dark:text-violet-400">
                   <Heart className="w-4 h-4" />
-                  <h4 className="font-semibold text-xs">Support Open Learning</h4>
+                  <h4 className="font-semibold text-xs">Support Cognita</h4>
                 </div>
                 <p className="text-[11px] leading-relaxed opacity-70 mb-4" style={mutedStyle}>
-                  Help keep this study environment accessible for high school and college students.
+                  Help keep this study hub free for students.
                 </p>
                 <a 
                   href="https://paypal.me/ycmusicmodels" 
@@ -696,9 +696,9 @@ export default function Home() {
               <div className="rounded-2xl p-4 border bg-emerald-500/5 border-emerald-500/10 flex gap-3 items-start">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
                 <div className="space-y-0.5">
-                  <p className="font-semibold text-xs text-emerald-600 dark:text-emerald-400">Student Operated</p>
+                  <p className="font-semibold text-xs text-emerald-600 dark:text-emerald-400">Student Built</p>
                   <p className="text-[11px] leading-relaxed opacity-70" style={mutedStyle}>
-                    Cognita Study is operated entirely by students for students. Reach out via our partnership page for integrations.
+                    Cognita is built and maintained by students. Reach out via our partners page for feedback or integrations.
                   </p>
                 </div>
               </div>
