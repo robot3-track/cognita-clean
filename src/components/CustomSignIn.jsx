@@ -7,7 +7,8 @@ import {
   Eye, 
   EyeOff, 
   Loader2, 
-  AlertCircle
+  AlertCircle,
+  X
 } from "lucide-react";
 
 export default function CustomSignIn() {
@@ -19,6 +20,7 @@ export default function CustomSignIn() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [mode, setMode] = useState("social");
+  const [activeModal, setActiveModal] = useState(null);
 
   useEffect(() => {
     if (!isLoadingAuth && isAuthenticated) {
@@ -28,8 +30,12 @@ export default function CustomSignIn() {
 
   const handleEmailSignIn = async (e) => {
     e.preventDefault();
-    if (!email || !password) { setError("Please enter your email and password."); return; }
-    setLoading(true); setError("");
+    if (!email || !password) { 
+      setError("Please enter your email and password."); 
+      return; 
+    }
+    setLoading(true); 
+    setError("");
     try {
       await db.auth.signInWithEmail(email, password);
       window.location.href = "/";
@@ -42,10 +48,20 @@ export default function CustomSignIn() {
 
   const handleEmailSignUp = async (e) => {
     e.preventDefault();
-    if (!email || !password) { setError("Please fill in all fields."); return; }
-    if (password !== confirmPassword) { setError("Passwords do not match."); return; }
-    if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
-    setLoading(true); setError("");
+    if (!email || !password) { 
+      setError("Please fill in all fields."); 
+      return; 
+    }
+    if (password !== confirmPassword) { 
+      setError("Passwords do not match."); 
+      return; 
+    }
+    if (password.length < 6) { 
+      setError("Password must be at least 6 characters."); 
+      return; 
+    }
+    setLoading(true); 
+    setError("");
     try {
       await db.auth.signUpWithEmail(email, password);
       localStorage.setItem("cognita_new_user", "1");
@@ -91,7 +107,6 @@ export default function CustomSignIn() {
 
   return (
     <div className="min-h-screen w-full flex bg-slate-950 text-slate-100 font-sans antialiased selection:bg-violet-500/30">
-      
       <div className="hidden lg:flex lg:w-[50%] xl:w-[55%] h-screen sticky top-0 bg-slate-900/40 border-r border-slate-800/60 p-8 flex-col justify-center items-center overflow-hidden">
         <div className="relative w-full h-full flex items-center justify-center select-none p-4">
           <img 
@@ -104,7 +119,6 @@ export default function CustomSignIn() {
 
       <div className="flex-1 flex flex-col justify-center items-center px-4 sm:px-8 py-8 relative bg-slate-950 min-h-screen">
         <div className="w-full max-w-[380px] space-y-6">
-          
           <div className="flex flex-col items-center lg:items-start text-center lg:text-left space-y-3">
             <div className="flex items-center gap-2.5">
               <img 
@@ -125,10 +139,7 @@ export default function CustomSignIn() {
             </div>
           </div>
 
-          {/* Form Card */}
           <div className="rounded-xl border border-slate-800/80 bg-slate-900/40 p-5 sm:p-6 shadow-xl backdrop-blur-sm">
-            
-            {/* SOCIAL MODE */}
             {mode === "social" && (
               <div className="space-y-4">
                 <button 
@@ -179,7 +190,6 @@ export default function CustomSignIn() {
               </div>
             )}
 
-            {/* EMAIL SIGN IN */}
             {mode === "signin" && (
               <form onSubmit={handleEmailSignIn} className="space-y-3.5">
                 <div className="space-y-1">
@@ -240,7 +250,6 @@ export default function CustomSignIn() {
               </form>
             )}
 
-            {/* EMAIL SIGN UP */}
             {mode === "signup" && (
               <form onSubmit={handleEmailSignUp} className="space-y-3.5">
                 <div className="space-y-1">
@@ -315,17 +324,98 @@ export default function CustomSignIn() {
                 </div>
               </form>
             )}
-
           </div>
 
-          {/* Footer */}
-          <div className="text-center text-xs text-slate-500">
-            Made by Yohan Chang • Marina High School • 2026
+          <div className="space-y-2 text-center text-xs text-slate-500">
+            <div>Made by Yohan Chang • Marina High School • 2026</div>
+            <div className="flex items-center justify-center gap-3 text-[11px] text-slate-400">
+              <button 
+                onClick={() => setActiveModal("privacy")} 
+                className="hover:text-slate-200 transition-colors underline underline-offset-2"
+              >
+                Privacy Policy
+              </button>
+              <span>•</span>
+              <button 
+                onClick={() => setActiveModal("terms")} 
+                className="hover:text-slate-200 transition-colors underline underline-offset-2"
+              >
+                Terms & Conditions
+              </button>
+              <span>•</span>
+              <a 
+                href="mailto:yohanychang@gmail.com" 
+                className="hover:text-slate-200 transition-colors underline underline-offset-2"
+              >
+                Contact Support
+              </a>
+            </div>
           </div>
-
         </div>
       </div>
 
+      {activeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 max-w-lg w-full max-h-[80vh] overflow-y-auto space-y-4 text-xs text-slate-300 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-sm font-bold text-white">
+                {activeModal === "privacy" ? "Privacy Policy" : "Terms & Conditions"}
+              </h3>
+              <button 
+                onClick={() => setActiveModal(null)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {activeModal === "privacy" && (
+              <div className="space-y-3 leading-relaxed">
+                <p><strong>Effective Date:</strong> August 20, 2026</p>
+                <p>
+                  Cognita Study ("we", "our", or "us") respects your privacy. This Privacy Policy details our data collection and processing practices strictly limited to core service functionality.
+                </p>
+                <p><strong>1. Data Collection & Usage Purpose</strong><br />
+                  We only collect essential user authentication information (email addresses, credential tokens) and user-generated study content (flashcards, notes, study progress). This data is processed strictly for core user functionality, account identification, and service delivery.
+                </p>
+                <p><strong>2. Third-Party Sharing & Commercial Use</strong><br />
+                  We do not sell, rent, monetize, or trade your personal information or user data with third-party advertisers, data brokers, or marketing entities. Data is only transferred to secure authentication and cloud providers (e.g., Firebase) to facilitate platform access.
+                </p>
+                <p><strong>3. Data Security & Retention</strong><br />
+                  We utilize standard, secure web encryption techniques to safeguard your content. Your stored information is retained solely while your account remains active or as needed to maintain application services.
+                </p>
+              </div>
+            )}
+
+            {activeModal === "terms" && (
+              <div className="space-y-3 leading-relaxed">
+                <p><strong>Effective Date:</strong> August 20, 2026</p>
+                <p>
+                  By logging into or accessing Cognita Study, you agree to comply with these terms.
+                </p>
+                <p><strong>1. Service Overview & Usage</strong><br />
+                  Cognita Study provides free web-based study tools. Users agree to utilize the application solely for educational and non-commercial purposes.
+                </p>
+                <p><strong>2. User Accounts & Data Ownership</strong><br />
+                  You retain ownership of study material you create. You are responsible for protecting your account credentials. We reserve the right to suspend or remove accounts violating security standards or creating unauthorized platform load.
+                </p>
+                <p><strong>3. Limitation of Liability</strong><br />
+                  The service is provided "as is" without warranty. We hold no liability for service interruptions, data loss, or reliance on study materials generated within the app.
+                </p>
+              </div>
+            )}
+
+            <div className="pt-3 border-t border-slate-800 flex justify-end">
+              <button
+                onClick={() => setActiveModal(null)}
+                className="px-4 py-1.5 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
