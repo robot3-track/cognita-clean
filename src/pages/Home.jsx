@@ -23,12 +23,60 @@ import { addSurveyBonusServer } from "@/components/userCredits";
 const TOP_STUDIER_KEY = "cognita_top_studier_rewarded";
 
 const MAIN_FEATURES = [
-  { label: "Flashcards", desc: "Study decks with active recall and SRS mode", icon: Layers, page: "Decks", iconColor: "text-amber-500", borderHover: "hover:border-amber-500/50", bgGlow: "from-amber-500/15 via-amber-500/5 to-transparent" },
-  { label: "Media Lab", desc: "Create narrated videos, audio recaps, and study guides", icon: FlaskRound, page: "Media", iconColor: "text-violet-500", borderHover: "hover:border-violet-500/50", bgGlow: "from-violet-500/15 via-violet-500/5 to-transparent" },
-  { label: "Study Chat", desc: "Ask questions, talk via voice, or upload course files", icon: Brain, page: "Chat", iconColor: "text-blue-500", borderHover: "hover:border-blue-500/50", bgGlow: "from-blue-500/15 via-blue-500/5 to-transparent" },
-  { label: "Scan & Import", desc: "Turn photo notes or pasted text into cards", icon: Camera, page: "Scan", iconColor: "text-rose-500", borderHover: "hover:border-rose-500/50", bgGlow: "from-rose-500/15 via-rose-500/5 to-transparent" },
-  { label: "Test Prep", desc: "Practice sets for AP, SAT, state tests, and exams", icon: BookOpen, page: "ExamPrep", iconColor: "text-purple-500", borderHover: "hover:border-purple-500/50", bgGlow: "from-purple-500/15 via-purple-500/5 to-transparent" },
-  { label: "Study Games", desc: "Play tower defense and term matching with classmates", icon: Gamepad2, page: "TowerDefense", iconColor: "text-emerald-500", borderHover: "hover:border-emerald-500/50", bgGlow: "from-emerald-500/15 via-emerald-500/5 to-transparent" },
+  { 
+    label: "Flashcards", 
+    desc: "Study decks with active recall and SRS mode", 
+    icon: Layers, 
+    page: "Decks", 
+    image: "https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=600&q=80",
+    stamp: "STATIONERY",
+    rotate: "-rotate-1"
+  },
+  { 
+    label: "Media Lab", 
+    desc: "Create narrated videos, audio recaps, and study guides", 
+    icon: FlaskRound, 
+    page: "Media", 
+    image: "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=600&q=80",
+    stamp: "LAB NOTES",
+    rotate: "rotate-1"
+  },
+  { 
+    label: "Study Chat", 
+    desc: "Ask questions, talk via voice, or upload course files", 
+    icon: Brain, 
+    page: "Chat", 
+    image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=600&q=80",
+    stamp: "DISCUSS",
+    rotate: "-rotate-2"
+  },
+  { 
+    label: "Scan & Import", 
+    desc: "Turn photo notes or pasted text into cards", 
+    icon: Camera, 
+    page: "Scan", 
+    image: "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=600&q=80",
+    stamp: "SNAPSHOT",
+    rotate: "rotate-2"
+  },
+  { 
+    label: "Test Prep", 
+    desc: "Practice sets for AP, SAT, state tests, and exams", 
+    icon: BookOpen, 
+    page: "ExamPrep", 
+    image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=600&q=80",
+    stamp: "EXAM HUB",
+    rotate: "-rotate-1"
+  },
+  { 
+    label: "Study Games", 
+    desc: "Play tower defense and term matching with classmates", 
+    icon: Gamepad2, 
+    page: "TowerDefense", 
+    image: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=600&q=80",
+    stamp: "ARCADE",
+    rotate: "rotate-1"
+  },
 ];
 
 const ROTATING_TIPS = [
@@ -84,7 +132,7 @@ function MoreTools({ cardStyle, mutedStyle }) {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mt-4">
           {tools.map(({ label, desc, icon: Icon, page }) => (
             <Link key={label} to={createPageUrl(page)}>
-              <div className="rounded-2xl p-3.5 cursor-pointer border transition-all duration-150 bg-[var(--app-surface)] hover:border-violet-500/40 shadow-xs" style={{ borderColor: "var(--app-border)" }}>
+              <div className="rounded-2xl p-3.5 cursor-pointer border transition-all duration-150 bg-[var(--app-surface)] hover:border-violet-500/40 shadow-xs hover:-translate-y-0.5" style={{ borderColor: "var(--app-border)" }}>
                 <div className="w-7 h-7 rounded-lg bg-[var(--app-bg)] border border-[var(--app-border)] flex items-center justify-center mb-2.5 text-violet-500 dark:text-violet-400">
                   <Icon className="w-3.5 h-3.5" />
                 </div>
@@ -335,10 +383,14 @@ export default function Home() {
       >
         <div className="w-full max-w-[360px] space-y-6 px-4 z-10">
           <div 
-            className="rounded-2xl border bg-[var(--app-surface)] p-6 shadow-xs flex flex-col items-center text-center space-y-5" 
+            className="rounded-3xl border bg-[var(--app-surface)] p-6 shadow-md flex flex-col items-center text-center space-y-5 -rotate-1 relative" 
             style={{ borderColor: "var(--app-border)" }}
           >
-            <div className="w-12 h-12 rounded-xl bg-[var(--app-bg)] border p-2 flex items-center justify-center shadow-xs" style={{ borderColor: "var(--app-border)" }}>
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-200/60 dark:bg-amber-800/40 text-amber-900 dark:text-amber-200 text-[9px] font-bold px-3 py-0.5 rounded-sm uppercase tracking-wider shadow-xs border border-amber-300/40">
+              STUDENT NOTEBOOK
+            </div>
+
+            <div className="w-12 h-12 rounded-xl bg-[var(--app-bg)] border p-2 flex items-center justify-center shadow-xs mt-2" style={{ borderColor: "var(--app-border)" }}>
               <img 
                 src="https://media.base44.com/images/public/69b097f35579053a78af47a3/43f8b728d_9e9c4097b_logo1.png" 
                 alt="Cognita" 
@@ -516,40 +568,51 @@ export default function Home() {
 
           <TutorialModal />
 
-          <div className="space-y-3">
-            <h2 className="font-semibold text-xs tracking-wider uppercase opacity-60 px-1" style={mutedStyle}>
-              Main Features
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {MAIN_FEATURES.map((feat, i) => {
-                const IconComponent = feat.icon;
-                return (
-                  <Link key={i} to={createPageUrl(feat.page)} className="block group">
-                    <div 
-                      className={`rounded-2xl p-5 border transition-all duration-200 relative overflow-hidden flex flex-col justify-between min-h-[140px] bg-[var(--app-surface)] hover:border-violet-500/30 hover:shadow-sm ${feat.borderHover}`} 
-                      style={{ borderColor: "var(--app-border)" }}
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <h3 className="font-bold text-base sm:text-lg tracking-tight text-[var(--app-text)] group-hover:text-violet-500 transition-colors">
-                          {feat.label}
-                        </h3>
-                        <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
-                          <IconComponent className={`w-4 h-4 ${feat.iconColor}`} />
-                        </div>
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 px-1">
+              <span className="w-2 h-2 rounded-full bg-violet-500"></span>
+              <h2 className="font-semibold text-xs tracking-wider uppercase opacity-60" style={mutedStyle}>
+                Main Features
+              </h2>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {MAIN_FEATURES.map((feat, i) => (
+                <Link key={i} to={createPageUrl(feat.page)} className="block group">
+                  <div 
+                    className={`rounded-3xl p-3 border transition-all duration-300 relative overflow-hidden bg-[var(--app-surface)] hover:border-violet-500/40 hover:-translate-y-1 hover:shadow-xl ${feat.rotate} ${feat.borderHover}`} 
+                    style={{ borderColor: "var(--app-border)" }}
+                  >
+                    <div className="relative h-32 w-full rounded-2xl overflow-hidden mb-3">
+                      <img 
+                        src={feat.image} 
+                        alt={feat.label} 
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+                      
+                      <div className="absolute top-2 left-2 bg-white/90 dark:bg-slate-900/90 border border-white/20 backdrop-blur-xs px-2 py-0.5 rounded-full text-[9px] font-extrabold tracking-wider uppercase text-slate-800 dark:text-slate-100 shadow-xs">
+                        {feat.stamp}
                       </div>
 
-                      <div className="mt-3 flex items-end justify-between gap-2">
-                        <p className="text-xs leading-relaxed opacity-70 line-clamp-2" style={mutedStyle}>
-                          {feat.desc}
-                        </p>
-                        <div className="w-6 h-6 rounded-full border border-slate-200 dark:border-slate-800 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all text-violet-500 shrink-0">
-                          <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                      <div className="absolute bottom-2.5 left-3 right-3 flex items-center justify-between text-white">
+                        <h3 className="font-bold text-base tracking-tight drop-shadow-sm">
+                          {feat.label}
+                        </h3>
+                        <div className="w-6 h-6 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0">
+                          <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform text-white" />
                         </div>
                       </div>
                     </div>
-                  </Link>
-                );
-              })}
+
+                    <div className="px-1 pb-1">
+                      <p className="text-xs leading-relaxed opacity-70 line-clamp-2" style={mutedStyle}>
+                        {feat.desc}
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
             </div>
           </div>
 
@@ -561,20 +624,26 @@ export default function Home() {
               {homeLayout.showRecentDecks && decks.length > 0 && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between px-1">
-                    <h2 className="font-semibold text-xs tracking-wider uppercase opacity-60" style={mutedStyle}>Recent Decks</h2>
+                    <h2 className="font-semibold text-xs tracking-wider uppercase opacity-60 flex items-center gap-1.5" style={mutedStyle}>
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                      Recent Decks
+                    </h2>
                     <Link to={createPageUrl("Decks")} className="text-violet-500 text-xs font-semibold hover:underline">
                       View all
                     </Link>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {decks.slice(0, 4).map(deck => (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {decks.slice(0, 4).map((deck, idx) => (
                       <Link key={deck.id} to={createPageUrl(`Study?deck_id=${deck.id}`)} className="block">
-                        <div className="rounded-2xl p-4 border transition-all duration-150 flex items-center justify-between group bg-[var(--app-surface)] hover:border-violet-500/30 shadow-xs" style={cardStyle}>
+                        <div 
+                          className={`rounded-2xl p-4 border transition-all duration-200 flex items-center justify-between group bg-[var(--app-surface)] hover:border-violet-500/40 hover:-translate-y-0.5 hover:shadow-md ${idx % 2 === 0 ? '-rotate-1' : 'rotate-1'}`} 
+                          style={cardStyle}
+                        >
                           <div className="flex items-center gap-3.5 min-w-0 pr-2">
                             {deck.cover_image_url ? (
-                              <img src={deck.cover_image_url} alt="" className="w-10 h-10 rounded-xl object-cover bg-[var(--app-bg)] border shrink-0" style={{ borderColor: "var(--app-border)" }} />
+                              <img src={deck.cover_image_url} alt="" className="w-12 h-12 rounded-xl object-cover bg-[var(--app-bg)] border shrink-0 shadow-xs" style={{ borderColor: "var(--app-border)" }} />
                             ) : (
-                              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${getFallbackStyle(deck.id)} shrink-0 flex items-center justify-center text-white/70 font-semibold text-xs`}>
+                              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${getFallbackStyle(deck.id)} shrink-0 flex items-center justify-center text-white/90 font-bold text-xs shadow-xs`}>
                                 SET
                               </div>
                             )}
@@ -597,20 +666,26 @@ export default function Home() {
               {homeLayout.showCommunityDecks && trendingDecks.length > 0 && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between px-1">
-                    <h2 className="font-semibold text-xs tracking-wider uppercase opacity-60" style={mutedStyle}>Popular Study Sets</h2>
+                    <h2 className="font-semibold text-xs tracking-wider uppercase opacity-60 flex items-center gap-1.5" style={mutedStyle}>
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                      Popular Study Sets
+                    </h2>
                     <Link to={createPageUrl("PublicDecks")} className="text-violet-500 text-xs font-semibold hover:underline">
                       Browse all
                     </Link>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {trendingDecks.map(deck => (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {trendingDecks.map((deck, idx) => (
                       <Link key={deck.id} to={createPageUrl(`Study?deck_id=${deck.id}`)}>
-                        <div className="rounded-2xl p-4 border transition-all h-full flex flex-col justify-between bg-[var(--app-surface)] hover:border-violet-500/30 shadow-xs" style={cardStyle}>
+                        <div 
+                          className={`rounded-2xl p-4 border transition-all h-full flex flex-col justify-between bg-[var(--app-surface)] hover:border-violet-500/40 hover:-translate-y-0.5 hover:shadow-md ${idx % 2 === 0 ? 'rotate-1' : '-rotate-1'}`} 
+                          style={cardStyle}
+                        >
                           <div className="flex items-start gap-3">
                             {deck.cover_image_url ? (
-                              <img src={deck.cover_image_url} alt="" className="w-10 h-10 rounded-xl object-cover bg-[var(--app-bg)] border shrink-0" style={{ borderColor: "var(--app-border)" }} />
+                              <img src={deck.cover_image_url} alt="" className="w-12 h-12 rounded-xl object-cover bg-[var(--app-bg)] border shrink-0 shadow-xs" style={{ borderColor: "var(--app-border)" }} />
                             ) : (
-                              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${getFallbackStyle(deck.id)} shrink-0 flex items-center justify-center text-white/70 font-semibold text-xs`}>
+                              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${getFallbackStyle(deck.id)} shrink-0 flex items-center justify-center text-white/90 font-bold text-xs shadow-xs`}>
                                 TRND
                               </div>
                             )}
@@ -634,22 +709,25 @@ export default function Home() {
             <div className="space-y-6">
               
               {user && (
-                <div className="border rounded-2xl p-4 bg-[var(--app-surface)] shadow-xs" style={cardStyle}>
-                  <div className="mb-2 px-1">
+                <div className="border rounded-3xl p-4 bg-[var(--app-surface)] shadow-sm -rotate-1 relative" style={cardStyle}>
+                  <div className="absolute -top-3 left-4 bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 text-[9px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider border border-violet-200/50">
+                    MY PROGRESS
+                  </div>
+                  <div className="mb-2 px-1 pt-2">
                   </div>
                   <StreakBadges sessions={allSessions} userEmail={user.email} />
                 </div>
               )}
 
               {homeLayout.showLiveCounters && (
-                <div className="border rounded-2xl p-5 space-y-4 bg-[var(--app-surface)] shadow-xs" style={cardStyle}>
+                <div className="border rounded-3xl p-5 space-y-4 bg-[var(--app-surface)] shadow-sm rotate-1 relative" style={cardStyle}>
                   <h4 className="text-[10px] font-semibold tracking-wider uppercase opacity-60" style={mutedStyle}>Overall Activity</h4>
                   <div className="grid grid-cols-2 gap-4">
-                    <div>
+                    <div className="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-2xl border border-slate-100 dark:border-slate-800">
                       <p className="text-xl font-bold text-[var(--app-text)]">{totalMinutes.toLocaleString()}</p>
                       <p className="text-[9px] font-semibold opacity-60 tracking-tight mt-0.5 uppercase" style={mutedStyle}>Minutes studied</p>
                     </div>
-                    <div>
+                    <div className="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-2xl border border-slate-100 dark:border-slate-800">
                       <p className="text-xl font-bold text-[var(--app-text)]">{totalCardsReviewed.toLocaleString()}</p>
                       <p className="text-[9px] font-semibold opacity-60 tracking-tight mt-0.5 uppercase" style={mutedStyle}>Cards reviewed</p>
                     </div>
@@ -660,7 +738,7 @@ export default function Home() {
               <LiveActivityBar />
 
               {homeLayout.showMyClasses && myClasses.length > 0 && (
-                <div className="border rounded-2xl p-4 space-y-3 bg-[var(--app-surface)] shadow-xs" style={cardStyle}>
+                <div className="border rounded-3xl p-4 space-y-3 bg-[var(--app-surface)] shadow-sm -rotate-1" style={cardStyle}>
                   <h4 className="text-[10px] font-semibold tracking-wider uppercase opacity-60" style={mutedStyle}>Your Classes</h4>
                   <div className="space-y-1.5">
                     {myClasses.slice(0, 3).map(cls => (
@@ -684,9 +762,9 @@ export default function Home() {
                 </div>
               )}
 
-              <div className="rounded-2xl p-5 border relative overflow-hidden bg-[var(--app-surface)] border-violet-500/20 shadow-xs">
+              <div className="rounded-3xl p-5 border relative overflow-hidden bg-[var(--app-surface)] border-violet-500/20 shadow-sm rotate-1">
                 <div className="flex items-center gap-2 mb-2 text-violet-600 dark:text-violet-400">
-                  <Heart className="w-4 h-4" />
+                  <Heart className="w-4 h-4 fill-violet-500/20" />
                   <h4 className="font-semibold text-xs">Support Cognita</h4>
                 </div>
                 <p className="text-[11px] leading-relaxed opacity-70 mb-4" style={mutedStyle}>
