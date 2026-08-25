@@ -20,6 +20,13 @@ import TutorialModal from "@/components/TutorialModal";
 import LiveActivityBar from "@/components/LiveActivityBar";
 import { addSurveyBonusServer } from "@/components/userCredits";
 
+import flashcardsImg from "../../flashcards.png";
+import medialabImg from "../../medialab.png";
+import studychatImg from "../../studychat.png";
+import scanandimportImg from "../../scanandimport.png";
+import examprepImg from "../../examprep.png";
+import studygamesImg from "../../studygames.png";
+
 const TOP_STUDIER_KEY = "cognita_top_studier_rewarded";
 
 const MAIN_FEATURES = [
@@ -28,7 +35,7 @@ const MAIN_FEATURES = [
     desc: "Study decks with active recall and SRS mode", 
     icon: Layers, 
     page: "Decks", 
-    image: "/flashcards.png",
+    image: flashcardsImg,
     stamp: "STATIONERY",
     rotate: "-rotate-1"
   },
@@ -37,7 +44,7 @@ const MAIN_FEATURES = [
     desc: "Create narrated videos, audio recaps, and study guides", 
     icon: FlaskRound, 
     page: "Media", 
-    image: "/medialab.png",
+    image: medialabImg,
     stamp: "LAB NOTES",
     rotate: "rotate-1"
   },
@@ -46,7 +53,7 @@ const MAIN_FEATURES = [
     desc: "Ask questions, talk via voice, or upload course files", 
     icon: Brain, 
     page: "Chat", 
-    image: "/studychat.png",
+    image: studychatImg,
     stamp: "DISCUSS",
     rotate: "-rotate-2"
   },
@@ -55,7 +62,7 @@ const MAIN_FEATURES = [
     desc: "Turn photo notes or pasted text into cards", 
     icon: Camera, 
     page: "Scan", 
-    image: "/scanandimport.png",
+    image: scanandimportImg,
     stamp: "SNAPSHOT",
     rotate: "rotate-2"
   },
@@ -64,7 +71,7 @@ const MAIN_FEATURES = [
     desc: "Practice sets for AP, SAT, state tests, and exams", 
     icon: BookOpen, 
     page: "ExamPrep", 
-    image: "/examprep.png",
+    image: examprepImg,
     stamp: "EXAM HUB",
     rotate: "-rotate-1"
   },
@@ -73,7 +80,7 @@ const MAIN_FEATURES = [
     desc: "Play tower defense and term matching with classmates", 
     icon: Gamepad2, 
     page: "TowerDefense", 
-    image: "/studygames.png",
+    image: studygamesImg,
     stamp: "ARCADE",
     rotate: "rotate-1"
   },
@@ -381,50 +388,45 @@ export default function Home() {
         className="min-h-screen w-full flex flex-col items-center justify-center relative overflow-hidden font-sans antialiased transition-colors duration-200" 
         style={bgStyle}
       >
-        <div className="w-full max-w-[360px] space-y-6 px-4 z-10">
+        <div className="w-full max-w-[380px] space-y-6 px-4 z-10">
           <div 
-            className="rounded-3xl border bg-[var(--app-surface)] p-6 shadow-md flex flex-col items-center text-center space-y-5 -rotate-1 relative" 
+            className="rounded-3xl border bg-[var(--app-surface)] p-6 shadow-xl flex flex-col items-center text-center space-y-5 relative -rotate-1" 
             style={{ borderColor: "var(--app-border)" }}
           >
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-200/60 dark:bg-amber-800/40 text-amber-900 dark:text-amber-200 text-[9px] font-bold px-3 py-0.5 rounded-sm uppercase tracking-wider shadow-xs border border-amber-300/40">
-              STUDENT NOTEBOOK
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-200/80 dark:bg-amber-800/60 text-amber-900 dark:text-amber-100 text-[9px] font-extrabold px-3 py-0.5 rounded-full uppercase tracking-widest shadow-xs border border-amber-300/40">
+              STUDY DECK STATION
             </div>
 
-            <div className="w-12 h-12 rounded-xl bg-[var(--app-bg)] border p-2 flex items-center justify-center shadow-xs mt-2" style={{ borderColor: "var(--app-border)" }}>
-              <img 
-                src="https://media.base44.com/images/public/69b097f35579053a78af47a3/43f8b728d_9e9c4097b_logo1.png" 
-                alt="Cognita" 
-                className="w-full h-full object-contain" 
-              />
+            <div className="w-14 h-14 rounded-2xl bg-[var(--app-bg)] border p-2.5 flex items-center justify-center shadow-inner mt-2 text-violet-500" style={{ borderColor: "var(--app-border)" }}>
+              <Layers className="w-8 h-8 animate-bounce" />
             </div>
 
             <div className="space-y-1">
               <h2 className="text-xl font-bold tracking-tight text-[var(--app-text)]">
-                Loading Cognita
+                Preparing Flashcards
               </h2>
-              <p className="text-xs" style={mutedStyle}>
-                Getting your sets ready...
+              <p className="text-xs font-medium" style={mutedStyle}>
+                Syncing study notes & lab assets...
               </p>
             </div>
 
-            <div className="w-full space-y-1.5">
-              <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden relative">
-                <div className="absolute inset-y-0 bg-violet-500 rounded-full w-1/3 animate-[shimmer_1.5s_infinite_linear] [animation:progress_1.8s_ease-in-out_infinite]" 
-                  style={{
-                    animation: "loading-bar 1.6s ease-in-out infinite"
-                  }}
+            <div className="w-full space-y-2">
+              <div className="w-full h-2 bg-slate-100 dark:bg-slate-800/80 rounded-full overflow-hidden relative border border-slate-200/50 dark:border-slate-700/50">
+                <div 
+                  className="absolute inset-y-0 bg-gradient-to-r from-violet-600 to-indigo-500 rounded-full" 
+                  style={{ animation: "stomp-loader 1.5s ease-in-out infinite" }}
                 />
                 <style>{`
-                  @keyframes loading-bar {
-                    0% { left: -35%; width: 30%; }
-                    50% { left: 35%; width: 40%; }
-                    100% { left: 100%; width: 30%; }
+                  @keyframes stomp-loader {
+                    0% { left: -30%; width: 25%; }
+                    50% { left: 40%; width: 45%; }
+                    100% { left: 100%; width: 25%; }
                   }
                 `}</style>
               </div>
-              <div className="flex justify-between items-center text-[10px] font-medium" style={mutedStyle}>
-                <span>Syncing workspace</span>
-                <span className="animate-pulse">Loading...</span>
+              <div className="flex justify-between items-center text-[10px] font-semibold" style={mutedStyle}>
+                <span>Loading components</span>
+                <span className="animate-pulse text-violet-500">Active Recall</span>
               </div>
             </div>
 
@@ -432,17 +434,13 @@ export default function Home() {
               className="w-full pt-4 border-t text-left space-y-1" 
               style={{ borderColor: "var(--app-border)" }}
             >
-              <span className="text-[10px] font-semibold text-violet-500 uppercase tracking-wider block">
-                Study Tip
+              <span className="text-[10px] font-bold text-violet-500 uppercase tracking-wider block">
+                Notebook Tip
               </span>
               <p className="text-xs leading-relaxed transition-opacity duration-300 text-[var(--app-text)] min-h-[36px]">
                 {ROTATING_TIPS[tipIndex]}
               </p>
             </div>
-          </div>
-
-          <div className="text-center text-[11px] opacity-60 font-medium" style={mutedStyle}>
-            Cognita Platform • Marina High School
           </div>
         </div>
       </div>
@@ -455,7 +453,7 @@ export default function Home() {
         @keyframes stompDown {
           0% {
             opacity: 0;
-            transform: translateY(-40px) scale(1.08);
+            transform: translateY(-40px) scale(1.06);
           }
           70% {
             transform: translateY(4px) scale(0.98);
@@ -600,7 +598,7 @@ export default function Home() {
               {MAIN_FEATURES.map((feat, i) => (
                 <Link key={i} to={createPageUrl(feat.page)} className="block group animate-stomp">
                   <div 
-                    className={`rounded-3xl p-3 border transition-all duration-300 relative overflow-hidden bg-[var(--app-surface)] hover:border-violet-500/40 hover:-translate-y-1 hover:shadow-xl ${feat.rotate} ${feat.borderHover}`} 
+                    className={`rounded-3xl p-3 border transition-all duration-300 relative overflow-hidden bg-[var(--app-surface)] hover:border-violet-500/40 hover:-translate-y-1 hover:shadow-xl ${feat.rotate}`} 
                     style={{ borderColor: "var(--app-border)" }}
                   >
                     <div className="relative h-32 w-full rounded-2xl overflow-hidden mb-3">
