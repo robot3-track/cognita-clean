@@ -123,7 +123,7 @@ function MoreTools({ cardStyle, mutedStyle }) {
   ];
 
   return (
-    <div className="pt-2">
+    <div className="pt-2 animate-stomp">
       <button
         onClick={() => setOpen(o => !o)}
         className="w-full flex items-center justify-between px-5 rounded-2xl text-xs font-semibold transition-all duration-200 hover:opacity-90 bg-slate-100/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 text-[var(--app-text)] shadow-xs"
@@ -382,14 +382,32 @@ export default function Home() {
     return colors[index];
   };
 
-  // Loader from file Home (16)
+  // Loader view
   if (loading) {
     return (
       <div 
         className="min-h-screen w-full flex flex-col items-center justify-center relative overflow-hidden font-sans antialiased transition-colors duration-200" 
         style={bgStyle}
       >
-        <div className="w-full max-w-[360px] space-y-6 px-4 z-10">
+        <style>{`
+          @keyframes stompDown {
+            0% {
+              opacity: 0;
+              transform: translateY(-40px) scale(1.06);
+            }
+            70% {
+              transform: translateY(4px) scale(0.98);
+            }
+            100% {
+              opacity: 1;
+              transform: translateY(0) scale(1);
+            }
+          }
+          .animate-stomp {
+            animation: stompDown 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+          }
+        `}</style>
+        <div className="w-full max-w-[360px] space-y-6 px-4 z-10 animate-stomp">
           <div 
             className="rounded-2xl border bg-[var(--app-surface)] p-6 shadow-xs flex flex-col items-center text-center space-y-5" 
             style={{ borderColor: "var(--app-border)" }}
@@ -471,14 +489,12 @@ export default function Home() {
         }
         .animate-stomp {
           animation: stompDown 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
-          animation-timeline: view();
-          animation-range: entry 10% cover 30%;
         }
       `}</style>
       <div className="min-h-screen pb-16 px-4 pt-6 sm:px-8 sm:pt-8 transition-colors duration-200 flex flex-col justify-between" style={bgStyle}>
         <div className="max-w-6xl w-full mx-auto flex-1 space-y-8">
           
-          <div className="space-y-5">
+          <div className="space-y-5 animate-stomp">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2">
@@ -512,7 +528,7 @@ export default function Home() {
               </div>
               
               {showDropdown && (
-                <div className="absolute top-full left-0 right-0 mt-2 rounded-2xl shadow-lg z-50 overflow-y-auto max-h-[420px] backdrop-blur-md border"
+                <div className="absolute top-full left-0 right-0 mt-2 rounded-2xl shadow-lg z-50 overflow-y-auto max-h-[420px] backdrop-blur-md border animate-stomp"
                   style={{ background: "var(--app-surface-solid, var(--app-surface))", borderColor: "var(--app-border)" }}>
                   
                   {matchedFeatures.length > 0 && (
@@ -607,20 +623,20 @@ export default function Home() {
                     className={`rounded-3xl p-3 border transition-all duration-300 relative overflow-hidden bg-[var(--app-surface)] hover:border-violet-500/40 hover:-translate-y-1 hover:shadow-xl ${feat.rotate}`} 
                     style={{ borderColor: "var(--app-border)" }}
                   >
-                    <div className="relative h-32 w-full rounded-2xl overflow-hidden mb-3">
+                    <div className="relative h-32 w-full rounded-2xl overflow-hidden mb-3 bg-slate-900">
                       <img 
                         src={feat.image} 
                         alt={feat.label} 
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                        className="w-full h-full object-cover transition-all duration-500 opacity-65 group-hover:opacity-80 group-hover:scale-105" 
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
                       
-                      <div className="absolute top-2 left-2 bg-white/90 dark:bg-slate-900/90 border border-white/20 backdrop-blur-xs px-2 py-0.5 rounded-full text-[9px] font-extrabold tracking-wider uppercase text-slate-800 dark:text-slate-100 shadow-xs">
+                      <div className="absolute top-2 left-2 bg-white/90 dark:bg-slate-900/90 border border-white/20 backdrop-blur-xs px-2 py-0.5 rounded-full text-[9px] font-extrabold tracking-wider uppercase text-slate-800 dark:text-slate-100 shadow-xs z-10">
                         {feat.stamp}
                       </div>
 
-                      <div className="absolute bottom-2.5 left-3 right-3 flex items-center justify-between text-white">
-                        <h3 className="font-bold text-base tracking-tight drop-shadow-sm">
+                      <div className="absolute bottom-2.5 left-3 right-3 flex items-center justify-between text-white z-10">
+                        <h3 className="font-bold text-base tracking-tight drop-shadow-md">
                           {feat.label}
                         </h3>
                         <div className="w-6 h-6 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0">
@@ -759,7 +775,9 @@ export default function Home() {
                 </div>
               )}
 
-              <LiveActivityBar />
+              <div className="animate-stomp">
+                <LiveActivityBar />
+              </div>
 
               {homeLayout.showMyClasses && myClasses.length > 0 && (
                 <div className="border rounded-3xl p-4 space-y-3 bg-[var(--app-surface)] shadow-sm -rotate-1 animate-stomp" style={cardStyle}>
