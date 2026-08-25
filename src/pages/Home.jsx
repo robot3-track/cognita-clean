@@ -28,7 +28,7 @@ const MAIN_FEATURES = [
     desc: "Study decks with active recall and SRS mode", 
     icon: Layers, 
     page: "Decks", 
-    image: "https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=600&q=80",
+    image: "/flashcards.png",
     stamp: "STATIONERY",
     rotate: "-rotate-1"
   },
@@ -37,7 +37,7 @@ const MAIN_FEATURES = [
     desc: "Create narrated videos, audio recaps, and study guides", 
     icon: FlaskRound, 
     page: "Media", 
-    image: "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=600&q=80",
+    image: "/medialab.png",
     stamp: "LAB NOTES",
     rotate: "rotate-1"
   },
@@ -46,7 +46,7 @@ const MAIN_FEATURES = [
     desc: "Ask questions, talk via voice, or upload course files", 
     icon: Brain, 
     page: "Chat", 
-    image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=600&q=80",
+    image: "/studychat.png",
     stamp: "DISCUSS",
     rotate: "-rotate-2"
   },
@@ -55,7 +55,7 @@ const MAIN_FEATURES = [
     desc: "Turn photo notes or pasted text into cards", 
     icon: Camera, 
     page: "Scan", 
-    image: "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=600&q=80",
+    image: "/scanandimport.png",
     stamp: "SNAPSHOT",
     rotate: "rotate-2"
   },
@@ -64,7 +64,7 @@ const MAIN_FEATURES = [
     desc: "Practice sets for AP, SAT, state tests, and exams", 
     icon: BookOpen, 
     page: "ExamPrep", 
-    image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=600&q=80",
+    image: "/examprep.png",
     stamp: "EXAM HUB",
     rotate: "-rotate-1"
   },
@@ -73,7 +73,7 @@ const MAIN_FEATURES = [
     desc: "Play tower defense and term matching with classmates", 
     icon: Gamepad2, 
     page: "TowerDefense", 
-    image: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=600&q=80",
+    image: "/studygames.png",
     stamp: "ARCADE",
     rotate: "rotate-1"
   },
@@ -451,6 +451,26 @@ export default function Home() {
 
   return (
     <PullToRefresh onRefresh={loadData}>
+      <style>{`
+        @keyframes stompDown {
+          0% {
+            opacity: 0;
+            transform: translateY(-40px) scale(1.08);
+          }
+          70% {
+            transform: translateY(4px) scale(0.98);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+        .animate-stomp {
+          animation: stompDown 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+          animation-timeline: view();
+          animation-range: entry 10% cover 30%;
+        }
+      `}</style>
       <div className="min-h-screen pb-16 px-4 pt-6 sm:px-8 sm:pt-8 transition-colors duration-200 flex flex-col justify-between" style={bgStyle}>
         <div className="max-w-6xl w-full mx-auto flex-1 space-y-8">
           
@@ -578,7 +598,7 @@ export default function Home() {
             
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {MAIN_FEATURES.map((feat, i) => (
-                <Link key={i} to={createPageUrl(feat.page)} className="block group">
+                <Link key={i} to={createPageUrl(feat.page)} className="block group animate-stomp">
                   <div 
                     className={`rounded-3xl p-3 border transition-all duration-300 relative overflow-hidden bg-[var(--app-surface)] hover:border-violet-500/40 hover:-translate-y-1 hover:shadow-xl ${feat.rotate} ${feat.borderHover}`} 
                     style={{ borderColor: "var(--app-border)" }}
@@ -634,7 +654,7 @@ export default function Home() {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {decks.slice(0, 4).map((deck, idx) => (
-                      <Link key={deck.id} to={createPageUrl(`Study?deck_id=${deck.id}`)} className="block">
+                      <Link key={deck.id} to={createPageUrl(`Study?deck_id=${deck.id}`)} className="block animate-stomp">
                         <div 
                           className={`rounded-2xl p-4 border transition-all duration-200 flex items-center justify-between group bg-[var(--app-surface)] hover:border-violet-500/40 hover:-translate-y-0.5 hover:shadow-md ${idx % 2 === 0 ? '-rotate-1' : 'rotate-1'}`} 
                           style={cardStyle}
@@ -676,7 +696,7 @@ export default function Home() {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {trendingDecks.map((deck, idx) => (
-                      <Link key={deck.id} to={createPageUrl(`Study?deck_id=${deck.id}`)}>
+                      <Link key={deck.id} to={createPageUrl(`Study?deck_id=${deck.id}`)} className="animate-stomp">
                         <div 
                           className={`rounded-2xl p-4 border transition-all h-full flex flex-col justify-between bg-[var(--app-surface)] hover:border-violet-500/40 hover:-translate-y-0.5 hover:shadow-md ${idx % 2 === 0 ? 'rotate-1' : '-rotate-1'}`} 
                           style={cardStyle}
@@ -709,7 +729,7 @@ export default function Home() {
             <div className="space-y-6">
               
               {user && (
-                <div className="border rounded-3xl p-4 bg-[var(--app-surface)] shadow-sm -rotate-1 relative" style={cardStyle}>
+                <div className="border rounded-3xl p-4 bg-[var(--app-surface)] shadow-sm -rotate-1 relative animate-stomp" style={cardStyle}>
                   <div className="absolute -top-3 left-4 bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 text-[9px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider border border-violet-200/50">
                     MY PROGRESS
                   </div>
@@ -720,7 +740,7 @@ export default function Home() {
               )}
 
               {homeLayout.showLiveCounters && (
-                <div className="border rounded-3xl p-5 space-y-4 bg-[var(--app-surface)] shadow-sm rotate-1 relative" style={cardStyle}>
+                <div className="border rounded-3xl p-5 space-y-4 bg-[var(--app-surface)] shadow-sm rotate-1 relative animate-stomp" style={cardStyle}>
                   <h4 className="text-[10px] font-semibold tracking-wider uppercase opacity-60" style={mutedStyle}>Overall Activity</h4>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-2xl border border-slate-100 dark:border-slate-800">
@@ -738,7 +758,7 @@ export default function Home() {
               <LiveActivityBar />
 
               {homeLayout.showMyClasses && myClasses.length > 0 && (
-                <div className="border rounded-3xl p-4 space-y-3 bg-[var(--app-surface)] shadow-sm -rotate-1" style={cardStyle}>
+                <div className="border rounded-3xl p-4 space-y-3 bg-[var(--app-surface)] shadow-sm -rotate-1 animate-stomp" style={cardStyle}>
                   <h4 className="text-[10px] font-semibold tracking-wider uppercase opacity-60" style={mutedStyle}>Your Classes</h4>
                   <div className="space-y-1.5">
                     {myClasses.slice(0, 3).map(cls => (
@@ -762,7 +782,7 @@ export default function Home() {
                 </div>
               )}
 
-              <div className="rounded-3xl p-5 border relative overflow-hidden bg-[var(--app-surface)] border-violet-500/20 shadow-sm rotate-1">
+              <div className="rounded-3xl p-5 border relative overflow-hidden bg-[var(--app-surface)] border-violet-500/20 shadow-sm rotate-1 animate-stomp">
                 <div className="flex items-center gap-2 mb-2 text-violet-600 dark:text-violet-400">
                   <Heart className="w-4 h-4 fill-violet-500/20" />
                   <h4 className="font-semibold text-xs">Support Cognita</h4>
