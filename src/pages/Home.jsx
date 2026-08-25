@@ -390,20 +390,16 @@ export default function Home() {
       >
         <div className="w-full max-w-[380px] space-y-6 px-4 z-10">
           <div 
-            className="rounded-3xl border bg-[var(--app-surface)] p-6 shadow-xl flex flex-col items-center text-center space-y-5 relative -rotate-1" 
+            className="rounded-3xl border bg-[var(--app-surface)] p-6 shadow-xl flex flex-col items-center text-center space-y-5 relative" 
             style={{ borderColor: "var(--app-border)" }}
           >
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-200/80 dark:bg-amber-800/60 text-amber-900 dark:text-amber-100 text-[9px] font-extrabold px-3 py-0.5 rounded-full uppercase tracking-widest shadow-xs border border-amber-300/40">
-              STUDY DECK STATION
-            </div>
-
-            <div className="w-14 h-14 rounded-2xl bg-[var(--app-bg)] border p-2.5 flex items-center justify-center shadow-inner mt-2 text-violet-500" style={{ borderColor: "var(--app-border)" }}>
-              <Layers className="w-8 h-8 animate-bounce" />
+            <div className="w-16 h-16 rounded-2xl bg-violet-600 text-white flex items-center justify-center font-extrabold text-2xl shadow-lg shadow-violet-500/30">
+              44
             </div>
 
             <div className="space-y-1">
               <h2 className="text-xl font-bold tracking-tight text-[var(--app-text)]">
-                Preparing Flashcards
+                Cognita 44
               </h2>
               <p className="text-xs font-medium" style={mutedStyle}>
                 Syncing study notes & lab assets...
@@ -453,10 +449,10 @@ export default function Home() {
         @keyframes stompDown {
           0% {
             opacity: 0;
-            transform: translateY(-40px) scale(1.06);
+            transform: translateY(-30px) scale(1.03);
           }
           70% {
-            transform: translateY(4px) scale(0.98);
+            transform: translateY(3px) scale(0.99);
           }
           100% {
             opacity: 1;
@@ -464,9 +460,9 @@ export default function Home() {
           }
         }
         .animate-stomp {
-          animation: stompDown 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+          animation: stompDown 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
           animation-timeline: view();
-          animation-range: entry 10% cover 30%;
+          animation-range: entry 5% cover 25%;
         }
       `}</style>
       <div className="min-h-screen pb-16 px-4 pt-6 sm:px-8 sm:pt-8 transition-colors duration-200 flex flex-col justify-between" style={bgStyle}>
@@ -533,7 +529,7 @@ export default function Home() {
                         <Link key={deck.id} to={createPageUrl(`Study?deck_id=${deck.id}`)} onClick={() => setSearch("")}>
                           <div className="px-4 py-2 hover:bg-black/5 dark:hover:bg-white/5 text-xs truncate font-medium flex items-center gap-2.5 text-[var(--app-text)]">
                             {deck.cover_image_url ? (
-                              <img src={deck.cover_image_url} alt="" className="w-5 h-5 rounded object-cover bg-[var(--app-bg)] border" style={{ borderColor: "var(--app-border)" }} />
+                              <img src={deck.cover_image_url} alt="" className="w-5 h-5 rounded object-cover bg-[var(--app-bg)] border opacity-50" style={{ borderColor: "var(--app-border)" }} />
                             ) : (
                               <div className={`w-5 h-5 rounded bg-gradient-to-br ${getFallbackStyle(deck.id)}`} />
                             )}
@@ -551,7 +547,7 @@ export default function Home() {
                         <Link key={deck.id} to={createPageUrl(`Study?deck_id=${deck.id}`)} onClick={() => setSearch("")}>
                           <div className="px-4 py-2 hover:bg-black/5 dark:hover:bg-white/5 text-xs truncate font-medium flex items-center gap-2.5 text-[var(--app-text)]">
                             {deck.cover_image_url ? (
-                              <img src={deck.cover_image_url} alt="" className="w-5 h-5 rounded object-cover bg-[var(--app-bg)] border" style={{ borderColor: "var(--app-border)" }} />
+                              <img src={deck.cover_image_url} alt="" className="w-5 h-5 rounded object-cover bg-[var(--app-bg)] border opacity-50" style={{ borderColor: "var(--app-border)" }} />
                             ) : (
                               <div className={`w-5 h-5 rounded bg-gradient-to-br ${getFallbackStyle(deck.id)}`} />
                             )}
@@ -598,23 +594,23 @@ export default function Home() {
               {MAIN_FEATURES.map((feat, i) => (
                 <Link key={i} to={createPageUrl(feat.page)} className="block group animate-stomp">
                   <div 
-                    className={`rounded-3xl p-3 border transition-all duration-300 relative overflow-hidden bg-[var(--app-surface)] hover:border-violet-500/40 hover:-translate-y-1 hover:shadow-xl ${feat.rotate}`} 
+                    className="rounded-3xl p-3 border transition-all duration-300 relative overflow-hidden bg-[var(--app-surface)] hover:border-violet-500/40 hover:-translate-y-1 hover:shadow-xl" 
                     style={{ borderColor: "var(--app-border)" }}
                   >
-                    <div className="relative h-32 w-full rounded-2xl overflow-hidden mb-3">
+                    <div className="relative h-32 w-full rounded-2xl overflow-hidden mb-3 bg-slate-900/10 dark:bg-black/20">
                       <img 
                         src={feat.image} 
                         alt={feat.label} 
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                        className="w-full h-full object-cover opacity-35 transition-opacity duration-300 group-hover:opacity-45" 
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />
                       
                       <div className="absolute top-2 left-2 bg-white/90 dark:bg-slate-900/90 border border-white/20 backdrop-blur-xs px-2 py-0.5 rounded-full text-[9px] font-extrabold tracking-wider uppercase text-slate-800 dark:text-slate-100 shadow-xs">
                         {feat.stamp}
                       </div>
 
                       <div className="absolute bottom-2.5 left-3 right-3 flex items-center justify-between text-white">
-                        <h3 className="font-bold text-base tracking-tight drop-shadow-sm">
+                        <h3 className="font-bold text-base tracking-tight drop-shadow-md">
                           {feat.label}
                         </h3>
                         <div className="w-6 h-6 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0">
@@ -624,7 +620,7 @@ export default function Home() {
                     </div>
 
                     <div className="px-1 pb-1">
-                      <p className="text-xs leading-relaxed opacity-70 line-clamp-2" style={mutedStyle}>
+                      <p className="text-xs leading-relaxed opacity-80 line-clamp-2 text-[var(--app-text)]">
                         {feat.desc}
                       </p>
                     </div>
@@ -651,15 +647,15 @@ export default function Home() {
                     </Link>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {decks.slice(0, 4).map((deck, idx) => (
+                    {decks.slice(0, 4).map((deck) => (
                       <Link key={deck.id} to={createPageUrl(`Study?deck_id=${deck.id}`)} className="block animate-stomp">
                         <div 
-                          className={`rounded-2xl p-4 border transition-all duration-200 flex items-center justify-between group bg-[var(--app-surface)] hover:border-violet-500/40 hover:-translate-y-0.5 hover:shadow-md ${idx % 2 === 0 ? '-rotate-1' : 'rotate-1'}`} 
+                          className="rounded-2xl p-4 border transition-all duration-200 flex items-center justify-between group bg-[var(--app-surface)] hover:border-violet-500/40 hover:-translate-y-0.5 hover:shadow-md" 
                           style={cardStyle}
                         >
                           <div className="flex items-center gap-3.5 min-w-0 pr-2">
                             {deck.cover_image_url ? (
-                              <img src={deck.cover_image_url} alt="" className="w-12 h-12 rounded-xl object-cover bg-[var(--app-bg)] border shrink-0 shadow-xs" style={{ borderColor: "var(--app-border)" }} />
+                              <img src={deck.cover_image_url} alt="" className="w-12 h-12 rounded-xl object-cover bg-[var(--app-bg)] border shrink-0 opacity-50 group-hover:opacity-75 transition-opacity" style={{ borderColor: "var(--app-border)" }} />
                             ) : (
                               <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${getFallbackStyle(deck.id)} shrink-0 flex items-center justify-center text-white/90 font-bold text-xs shadow-xs`}>
                                 SET
@@ -693,15 +689,15 @@ export default function Home() {
                     </Link>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {trendingDecks.map((deck, idx) => (
+                    {trendingDecks.map((deck) => (
                       <Link key={deck.id} to={createPageUrl(`Study?deck_id=${deck.id}`)} className="animate-stomp">
                         <div 
-                          className={`rounded-2xl p-4 border transition-all h-full flex flex-col justify-between bg-[var(--app-surface)] hover:border-violet-500/40 hover:-translate-y-0.5 hover:shadow-md ${idx % 2 === 0 ? 'rotate-1' : '-rotate-1'}`} 
+                          className="rounded-2xl p-4 border transition-all h-full flex flex-col justify-between bg-[var(--app-surface)] hover:border-violet-500/40 hover:-translate-y-0.5 hover:shadow-md" 
                           style={cardStyle}
                         >
                           <div className="flex items-start gap-3">
                             {deck.cover_image_url ? (
-                              <img src={deck.cover_image_url} alt="" className="w-12 h-12 rounded-xl object-cover bg-[var(--app-bg)] border shrink-0 shadow-xs" style={{ borderColor: "var(--app-border)" }} />
+                              <img src={deck.cover_image_url} alt="" className="w-12 h-12 rounded-xl object-cover bg-[var(--app-bg)] border shrink-0 opacity-50 group-hover:opacity-75 transition-opacity" style={{ borderColor: "var(--app-border)" }} />
                             ) : (
                               <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${getFallbackStyle(deck.id)} shrink-0 flex items-center justify-center text-white/90 font-bold text-xs shadow-xs`}>
                                 TRND
@@ -727,7 +723,7 @@ export default function Home() {
             <div className="space-y-6">
               
               {user && (
-                <div className="border rounded-3xl p-4 bg-[var(--app-surface)] shadow-sm -rotate-1 relative animate-stomp" style={cardStyle}>
+                <div className="border rounded-3xl p-4 bg-[var(--app-surface)] shadow-xs relative animate-stomp" style={cardStyle}>
                   <div className="absolute -top-3 left-4 bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 text-[9px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider border border-violet-200/50">
                     MY PROGRESS
                   </div>
@@ -738,7 +734,7 @@ export default function Home() {
               )}
 
               {homeLayout.showLiveCounters && (
-                <div className="border rounded-3xl p-5 space-y-4 bg-[var(--app-surface)] shadow-sm rotate-1 relative animate-stomp" style={cardStyle}>
+                <div className="border rounded-3xl p-5 space-y-4 bg-[var(--app-surface)] shadow-xs relative animate-stomp" style={cardStyle}>
                   <h4 className="text-[10px] font-semibold tracking-wider uppercase opacity-60" style={mutedStyle}>Overall Activity</h4>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-2xl border border-slate-100 dark:border-slate-800">
@@ -756,7 +752,7 @@ export default function Home() {
               <LiveActivityBar />
 
               {homeLayout.showMyClasses && myClasses.length > 0 && (
-                <div className="border rounded-3xl p-4 space-y-3 bg-[var(--app-surface)] shadow-sm -rotate-1 animate-stomp" style={cardStyle}>
+                <div className="border rounded-3xl p-4 space-y-3 bg-[var(--app-surface)] shadow-xs animate-stomp" style={cardStyle}>
                   <h4 className="text-[10px] font-semibold tracking-wider uppercase opacity-60" style={mutedStyle}>Your Classes</h4>
                   <div className="space-y-1.5">
                     {myClasses.slice(0, 3).map(cls => (
@@ -780,7 +776,7 @@ export default function Home() {
                 </div>
               )}
 
-              <div className="rounded-3xl p-5 border relative overflow-hidden bg-[var(--app-surface)] border-violet-500/20 shadow-sm rotate-1 animate-stomp">
+              <div className="rounded-3xl p-5 border relative overflow-hidden bg-[var(--app-surface)] border-violet-500/20 shadow-xs animate-stomp">
                 <div className="flex items-center gap-2 mb-2 text-violet-600 dark:text-violet-400">
                   <Heart className="w-4 h-4 fill-violet-500/20" />
                   <h4 className="font-semibold text-xs">Support Cognita</h4>
