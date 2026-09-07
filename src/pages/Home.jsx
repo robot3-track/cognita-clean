@@ -36,7 +36,6 @@ const MAIN_FEATURES = [
     icon: Layers, 
     page: "Decks", 
     image: flashcardsImg,
-    stamp: "STATIONERY",
     rotate: "-rotate-1"
   },
   { 
@@ -45,7 +44,6 @@ const MAIN_FEATURES = [
     icon: FlaskRound, 
     page: "Media", 
     image: medialabImg,
-    stamp: "LAB NOTES",
     rotate: "rotate-1"
   },
   { 
@@ -54,7 +52,6 @@ const MAIN_FEATURES = [
     icon: Brain, 
     page: "Chat", 
     image: studychatImg,
-    stamp: "DISCUSS",
     rotate: "-rotate-2"
   },
   { 
@@ -63,7 +60,6 @@ const MAIN_FEATURES = [
     icon: Camera, 
     page: "Scan", 
     image: scanandimportImg,
-    stamp: "SNAPSHOT",
     rotate: "rotate-2"
   },
   { 
@@ -72,7 +68,6 @@ const MAIN_FEATURES = [
     icon: BookOpen, 
     page: "ExamPrep", 
     image: examprepImg,
-    stamp: "EXAM HUB",
     rotate: "-rotate-1"
   },
   { 
@@ -81,7 +76,6 @@ const MAIN_FEATURES = [
     icon: Gamepad2, 
     page: "TowerDefense", 
     image: studygamesImg,
-    stamp: "ARCADE",
     rotate: "rotate-1"
   },
 ];
@@ -630,10 +624,6 @@ export default function Home() {
                         className="w-full h-full object-cover transition-all duration-500 opacity-65 group-hover:opacity-80 group-hover:scale-105" 
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
-                      
-                      <div className="absolute top-2 left-2 bg-white/90 dark:bg-slate-900/90 border border-white/20 backdrop-blur-xs px-2 py-0.5 rounded-full text-[9px] font-extrabold tracking-wider uppercase text-slate-800 dark:text-slate-100 shadow-xs z-10">
-                        {feat.stamp}
-                      </div>
 
                       <div className="absolute bottom-2.5 left-3 right-3 flex items-center justify-between text-white z-10">
                         <h3 className="font-bold text-base tracking-tight drop-shadow-md">
