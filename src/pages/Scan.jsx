@@ -46,19 +46,6 @@ export default function Scan() {
     db.auth.me().then(u => setUserEmail(u?.email)).catch(() => {});
   }, []);
 
-  // Helper utility executing file upload over local proxy route
-  const executeLocalUpload = async (file) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    const response = await fetch('/api/upload', {
-      method: 'POST',
-      body: formData,
-    });
-    if (!response.ok) throw new Error('Upload request failed');
-    return await response.json();
-  };
-
-  // ─── COVER IMAGE UPLOADER ──────────────────────────────────────────────────
   const handleCoverUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -66,30 +53,14 @@ export default function Scan() {
     
     try {
       const reader = new FileReader();
-      
       const localBase64Url = await new Promise((resolve, reject) => {
         reader.onload = () => resolve(reader.result);
         reader.onerror = () => reject(new Error('Failed to read local file asset'));
         reader.readAsDataURL(file);
       });
-
-      // Assign the verified base64 string state matching your scan component code configuration
       setDeckCoverUrl(localBase64Url);
     } catch (err) {
       console.error("Image loading execution failed:", err);
-      
-      // Resilient inline fallback implementation
-      try {
-        const fallbackReader = new FileReader();
-        fallbackReader.onloadend = () => {
-          if (typeof fallbackReader.result === 'string') {
-            setDeckCoverUrl(fallbackReader.result);
-          }
-        };
-        fallbackReader.readAsDataURL(file);
-      } catch (nestedErr) {
-        console.error("Ultimate fallback state layer broken:", nestedErr);
-      }
     } finally {
       setUploadingCover(false);
     }
@@ -102,11 +73,10 @@ export default function Scan() {
     setResult(null);
     setSavedDeck(null);
     
-    // WORKAROUND: Read as local base64 instead of uploading to Firebase
     const reader = new FileReader();
     reader.onload = (ev) => {
       setCapturedImage(ev.target.result);
-      setUploading(false); // Done processing locally immediately
+      setUploading(false);
     };
     reader.readAsDataURL(file);
   };
@@ -138,24 +108,24 @@ export default function Scan() {
   };
 
   const processImage = async () => {
-    if (!capturedImage) return; // Change from uploadedUrl to capturedImage
+    if (!capturedImage) return;
     if (!canUseAi(userEmail)) { setLimitError("You've reached your AI credit limit for today!"); return; }
     setLimitError(null);
     setProcessing(true);
     setResult(null);
     setSavedDeck(null);
     incrementAiUsage(userEmail);
+
     let prompt = "";
     if (selectedAction === "flashcards") {
-      prompt = `Look at this image of study material and create ${flashcardCount} high-quality flashcards from the content.\nFormat each flashcard EXACTLY on its own line like:\n**Q:** [question] A: [answer]\nMake questions that test real understanding.`;
+      prompt = `Look at this image of study material and create ${flashcardCount} high-quality flashcards from the content.\n\nFORMATTING INSTRUCTIONS:\n- Format each card on its own line like:\nQ: [question/term] | A: [answer/definition]\n- If math formulas are present, use standard LaTeX enclosed with $...$ for inline math or $$...$$ for block math. DO NOT use \\( \\) or \\[ \\].`;
     } else if (selectedAction === "quiz") {
-      prompt = `Look at this image of study material and create a 10-question multiple choice quiz.\nFormat as:\nQ1. [question]\nA) option  B) option  C) option  D) option\nAnswer: [correct option letter]\n[brief explanation]\n\nRepeat for each question.`;
+      prompt = `Look at this image of study material and create a 10-question multiple choice quiz.\nFormat as:\nQ1. [question]\nA) option  B) option  C) option  D) option\nAnswer: [correct option letter]\n\nIf math formulas are present, use standard LaTeX with $...$ or $$...$$.`;
     } else {
-      prompt = `Look at this image of study material and provide a clear, comprehensive summary. Organize with bullet points and key takeaways.`;
+      prompt = `Look at this image of study material and provide a clear, comprehensive summary. Organize with bullet points and key takeaways. Use $...$ or $$...$$ for math formulas.`;
     }
     
-    // WORKAROUND: Pass the local base64 image data string directly to the AI
-    const response = await callAI({ prompt, file_urls: [capturedImage], feature: "scan_image" });
+    const response = await callAI({ prompt, images: [capturedImage], feature: "scan_image" });
     setResult(response);
     setProcessing(false);
     if (selectedAction === "flashcards") setDeckTitle("");
@@ -178,9 +148,9 @@ export default function Scan() {
 
         let actionInstruction = "";
         if (selectedAction === "flashcards") {
-          actionInstruction = `Extract up to ${flashcardCount} term-definition pairs and format each on its own line exactly as:\n**Q:** [term] A: [definition]`;
+          actionInstruction = `Extract up to ${flashcardCount} term-definition pairs.\nFormat each card on its own line as:\nQ: [term] | A: [definition]\nUse $...$ or $$...$$ for any LaTeX math expressions.`;
         } else if (selectedAction === "quiz") {
-          actionInstruction = `Extract the terms and create a 10-question multiple choice quiz.\nFormat:\nQ1. [question]\nA) option  B) option  C) option  D) option\nAnswer: [correct letter]`;
+          actionInstruction = `Extract the terms and create a 10-question multiple choice quiz. Format as Q1. ... Answer: ...`;
         } else {
           actionInstruction = `List all the vocabulary terms and their definitions from this set.`;
         }
@@ -213,14 +183,13 @@ export default function Scan() {
 
     let prompt = "";
     if (selectedAction === "flashcards") {
-      prompt = `Search for the main core details at this URL and extract its data, then create ${flashcardCount} high-quality flashcards.\nURL: ${websiteUrl}\n\nFormat each flashcard EXACTLY on its own line like:\n**Q:** [question] A: [answer]`;
+      prompt = `Extract the content from URL: ${websiteUrl} and create ${flashcardCount} flashcards.\n\nFormat each on its own line:\nQ: [question/term] | A: [answer/definition]\nUse $...$ or $$...$$ for all math expressions.`;
     } else if (selectedAction === "quiz") {
-      prompt = `Search the page content at this URL: ${websiteUrl}\n\nExtract the data context, then create a 10-question multiple choice quiz.\n\nFormat as:\nQ1. [question]\nA) option  B) option  C) option  D) option\nAnswer: [correct option letter]`;
+      prompt = `Search the page content at URL: ${websiteUrl} and create a 10-question multiple choice quiz. Use $...$ or $$...$$ for math formulas.`;
     } else {
-      prompt = `Read the information available at this URL: ${websiteUrl}\n\nProvide a clear, comprehensive summary.`;
+      prompt = `Read the information available at URL: ${websiteUrl} and provide a clear summary.`;
     }
     
-    // Fixed: Stripped invalid 'add_context_from_internet' param to match callAI structure
     const response = await callAI({ prompt, feature: "scan_url" });
     setResult(response);
     setProcessing(false);
@@ -229,62 +198,148 @@ export default function Scan() {
   const saveAsFlashcards = async () => {
     if (!result) return;
     setSavingDeck(true);
-    const lines = result.split("\n");
     const cards = [];
-    for (const line of lines) {
-      if (line.includes("**Q:**") || line.includes("Q:")) {
-        const parts = line.split(/A:|Answer:/i);
-        if (parts.length >= 2) {
-          const front = parts[0].replace(/\*\*Q:\*\*|Q:/g, "").trim();
-          const back = parts[1].replace(/\*\*/g, "").trim();
-          if (front && back) cards.push({ front, back });
+
+    let textToParse = typeof result === "string" ? result : JSON.stringify(result);
+
+    // Clean up LaTeX slash formatting in case the model used \(...\) or \[...\]
+    textToParse = textToParse
+      .replace(/\\\[([\s\S]*?)\\\]/g, '$$$$$1$$$$')
+      .replace(/\\\(([\s\S]*?)\\\)/g, '$$$1$$');
+
+    // 1. Attempt JSON Parsing
+    try {
+      let cleanedJson = textToParse.trim();
+      if (cleanedJson.startsWith("```")) {
+        const firstNewline = cleanedJson.indexOf("\n");
+        if (firstNewline !== -1) cleanedJson = cleanedJson.substring(firstNewline + 1);
+      }
+      if (cleanedJson.endsWith("```")) {
+        cleanedJson = cleanedJson.substring(0, cleanedJson.length - 3);
+      }
+      const parsed = JSON.parse(cleanedJson);
+
+      const candidateCards = Array.isArray(parsed) ? parsed : (parsed?.cards || parsed?.flashcards || []);
+      if (Array.isArray(candidateCards)) {
+        candidateCards.forEach(c => {
+          const front = c.front || c.question || c.term || c.Q;
+          const back = c.back || c.answer || c.definition || c.A;
+          if (front && back) {
+            cards.push({ front: String(front).trim(), back: String(back).trim() });
+          }
+        });
+      }
+    } catch (e) {
+      // Non-JSON format, proceed to string parser
+    }
+
+    // 2. Multiline & Flexible Regex String Parsing
+    if (cards.length === 0 && typeof textToParse === "string") {
+      // Split into candidate lines or blocks
+      const lines = textToParse.split("\n");
+      
+      let tempFront = "";
+
+      for (let i = 0; i < lines.length; i++) {
+        let trimmed = lines[i].trim();
+        if (!trimmed) continue;
+
+        // Clean leading markdown bullet/number prefixes
+        trimmed = trimmed.replace(/^(\d+[\.\)]|\*|-|\+)\s*/, "");
+
+        // Format A: Q: ... | A: ...
+        if (trimmed.includes("| A:") || trimmed.includes("| A :")) {
+          const parts = trimmed.split(/\|\s*A\s*:/i);
+          if (parts.length >= 2) {
+            const front = parts[0].replace(/^Q\s*:\s*/i, "").trim();
+            const back = parts.slice(1).join("| A:").trim();
+            if (front && back) cards.push({ front, back });
+            continue;
+          }
+        }
+
+        // Format B: **Q:** Front **A:** Back or Q: Front A: Back
+        if (/(?:\*\*|)?Q(?:uestion|)(?:\*\*|)?\s*:/i.test(trimmed) && /(?:\*\*|)?A(?:nswer|)(?:\*\*|)?\s*:/i.test(trimmed)) {
+          const match = trimmed.match(/(?:\*\*|)?Q(?:uestion|)(?:\*\*|)?\s*:\s*(.*?)\s*(?:\*\*|)?A(?:nswer|)(?:\*\*|)?\s*:\s*(.*)/i);
+          if (match && match[1] && match[2]) {
+            cards.push({ front: match[1].trim(), back: match[2].trim() });
+            continue;
+          }
+        }
+
+        // Format C: Standalone Question line followed by Answer line
+        if (/(?:\*\*|)?Q(?:uestion|)(?:\*\*|)?\s*:/i.test(trimmed)) {
+          tempFront = trimmed.replace(/(?:\*\*|)?Q(?:uestion|)(?:\*\*|)?\s*:\s*/i, "").trim();
+          continue;
+        }
+
+        if (tempFront && /(?:\*\*|)?A(?:nswer|)(?:\*\*|)?\s*:/i.test(trimmed)) {
+          const tempBack = trimmed.replace(/(?:\*\*|)?A(?:nswer|)(?:\*\*|)?\s*:\s*/i, "").trim();
+          if (tempFront && tempBack) {
+            cards.push({ front: tempFront, back: tempBack });
+          }
+          tempFront = "";
+          continue;
+        }
+
+        // Format D: "Front" - "Back" OR "Front" : "Back"
+        if (trimmed.includes(" - ") || trimmed.includes(" : ")) {
+          const delimiter = trimmed.includes(" - ") ? " - " : " : ";
+          const parts = trimmed.split(delimiter);
+          if (parts.length >= 2) {
+            const front = parts[0].trim();
+            const back = parts.slice(1).join(delimiter).trim();
+            if (front && back && front.length < 250) {
+              cards.push({ front, back });
+            }
+          }
         }
       }
     }
+
     if (cards.length > 0) {
-      const user = await db.auth.me();
-      const finalTitle = deckTitle.trim() || (subTab === "url" ? "Website Material" : "Scanned Material");
-      
-      const deckData = {
-        title: finalTitle,
-        card_count: cards.length,
-        author_name: user?.full_name || "",
-        author_email: user?.email || "",
-      };
+      try {
+        const user = await db.auth.me();
+        const finalTitle = deckTitle.trim() || (subTab === "url" ? "Website Material" : "Scanned Material");
+        
+        const deckData = {
+          title: finalTitle,
+          card_count: cards.length,
+          author_name: user?.full_name || "",
+          author_email: user?.email || "",
+        };
 
-      if (subTab === "url" && websiteUrl) {
-        deckData.source_text = websiteUrl;
+        if (subTab === "url" && websiteUrl) {
+          deckData.source_text = websiteUrl;
+        }
+        if (deckCoverUrl) {
+          deckData.cover_image_url = deckCoverUrl;
+        }
+
+        const deck = await db.entities.Deck.create(deckData);
+        const targetDeckId = deck?.id || deck?._id;
+        
+        if (!targetDeckId) {
+          console.error("Deck created without ID:", deck);
+          setSavingDeck(false);
+          return;
+        }
+
+        await db.entities.Flashcard.bulkCreate(
+          cards.map(c => ({ 
+            front: c.front,
+            back: c.back, 
+            deck_id: targetDeckId, 
+            author_email: user?.email || "" 
+          }))
+        );
+
+        setSavedDeck(deck);
+      } catch (err) {
+        console.error("Error saving deck:", err);
       }
-      if (deckCoverUrl) {
-        deckData.cover_image_url = deckCoverUrl;
-      }
-
-      // 1. Create the deck and ensure we capture the returned instance safely
-      const deck = await db.entities.Deck.create(deckData);
-      
-      // CRITICAL FIX: Ensure deck exists and has a valid identifier (e.g., deck.id or deck._id)
-      const targetDeckId = deck?.id || deck?._id;
-      
-      if (!targetDeckId) {
-        console.error("Deck was created but no valid ID was returned by the database:", deck);
-        setSavingDeck(false);
-        return;
-      }
-
-      // 2. Bulk create the cards tied explicitly to that verified ID
-      await db.entities.Flashcard.bulkCreate(
-        cards.map(c => ({ 
-          ...c, 
-          deck_id: targetDeckId, 
-          author_email: user?.email || "" 
-        }))
-      );
-
-      // 3. Save the correct reference to state
-      setSavedDeck(deck);
-
-      // 4. IF YOU ARE NAVIGATING HERE, USE THE VERIFIED ID:
-      // navigate(`/decks/${targetDeckId}`); 
+    } else {
+      alert("Could not extract flashcards from AI output. Please try re-running the scan.");
     }
     setSavingDeck(false);
   };
@@ -294,7 +349,6 @@ export default function Scan() {
     setWebsiteUrl(""); setDeckTitle(""); setDeckCoverUrl(null);
   };
 
-  // Change !!uploadedUrl to !!capturedImage
   const canProcess = subTab === "image" ? !!capturedImage : !!websiteUrl.trim();
 
   const runBulkImport = async () => {
@@ -305,9 +359,8 @@ export default function Scan() {
     setBulkSaved(null);
     incrementAiUsage(userEmail);
     
-    // Fixed: Removed custom direct flag attributes to respect callAI's signature
     const resp = await callAI({
-      prompt: `You are an expert educator. Create ${bulkCount} high-quality flashcards about the topic: "${bulkTopic}".\n\nUse your knowledge to construct accurate, up-to-date information about this topic.\n\nReturn a JSON object with:\n- "title": a good deck title\n- "cards": array of {"front": question/term, "back": answer/definition}\n\nMake the cards educational, accurate, and cover the topic comprehensively from basics to advanced.`,
+      prompt: `You are an expert educator. Create ${bulkCount} high-quality flashcards about the topic: "${bulkTopic}".\n\nReturn a JSON object with:\n- "title": concise deck title\n- "cards": array of {"front": question/term, "back": answer/definition}\n\nIMPORTANT LATEX INSTRUCTIONS:\nFor any math expressions, write formulas in standard LaTeX using $...$ for inline math or $$...$$ for block math. DO NOT use \\( \\) or \\[ \\].`,
       feature: "scan_bulk",
       response_json_schema: {
         type: "object",
@@ -317,15 +370,27 @@ export default function Scan() {
         }
       }
     });
-    if (resp?.cards?.length > 0) {
+    
+    let parsedData = resp;
+    if (typeof resp === 'string') {
+      try {
+        let clean = resp.replace(/\\\[([\s\S]*?)\\\]/g, '$$$$$1$$$$').replace(/\\\(([\s\S]*?)\\\)/g, '$$$1$$');
+        const firstBrace = clean.indexOf("{");
+        const lastBrace = clean.lastIndexOf("}");
+        if (firstBrace !== -1 && lastBrace !== -1) clean = clean.substring(firstBrace, lastBrace + 1);
+        parsedData = JSON.parse(clean);
+      } catch (e) {}
+    }
+
+    if (parsedData?.cards?.length > 0) {
       const user = await db.auth.me();
       const deck = await db.entities.Deck.create({
-        title: resp.title || bulkTopic,
-        card_count: resp.cards.length,
+        title: parsedData.title || bulkTopic,
+        card_count: parsedData.cards.length,
         author_name: user.full_name || "",
         author_email: user.email || "",
       });
-      await db.entities.Flashcard.bulkCreate(resp.cards.map(c => ({ front: c.front, back: c.back, deck_id: deck.id, author_email: user.email })));
+      await db.entities.Flashcard.bulkCreate(parsedData.cards.map(c => ({ front: c.front, back: c.back, deck_id: deck.id, author_email: user.email })));
       setBulkSaved(deck);
     }
     setBulkProcessing(false);
@@ -333,36 +398,110 @@ export default function Scan() {
 
   const runNotesImport = async () => {
     if (!notesText.trim()) return;
-    if (!canUseAi(userEmail)) { setLimitError("You've reached your AI credit limit for today!"); return; }
+    if (!canUseAi(userEmail)) { 
+      setLimitError("You've reached your AI credit limit for today!"); 
+      return; 
+    }
+    
     setLimitError(null);
     setNotesProcessing(true);
     setNotesSaved(null);
-    incrementAiUsage(userEmail);
-    const resp = await callAI({
-      prompt: `You are an expert educator. Read the following notes/text and create ${notesCount} high-quality flashcards from the content.\n\nNotes:\n${notesText}\n\nReturn a JSON object with:\n- "title": a concise deck title based on the notes\n- "cards": array of {"front": question or term, "back": answer or definition}\n\nMake cards that test real understanding of the material.`,
-      feature: "scan_notes",
-      response_json_schema: {
-        type: "object",
-        properties: {
-          title: { type: "string" },
-          cards: { type: "array", items: { type: "object", properties: { front: { type: "string" }, back: { type: "string" } } } }
+
+    try {
+      incrementAiUsage(userEmail);
+
+      const systemPrompt = `You are an expert educator. Respond ONLY with valid JSON following this exact structure:
+{
+  "title": "Concise deck title",
+  "cards": [
+    { "front": "Question or term", "back": "Answer or definition" }
+  ]
+}
+MATH LATEX RULE: Format all math expressions using $...$ for inline math and $$...$$ for block math. NEVER use \\( \\) or \\[ \\].`;
+
+      const resp = await callAI({
+        prompt: `Read the following notes and create exactly ${notesCount} flashcards.\n\nNotes:\n${notesText}`,
+        feature: "scan_notes",
+        systemPrompt,
+        response_format: { type: "json_object" },
+        response_json_schema: {
+          type: "object",
+          properties: {
+            title: { type: "string" },
+            cards: { 
+              type: "array", 
+              items: { 
+                type: "object", 
+                properties: { 
+                  front: { type: "string" }, 
+                  back: { type: "string" } 
+                },
+                required: ["front", "back"]
+              } 
+            }
+          },
+          required: ["title", "cards"]
+        }
+      });
+
+      let parsedData = resp;
+
+      if (typeof resp === 'string') {
+        let cleaned = resp.trim();
+        // Convert any stray slash-based LaTeX formatting
+        cleaned = cleaned.replace(/\\\[([\s\S]*?)\\\]/g, '$$$$$1$$$$').replace(/\\\(([\s\S]*?)\\\)/g, '$$$1$$');
+
+        if (cleaned.startsWith("```")) {
+          const firstNewline = cleaned.indexOf("\n");
+          if (firstNewline !== -1) cleaned = cleaned.substring(firstNewline + 1);
+        }
+        if (cleaned.endsWith("```")) {
+          cleaned = cleaned.substring(0, cleaned.length - 3);
+        }
+        
+        const firstBrace = cleaned.indexOf("{");
+        const lastBrace = cleaned.lastIndexOf("}");
+        if (firstBrace !== -1 && lastBrace !== -1) {
+          cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+        }
+
+        try {
+          parsedData = JSON.parse(cleaned);
+        } catch (e) {
+          console.error("JSON parse error:", e);
         }
       }
-    });
-    if (resp?.cards?.length > 0) {
-      const user = await db.auth.me();
-      const title = notesDeckTitle.trim() || resp.title || "My Notes";
-      const deck = await db.entities.Deck.create({
-        title,
-        card_count: resp.cards.length,
-        author_name: user.full_name || "",
-        author_email: user.email || "",
-        source_text: notesText.slice(0, 500),
-      });
-      await db.entities.Flashcard.bulkCreate(resp.cards.map(c => ({ front: c.front, back: c.back, deck_id: deck.id, author_email: user.email })));
-      setNotesSaved(deck);
+
+      if (parsedData?.cards && Array.isArray(parsedData.cards) && parsedData.cards.length > 0) {
+        const user = await db.auth.me();
+        const title = notesDeckTitle.trim() || parsedData.title || "My Notes";
+
+        const deck = await db.entities.Deck.create({
+          title,
+          card_count: parsedData.cards.length,
+          author_name: user?.full_name || "",
+          author_email: user?.email || "",
+          source_text: notesText.slice(0, 500),
+        });
+
+        const cardsToCreate = parsedData.cards.map(c => ({ 
+          front: c.front || "", 
+          back: c.back || "", 
+          deck_id: deck.id, 
+          author_email: user?.email || "" 
+        }));
+
+        await db.entities.Flashcard.bulkCreate(cardsToCreate);
+        setNotesSaved(deck);
+      } else {
+        setLimitError("Failed to generate flashcards. Please try again with different notes.");
+      }
+    } catch (err) {
+      console.error("Error generating flashcards:", err);
+      setLimitError("An unexpected error occurred while generating flashcards.");
+    } finally {
+      setNotesProcessing(false);
     }
-    setNotesProcessing(false);
   };
 
   const bgStyle = { background: "var(--app-bg)", color: "var(--app-text)" };
@@ -373,10 +512,6 @@ export default function Scan() {
     <div className="min-h-screen pb-28 px-6 py-10" style={bgStyle}>
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 bg-violet-500/10 border border-violet-500/20 rounded-full px-4 py-1.5 text-sm text-violet-400 mb-4">
-            <Camera className="w-3.5 h-3.5" />
-            Scan & Learn
-          </div>
           <h1 className="text-3xl font-black tracking-tight mb-2">Scan & Import</h1>
           <p className="text-sm" style={mutedStyle}>Scan images, URLs, or import JSON decks</p>
         </div>
@@ -604,7 +739,7 @@ export default function Scan() {
                   </div>
                 )}
                 {!uploading && (
-                  <button onClick={reset} className="absolute top-3 right-3 w-8 h-8 bg-black/60 rounded-full flex items-colors flex items-center justify-center text-white/70 hover:text-white transition-colors">
+                  <button onClick={reset} className="absolute top-3 right-3 w-8 h-8 bg-black/60 rounded-full flex items-center justify-center text-white/70 hover:text-white transition-colors">
                     <X className="w-4 h-4" />
                   </button>
                 )}
@@ -700,7 +835,9 @@ export default function Scan() {
                 <h3 className="font-bold text-sm">AI Result</h3>
               </div>
               <div className="max-h-80 overflow-y-auto">
-                <p className="text-sm leading-relaxed whitespace-pre-wrap" style={mutedStyle}>{result}</p>
+                <p className="text-sm leading-relaxed whitespace-pre-wrap" style={mutedStyle}>
+                  {typeof result === 'string' ? result : JSON.stringify(result, null, 2)}
+                </p>
               </div>
             </div>
             {selectedAction === "flashcards" && !savedDeck && (
@@ -734,7 +871,7 @@ export default function Scan() {
                 </button>
               )}
               {savedDeck && (
-                <Link to={createPageUrl(`Study?deck_id=${savedDeck.id}`)} className="flex-1">
+                <Link to={createPageUrl(`Study?deck_id=${savedDeck.id || savedDeck._id}`)} className="flex-1">
                   <button className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-2xl font-semibold text-sm transition-all">
                     <CheckCircle2 className="w-4 h-4" /> Study Now →
                   </button>
