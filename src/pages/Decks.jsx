@@ -255,7 +255,7 @@ export default function Decks() {
       resetFormState();
     } catch (err) {
       console.error("Failed to commit updates to backend collection schemas:", err);
-    } finally {
+    } fontally {
       setCreating(false);
     }
   };
@@ -573,15 +573,12 @@ export default function Decks() {
                 <span>{mergeMode ? t('cancel') : t('mergeDecksBtn')}</span>
               </button>
               
-              <button
-                onClick={() => {
-                  resetFormState();
-                  setShowNew(true);
-                }}
+              <Link
+                to={createPageUrl("Scan")}
                 className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white px-4 py-2 rounded-xl font-semibold text-xs transition-all shadow-lg shadow-violet-600/10"
               >
                 <Plus className="w-4 h-4" /> {t('newDeck')}
-              </button>
+              </Link>
             </div>
           </div>
 
