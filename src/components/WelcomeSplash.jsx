@@ -6,7 +6,6 @@ import { createPageUrl } from "@/utils";
 const SPLASH_KEY = "cognita_welcome_seen_v8";
 const PREF_ROLE_KEY = "cognita_user_role";
 
-// Clean inline SVGs replacing lucide-react dependencies
 const Icons = {
   School: (props) => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
@@ -108,7 +107,7 @@ export default function WelcomeSplash({ isBackendLoading }) {
       setVisible(true);
       const timer = setTimeout(() => {
         setMinTimerDone(true);
-      }, 2500); // Scaled back from 5.5s to 2.5s for a faster human feel
+      }, 3000);
       return () => clearTimeout(timer);
     }
   }, []);
