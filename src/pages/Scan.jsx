@@ -125,7 +125,15 @@ export default function Scan() {
       prompt = `Look at this image of study material and provide a clear, comprehensive summary. Organize with bullet points and key takeaways. Use $...$ or $$...$$ for math formulas.`;
     }
     
-    const response = await callAI({ prompt, images: [capturedImage], feature: "scan_image" });
+    // Provide standard model identifiers and both single/array image parameters for compatibility
+    const response = await callAI({ 
+      prompt, 
+      image: capturedImage,
+      images: [capturedImage], 
+      model: "gemini-1.5-flash",
+      feature: "scan_image" 
+    });
+
     setResult(response);
     setProcessing(false);
     if (selectedAction === "flashcards") setDeckTitle("");
@@ -235,16 +243,13 @@ export default function Scan() {
 
     // 2. Multiline & Flexible Regex String Parsing
     if (cards.length === 0 && typeof textToParse === "string") {
-      // Split into candidate lines or blocks
       const lines = textToParse.split("\n");
-      
       let tempFront = "";
 
       for (let i = 0; i < lines.length; i++) {
         let trimmed = lines[i].trim();
         if (!trimmed) continue;
 
-        // Clean leading markdown bullet/number prefixes
         trimmed = trimmed.replace(/^(\d+[\.\)]|\*|-|\+)\s*/, "");
 
         // Format A: Q: ... | A: ...
@@ -387,10 +392,10 @@ export default function Scan() {
       const deck = await db.entities.Deck.create({
         title: parsedData.title || bulkTopic,
         card_count: parsedData.cards.length,
-        author_name: user.full_name || "",
-        author_email: user.email || "",
+        author_name: user?.full_name || "",
+        author_email: user?.email || "",
       });
-      await db.entities.Flashcard.bulkCreate(parsedData.cards.map(c => ({ front: c.front, back: c.back, deck_id: deck.id, author_email: user.email })));
+      await db.entities.Flashcard.bulkCreate(parsedData.cards.map(c => ({ front: c.front, back: c.back, deck_id: deck.id, author_email: user?.email || "" })));
       setBulkSaved(deck);
     }
     setBulkProcessing(false);
@@ -448,7 +453,6 @@ MATH LATEX RULE: Format all math expressions using $...$ for inline math and $$.
 
       if (typeof resp === 'string') {
         let cleaned = resp.trim();
-        // Convert any stray slash-based LaTeX formatting
         cleaned = cleaned.replace(/\\\[([\s\S]*?)\\\]/g, '$$$$$1$$$$').replace(/\\\(([\s\S]*?)\\\)/g, '$$$1$$');
 
         if (cleaned.startsWith("```")) {
