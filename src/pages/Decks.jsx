@@ -255,7 +255,7 @@ export default function Decks() {
       resetFormState();
     } catch (err) {
       console.error("Failed to commit updates to backend collection schemas:", err);
-    } fontally {
+    } finally {
       setCreating(false);
     }
   };
