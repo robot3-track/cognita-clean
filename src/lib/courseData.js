@@ -6,7 +6,7 @@ export const COURSES = [
 
   // ── MINI / SKILL COURSES ─────────────────────────────────────────────────
   {
-    id: "mini-git-commit", title: "Writing Good Git Commits", emoji: "📝", color: "#f97316",
+    id: "mini-git-commit", title: "Writing Good Git Commits", imageUrl: "https://images.unsplash.com/photo-1618401471353-b98afee0b2eb?w=400&auto=format&fit=crop&q=60", color: "#f97316",
     category: "Coding Skills", level: "beginner", type: "mini", duration: "2 min",
     description: "Learn the anatomy of a perfect git commit message in under 2 minutes.",
     modules: [
@@ -14,7 +14,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "mini-debug-js", title: "Debugging JavaScript in DevTools", emoji: "🐛", color: "#eab308",
+    id: "mini-debug-js", title: "Debugging JavaScript in DevTools", imageUrl: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400&auto=format&fit=crop&q=60", color: "#eab308",
     category: "Coding Skills", level: "beginner", type: "mini", duration: "3 min",
     description: "Use Chrome DevTools breakpoints and console to squash bugs fast.",
     modules: [
@@ -22,7 +22,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "mini-css-flexbox", title: "CSS Flexbox in 5 Minutes", emoji: "📦", color: "#06b6d4",
+    id: "mini-css-flexbox", title: "CSS Flexbox in 5 Minutes", imageUrl: "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?w=400&auto=format&fit=crop&q=60", color: "#06b6d4",
     category: "Coding Skills", level: "beginner", type: "mini", duration: "5 min",
     description: "Master flex-direction, justify-content, and align-items quickly.",
     modules: [
@@ -30,7 +30,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "mini-async-await", title: "async/await in JavaScript", emoji: "⚡", color: "#a855f7",
+    id: "mini-async-await", title: "async/await in JavaScript", imageUrl: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=400&auto=format&fit=crop&q=60", color: "#a855f7",
     category: "Coding Skills", level: "intermediate", type: "mini", duration: "4 min",
     description: "Write cleaner async code by replacing .then() chains with async/await.",
     modules: [
@@ -38,7 +38,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "mini-big-o", title: "Big-O Notation in 3 Minutes", emoji: "📈", color: "#10b981",
+    id: "mini-big-o", title: "Big-O Notation in 3 Minutes", imageUrl: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=400&auto=format&fit=crop&q=60", color: "#10b981",
     category: "Coding Skills", level: "intermediate", type: "mini", duration: "3 min",
     description: "Understand O(1), O(n), O(n²) and why algorithm complexity matters.",
     modules: [
@@ -46,7 +46,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "mini-sql-joins", title: "SQL JOIN Types", emoji: "🔗", color: "#3b82f6",
+    id: "mini-sql-joins", title: "SQL JOIN Types", imageUrl: "https://images.unsplash.com/photo-1544383835-bda2bc66a55d?w=400&auto=format&fit=crop&q=60", color: "#3b82f6",
     category: "Coding Skills", level: "intermediate", type: "mini", duration: "5 min",
     description: "INNER, LEFT, RIGHT, and FULL OUTER JOIN — with visual diagrams.",
     modules: [
@@ -54,7 +54,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "mini-regex", title: "Regex Basics", emoji: "🔍", color: "#ef4444",
+    id: "mini-regex", title: "Regex Basics", imageUrl: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=400&auto=format&fit=crop&q=60", color: "#ef4444",
     category: "Coding Skills", level: "intermediate", type: "mini", duration: "5 min",
     description: "Write regular expressions to match, search, and replace text patterns.",
     modules: [
@@ -62,7 +62,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "mini-docker-intro", title: "Docker in 100 Seconds", emoji: "🐳", color: "#0ea5e9",
+    id: "mini-docker-intro", title: "Docker in 100 Seconds", imageUrl: "https://images.unsplash.com/photo-1605745341112-85968b19335b?w=400&auto=format&fit=crop&q=60", color: "#0ea5e9",
     category: "Coding Skills", level: "intermediate", type: "mini", duration: "2 min",
     description: "What containers are, why Docker matters, and how to run your first image.",
     modules: [
@@ -70,7 +70,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "mini-linux-commands", title: "Essential Linux Commands", emoji: "🐧", color: "#84cc16",
+    id: "mini-linux-commands", title: "Essential Linux Commands", imageUrl: "https://images.unsplash.com/photo-1629654297299-c8506221ca97?w=400&auto=format&fit=crop&q=60", color: "#84cc16",
     category: "Coding Skills", level: "beginner", type: "mini", duration: "5 min",
     description: "ls, cd, grep, chmod, ps, and more — survive the terminal confidently.",
     modules: [
@@ -78,7 +78,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "mini-http", title: "HTTP Status Codes", emoji: "🌐", color: "#f59e0b",
+    id: "mini-http", title: "HTTP Status Codes", imageUrl: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400&auto=format&fit=crop&q=60", color: "#f59e0b",
     category: "Coding Skills", level: "beginner", type: "mini", duration: "3 min",
     description: "200, 301, 404, 500 — what every status code means and when you'll see them.",
     modules: [
@@ -86,7 +86,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "mini-git-branching", title: "Git Branching in 5 Minutes", emoji: "🌿", color: "#22c55e",
+    id: "mini-git-branching", title: "Git Branching in 5 Minutes", imageUrl: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400&auto=format&fit=crop&q=60", color: "#22c55e",
     category: "Coding Skills", level: "beginner", type: "mini", duration: "5 min",
     description: "Create, merge, and manage branches in Git with confidence.",
     modules: [
@@ -94,7 +94,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "mini-rest-api", title: "REST APIs Explained", emoji: "🔌", color: "#8b5cf6",
+    id: "mini-rest-api", title: "REST APIs Explained", imageUrl: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&auto=format&fit=crop&q=60", color: "#8b5cf6",
     category: "Coding Skills", level: "beginner", type: "mini", duration: "5 min",
     description: "What a REST API is, HTTP verbs, endpoints, and JSON responses.",
     modules: [
@@ -102,7 +102,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "mini-ssh", title: "SSH in 100 Seconds", emoji: "🔐", color: "#64748b",
+    id: "mini-ssh", title: "SSH in 100 Seconds", imageUrl: "https://images.unsplash.com/photo-1526374865745-d3112a35266d?w=400&auto=format&fit=crop&q=60", color: "#64748b",
     category: "Coding Skills", level: "intermediate", type: "mini", duration: "2 min",
     description: "Securely connect to remote servers using SSH keys and commands.",
     modules: [
@@ -112,7 +112,7 @@ export const COURSES = [
 
   // ── BEGINNER PROGRAMMING ─────────────────────────────────────────────────
   {
-    id: "python-intro", title: "Python for Beginners", emoji: "🐍", color: "#3b82f6",
+    id: "python-intro", title: "Python for Beginners", imageUrl: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=400&auto=format&fit=crop&q=60", color: "#3b82f6",
     category: "Programming", level: "beginner", type: "full", duration: "~15h",
     description: "Learn Python from scratch — variables, loops, functions, and basic projects.",
     modules: [
@@ -125,7 +125,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "html-css", title: "HTML & CSS Fundamentals", emoji: "🌐", color: "#f97316",
+    id: "html-css", title: "HTML & CSS Fundamentals", imageUrl: "https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=400&auto=format&fit=crop&q=60", color: "#f97316",
     category: "Programming", level: "beginner", type: "full", duration: "~12h",
     description: "Build your first websites with semantic HTML and modern CSS.",
     modules: [
@@ -136,7 +136,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "javascript-basics", title: "JavaScript Fundamentals", emoji: "📜", color: "#eab308",
+    id: "javascript-basics", title: "JavaScript Fundamentals", imageUrl: "https://images.unsplash.com/photo-1579468118864-1b9ea3c0db4a?w=400&auto=format&fit=crop&q=60", color: "#eab308",
     category: "Programming", level: "beginner", type: "full", duration: "~18h",
     description: "From variables to DOM manipulation — the full beginner JS journey.",
     modules: [
@@ -148,7 +148,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "java-basics", title: "Java for Beginners", emoji: "☕", color: "#f97316",
+    id: "java-basics", title: "Java for Beginners", imageUrl: "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?w=400&auto=format&fit=crop&q=60", color: "#f97316",
     category: "Programming", level: "beginner", type: "full", duration: "~20h",
     description: "Learn Java from scratch: OOP, arrays, classes, and basic programs.",
     modules: [
@@ -160,7 +160,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "c-plus-plus", title: "C++ Fundamentals", emoji: "⚙️", color: "#0ea5e9",
+    id: "c-plus-plus", title: "C++ Fundamentals", imageUrl: "https://images.unsplash.com/photo-1607799279861-4dd421887fb3?w=400&auto=format&fit=crop&q=60", color: "#0ea5e9",
     category: "Programming", level: "intermediate", type: "full", duration: "~22h",
     description: "Systems programming with C++: memory, pointers, OOP, and STL.",
     modules: [
@@ -174,7 +174,7 @@ export const COURSES = [
 
   // ── INTERMEDIATE PROGRAMMING ─────────────────────────────────────────────
   {
-    id: "react-course", title: "React.js", emoji: "⚛️", color: "#06b6d4",
+    id: "react-course", title: "React.js", imageUrl: "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=400&auto=format&fit=crop&q=60", color: "#06b6d4",
     category: "Programming", level: "intermediate", type: "full", duration: "~20h",
     description: "Build modern UIs with React — components, hooks, state, and routing.",
     modules: [
@@ -187,7 +187,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "data-structures", title: "Data Structures", emoji: "🗂️", color: "#8b5cf6",
+    id: "data-structures", title: "Data Structures", imageUrl: "https://images.unsplash.com/photo-1607799279861-4dd421887fb3?w=400&auto=format&fit=crop&q=60", color: "#8b5cf6",
     category: "Programming", level: "intermediate", type: "full", duration: "~22h",
     description: "Arrays, linked lists, stacks, queues, trees, and graphs explained visually.",
     modules: [
@@ -200,7 +200,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "algorithms", title: "Algorithms", emoji: "⚙️", color: "#ec4899",
+    id: "algorithms", title: "Algorithms", imageUrl: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&auto=format&fit=crop&q=60", color: "#ec4899",
     category: "Programming", level: "intermediate", type: "full", duration: "~20h",
     description: "Sorting, searching, recursion, dynamic programming, and greedy algorithms.",
     modules: [
@@ -212,7 +212,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "sql-databases", title: "SQL & Databases", emoji: "🗄️", color: "#14b8a6",
+    id: "sql-databases", title: "SQL & Databases", imageUrl: "https://images.unsplash.com/photo-1544383835-bda2bc66a55d?w=400&auto=format&fit=crop&q=60", color: "#14b8a6",
     category: "Programming", level: "intermediate", type: "full", duration: "~14h",
     description: "Write real SQL queries, design schemas, and understand how relational databases work.",
     modules: [
@@ -226,7 +226,7 @@ export const COURSES = [
 
   // ── ADVANCED / ENGINEERING ───────────────────────────────────────────────
   {
-    id: "system-design", title: "System Design", emoji: "🏗️", color: "#f97316",
+    id: "system-design", title: "System Design", imageUrl: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400&auto=format&fit=crop&q=60", color: "#f97316",
     category: "Engineering", level: "engineering", type: "full", duration: "~25h",
     description: "Design scalable distributed systems — caching, load balancing, databases at scale.",
     modules: [
@@ -239,7 +239,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "machine-learning", title: "Machine Learning", emoji: "🤖", color: "#8b5cf6",
+    id: "machine-learning", title: "Machine Learning", imageUrl: "https://images.unsplash.com/photo-1527474305487-b87b222841cc?w=400&auto=format&fit=crop&q=60", color: "#8b5cf6",
     category: "Engineering", level: "engineering", type: "full", duration: "~30h",
     description: "Linear regression to neural networks — the full ML pipeline with Python.",
     modules: [
@@ -252,7 +252,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "os-concepts", title: "Operating Systems", emoji: "💾", color: "#64748b",
+    id: "os-concepts", title: "Operating Systems", imageUrl: "https://images.unsplash.com/photo-1629654297299-c8506221ca97?w=400&auto=format&fit=crop&q=60", color: "#64748b",
     category: "Engineering", level: "engineering", type: "full", duration: "~20h",
     description: "Processes, threads, memory management, file systems, and scheduling.",
     modules: [
@@ -264,7 +264,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "computer-networks", title: "Computer Networks", emoji: "🌐", color: "#0ea5e9",
+    id: "computer-networks", title: "Computer Networks", imageUrl: "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=400&auto=format&fit=crop&q=60", color: "#0ea5e9",
     category: "Engineering", level: "engineering", type: "full", duration: "~18h",
     description: "TCP/IP, DNS, HTTP, sockets, routing, and how the internet actually works.",
     modules: [
@@ -276,7 +276,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "cybersecurity", title: "Cybersecurity Fundamentals", emoji: "🔒", color: "#ef4444",
+    id: "cybersecurity", title: "Cybersecurity Fundamentals", imageUrl: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=400&auto=format&fit=crop&q=60", color: "#ef4444",
     category: "Engineering", level: "intermediate", type: "full", duration: "~18h",
     description: "Threats, defense, cryptography, network security, and ethical hacking basics.",
     modules: [
@@ -288,7 +288,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "devops", title: "DevOps & CI/CD", emoji: "🚀", color: "#10b981",
+    id: "devops", title: "DevOps & CI/CD", imageUrl: "https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?w=400&auto=format&fit=crop&q=60", color: "#10b981",
     category: "Engineering", level: "intermediate", type: "full", duration: "~20h",
     description: "Git workflows, CI/CD pipelines, Docker, Kubernetes, and cloud deployment.",
     modules: [
@@ -302,7 +302,7 @@ export const COURSES = [
 
   // ── AP SCIENCES ──────────────────────────────────────────────────────────
   {
-    id: "ap-biology", title: "AP Biology", emoji: "🧬", color: "#10b981",
+    id: "ap-biology", title: "AP Biology", imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRz-8jR9qjG6_cM_D8bYlC977U8aP0e2Q&s", color: "#10b981",
     category: "AP Sciences", level: "ap", type: "full", duration: "~40h",
     description: "Cell biology, genetics, evolution, ecology, and more.",
     modules: [
@@ -317,7 +317,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "ap-chemistry", title: "AP Chemistry", emoji: "⚗️", color: "#f59e0b",
+    id: "ap-chemistry", title: "AP Chemistry", imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQPZVSP0H6nrkzaIP1dIEXPMKGWngLqiAAFI2nsu-TGYQ&s", color: "#f59e0b",
     category: "AP Sciences", level: "ap", type: "full", duration: "~45h",
     description: "Atoms, molecules, reactions, thermodynamics, and kinetics.",
     modules: [
@@ -333,7 +333,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "ap-physics-1", title: "AP Physics 1", emoji: "⚡", color: "#6366f1",
+    id: "ap-physics-1", title: "AP Physics 1", imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR07jQ3J1Ppx_62Fw3Q6F9n9H3C-lWw&s", color: "#6366f1",
     category: "AP Sciences", level: "ap", type: "full", duration: "~38h",
     description: "Mechanics, waves, electricity, and modern physics fundamentals.",
     modules: [
@@ -347,7 +347,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "ap-environmental", title: "AP Environmental Science", emoji: "🌍", color: "#16a34a",
+    id: "ap-environmental", title: "AP Environmental Science", imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT6-mJ5Rpx_mCZuK35l1Nl85xG5p_QvD&s", color: "#16a34a",
     category: "AP Sciences", level: "ap", type: "full", duration: "~36h",
     description: "Earth systems, ecosystems, pollution, climate change, and sustainability.",
     modules: [
@@ -362,7 +362,7 @@ export const COURSES = [
 
   // ── AP MATHEMATICS ──────────────────────────────────────────────────────
   {
-    id: "ap-calc-ab", title: "AP Calculus AB", emoji: "∫", color: "#3b82f6",
+    id: "ap-calc-ab", title: "AP Calculus AB", imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSnZ7WqTjZfB967n9H3C-lWw&s", color: "#3b82f6",
     category: "AP Mathematics", level: "ap", type: "full", duration: "~42h",
     description: "Limits, derivatives, integrals, and the Fundamental Theorem.",
     modules: [
@@ -377,7 +377,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "ap-calc-bc", title: "AP Calculus BC", emoji: "∑", color: "#2563eb",
+    id: "ap-calc-bc", title: "AP Calculus BC", imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRz-7WqTjZfB967n9H3C-lWw&s", color: "#2563eb",
     category: "AP Mathematics", level: "ap", type: "full", duration: "~52h",
     description: "All of AB plus series, parametric equations, and polar coordinates.",
     modules: [
@@ -391,7 +391,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "ap-statistics", title: "AP Statistics", emoji: "📊", color: "#0ea5e9",
+    id: "ap-statistics", title: "AP Statistics", imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT6-mJ5Rpx_mCZuK35l1Nl85xG5p_QvD&s", color: "#0ea5e9",
     category: "AP Mathematics", level: "ap", type: "full", duration: "~36h",
     description: "Data exploration, probability, inference, and regression.",
     modules: [
@@ -405,7 +405,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "precalculus", title: "Precalculus", emoji: "📐", color: "#6366f1",
+    id: "precalculus", title: "Precalculus", imageUrl: "https://images.unsplash.com/photo-1509228468518-180dd4864904?w=400&auto=format&fit=crop&q=60", color: "#6366f1",
     category: "AP Mathematics", level: "intermediate", type: "full", duration: "~40h",
     description: "Functions, trigonometry, conic sections, and an intro to limits.",
     modules: [
@@ -420,11 +420,10 @@ export const COURSES = [
 
   // ── AP HISTORY & SOCIAL SCIENCE ──────────────────────────────────────────
   {
-    id: "ap-human-geography", title: "AP Human Geography", emoji: "🗺️", color: "#16a34a",
+    id: "ap-human-geography", title: "AP Human Geography", imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRz-8jR9qjG6_cM_D8bYlC977U8aP0e2Q&s", color: "#16a34a",
     category: "AP History & Social Science", level: "ap", type: "full", duration: "~36h",
     description: "Population, culture, political geography, urbanization, agriculture, and globalization.",
     modules: [
-      // All videos are Khan Academy / CrashCourse AP Human Geography specific
       { id: "aphg-1", title: "Thinking Geographically", videoId: "pNFYNGkXA18", summary: "Maps, map projections, spatial thinking, and geographic concepts." },
       { id: "aphg-2", title: "Population & Migration", videoId: "3bRai4s_NUQ", summary: "Population distribution, growth models, demographic transition, migration patterns." },
       { id: "aphg-3", title: "Cultural Patterns & Processes", videoId: "OcvbqEWTkis", summary: "Language, religion, ethnicity, and cultural diffusion." },
@@ -435,7 +434,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "ap-us-history", title: "AP US History", emoji: "🇺🇸", color: "#ef4444",
+    id: "ap-us-history", title: "AP US History", imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQPZVSP0H6nrkzaIP1dIEXPMKGWngLqiAAFI2nsu-TGYQ&s", color: "#ef4444",
     category: "AP History & Social Science", level: "ap", type: "full", duration: "~48h",
     description: "American history from colonialism through modern times.",
     modules: [
@@ -447,7 +446,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "ap-world-history", title: "AP World History", emoji: "🌏", color: "#f59e0b",
+    id: "ap-world-history", title: "AP World History", imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSnZ7WqTjZfB967n9H3C-lWw&s", color: "#f59e0b",
     category: "AP History & Social Science", level: "ap", type: "full", duration: "~44h",
     description: "Global history from 1200 CE to present: trade, empires, revolutions, and globalization.",
     modules: [
@@ -461,7 +460,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "ap-psychology", title: "AP Psychology", emoji: "🧠", color: "#ec4899",
+    id: "ap-psychology", title: "AP Psychology", imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR07jQ3J1Ppx_62Fw3Q6F9n9H3C-lWw&s", color: "#ec4899",
     category: "AP History & Social Science", level: "ap", type: "full", duration: "~40h",
     description: "Research methods, biological bases, cognition, and social behavior.",
     modules: [
@@ -473,7 +472,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "ap-economics", title: "AP Macroeconomics", emoji: "📈", color: "#0ea5e9",
+    id: "ap-economics", title: "AP Macroeconomics", imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT6-mJ5Rpx_mCZuK35l1Nl85xG5p_QvD&s", color: "#0ea5e9",
     category: "AP History & Social Science", level: "ap", type: "full", duration: "~38h",
     description: "National economies, fiscal/monetary policy, GDP, inflation, and international trade.",
     modules: [
@@ -488,7 +487,7 @@ export const COURSES = [
 
   // ── AP CS ─────────────────────────────────────────────────────────────────
   {
-    id: "ap-cs-a", title: "AP Computer Science A", emoji: "💻", color: "#14b8a6",
+    id: "ap-cs-a", title: "AP Computer Science A", imageUrl: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&auto=format&fit=crop&q=60", color: "#14b8a6",
     category: "AP Computer Science", level: "ap", type: "full", duration: "~46h",
     description: "Java programming, data structures, algorithms, and OOP.",
     modules: [
@@ -501,7 +500,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "ap-csp", title: "AP Computer Science Principles", emoji: "🖥️", color: "#7c3aed",
+    id: "ap-csp", title: "AP Computer Science Principles", imageUrl: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=400&auto=format&fit=crop&q=60", color: "#7c3aed",
     category: "AP Computer Science", level: "ap", type: "full", duration: "~36h",
     description: "Digital information, algorithms, programming concepts, the internet, and impacts of computing.",
     modules: [
@@ -515,7 +514,7 @@ export const COURSES = [
 
   // ── LANGUAGE COURSES ─────────────────────────────────────────────────────
   {
-    id: "french-beginner", title: "French for Beginners", emoji: "🇫🇷", color: "#3b82f6",
+    id: "french-beginner", title: "French for Beginners", imageUrl: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&auto=format&fit=crop&q=60", color: "#3b82f6",
     category: "Languages", level: "beginner", type: "full", duration: "~20h",
     description: "Learn French from scratch — pronunciation, basic vocabulary, greetings, and everyday conversations.",
     modules: [
@@ -528,7 +527,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "french-intermediate", title: "Intermediate French", emoji: "🥐", color: "#2563eb",
+    id: "french-intermediate", title: "Intermediate French", imageUrl: "https://images.unsplash.com/photo-1549931319-a545dcf3bc73?w=400&auto=format&fit=crop&q=60", color: "#2563eb",
     category: "Languages", level: "intermediate", type: "full", duration: "~25h",
     description: "Build fluency with complex grammar, past tense, and richer vocabulary.",
     modules: [
@@ -540,7 +539,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "spanish-beginner", title: "Spanish for Beginners", emoji: "🇪🇸", color: "#ef4444",
+    id: "spanish-beginner", title: "Spanish for Beginners", imageUrl: "https://images.unsplash.com/photo-1543783207-ec64e4d95325?w=400&auto=format&fit=crop&q=60", color: "#ef4444",
     category: "Languages", level: "beginner", type: "full", duration: "~20h",
     description: "Start speaking Spanish today — pronunciation, everyday vocabulary, and basic conversations.",
     modules: [
@@ -553,7 +552,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "spanish-intermediate", title: "Intermediate Spanish", emoji: "💃", color: "#dc2626",
+    id: "spanish-intermediate", title: "Intermediate Spanish", imageUrl: "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=400&auto=format&fit=crop&q=60", color: "#dc2626",
     category: "Languages", level: "intermediate", type: "full", duration: "~25h",
     description: "Expand to past tense, subjunctive, and nuanced everyday expression in Spanish.",
     modules: [
@@ -567,7 +566,7 @@ export const COURSES = [
 
   // ── FOUNDATIONAL MATH & SCIENCE ──────────────────────────────────────────
   {
-    id: "algebra-1", title: "Algebra 1", emoji: "🔢", color: "#4f46e5",
+    id: "algebra-1", title: "Algebra 1", imageUrl: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=400&auto=format&fit=crop&q=60", color: "#4f46e5",
     category: "Mathematics", level: "beginner", type: "full", duration: "~35h",
     description: "Variables, expressions, equations, inequalities, and functions.",
     modules: [
@@ -579,7 +578,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "algebra-2", title: "Algebra 2", emoji: "📈", color: "#4338ca",
+    id: "algebra-2", title: "Algebra 2", imageUrl: "https://images.unsplash.com/photo-1509228468518-180dd4864904?w=400&auto=format&fit=crop&q=60", color: "#4338ca",
     category: "Mathematics", level: "intermediate", type: "full", duration: "~40h",
     description: "Polynomials, complex numbers, exponentials, logarithms, and conics.",
     modules: [
@@ -590,7 +589,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "geometry", title: "Geometry", emoji: "📐", color: "#7c3aed",
+    id: "geometry", title: "Geometry", imageUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&auto=format&fit=crop&q=60", color: "#7c3aed",
     category: "Mathematics", level: "beginner", type: "full", duration: "~35h",
     description: "Points, lines, angles, triangles, circles, proofs, and coordinate geometry.",
     modules: [
@@ -601,7 +600,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "trigonometry", title: "Trigonometry", emoji: "📏", color: "#8b5cf6",
+    id: "trigonometry", title: "Trigonometry", imageUrl: "https://images.unsplash.com/photo-1509228468518-180dd4864904?w=400&auto=format&fit=crop&q=60", color: "#8b5cf6",
     category: "Mathematics", level: "intermediate", type: "full", duration: "~28h",
     description: "Unit circle, trig functions, identities, law of sines/cosines, and graphs.",
     modules: [
@@ -613,7 +612,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "biology", title: "Biology", emoji: "🌱", color: "#16a34a",
+    id: "biology", title: "Biology", imageUrl: "https://images.unsplash.com/photo-1532187643603-ba119ca4109e?w=400&auto=format&fit=crop&q=60", color: "#16a34a",
     category: "Sciences", level: "beginner", type: "full", duration: "~40h",
     description: "Cell biology, genetics, evolution, body systems, and ecology.",
     modules: [
@@ -625,7 +624,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "chemistry", title: "Chemistry", emoji: "🧪", color: "#d97706",
+    id: "chemistry", title: "Chemistry", imageUrl: "https://images.unsplash.com/photo-1614963326505-843867e2d83a?w=400&auto=format&fit=crop&q=60", color: "#d97706",
     category: "Sciences", level: "beginner", type: "full", duration: "~40h",
     description: "Matter, atomic structure, bonding, reactions, and solutions.",
     modules: [
@@ -636,7 +635,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "physics", title: "Physics", emoji: "⚛️", color: "#6366f1",
+    id: "physics", title: "Physics", imageUrl: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=400&auto=format&fit=crop&q=60", color: "#6366f1",
     category: "Sciences", level: "intermediate", type: "full", duration: "~42h",
     description: "Mechanics, electricity, magnetism, waves, thermodynamics, and modern physics.",
     modules: [
@@ -648,7 +647,7 @@ export const COURSES = [
     ]
   },
   {
-    id: "earth-science", title: "Earth Science", emoji: "🌋", color: "#78716c",
+    id: "earth-science", title: "Earth Science", imageUrl: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400&auto=format&fit=crop&q=60", color: "#78716c",
     category: "Sciences", level: "beginner", type: "full", duration: "~32h",
     description: "Geology, weather, oceans, atmosphere, and the solar system.",
     modules: [
@@ -666,18 +665,18 @@ export function getCourse(id) {
 }
 
 export const COURSE_CATEGORIES = [
-  { id: "all", label: "All Courses", emoji: "🌟" },
-  { id: "mini", label: "⚡ Quick Skills", emoji: "⚡", filterType: "mini" },
-  { id: "Coding Skills", label: "Coding Skills", emoji: "🐛" },
-  { id: "Programming", label: "Programming", emoji: "💻" },
-  { id: "Engineering", label: "Engineering", emoji: "🏗️" },
-  { id: "AP Sciences", label: "AP Sciences", emoji: "🔬" },
-  { id: "AP Mathematics", label: "AP Mathematics", emoji: "∫" },
-  { id: "AP History & Social Science", label: "AP History & SS", emoji: "📜" },
-  { id: "AP Computer Science", label: "AP CS", emoji: "🖥️" },
-  { id: "Mathematics", label: "Mathematics", emoji: "📐" },
-  { id: "Sciences", label: "Sciences", emoji: "🌱" },
-  { id: "Languages", label: "Languages", emoji: "🗣️" },
+  { id: "all", label: "All Courses", imageUrl: "https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=100&q=80" },
+  { id: "mini", label: "Quick Skills", imageUrl: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=100&q=80", filterType: "mini" },
+  { id: "Coding Skills", label: "Coding Skills", imageUrl: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=100&q=80" },
+  { id: "Programming", label: "Programming", imageUrl: "https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=100&q=80" },
+  { id: "Engineering", label: "Engineering", imageUrl: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=100&q=80" },
+  { id: "AP Sciences", label: "AP Sciences", imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQPZVSP0H6nrkzaIP1dIEXPMKGWngLqiAAFI2nsu-TGYQ&s" },
+  { id: "AP Mathematics", label: "AP Mathematics", imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSnZ7WqTjZfB967n9H3C-lWw&s" },
+  { id: "AP History & Social Science", label: "AP History & SS", imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRz-8jR9qjG6_cM_D8bYlC977U8aP0e2Q&s" },
+  { id: "AP Computer Science", label: "AP CS", imageUrl: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=100&q=80" },
+  { id: "Mathematics", label: "Mathematics", imageUrl: "https://images.unsplash.com/photo-1509228468518-180dd4864904?w=100&q=80" },
+  { id: "Sciences", label: "Sciences", imageUrl: "https://images.unsplash.com/photo-1532187643603-ba119ca4109e?w=100&q=80" },
+  { id: "Languages", label: "Languages", imageUrl: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=100&q=80" },
 ];
 
 export const LEVEL_LABELS = {
