@@ -759,48 +759,112 @@ async function tryClaude({ enhancedPrompt, systemPrompt, response_json_schema, f
  * For CODE HELPER: Cohere → Lynx → Gemini → Claude → Base44
  * For internet/vision requests: Gemini first (only provider supporting both)
  */
-export async function callAI({ prompt, response_json_schema, add_context_from_internet, file_urls, model, systemPrompt, feature } = {}) {
+export async function callAI({ 
+  prompt, 
+  response_json_schema, 
+  add_context_from_internet, 
+  file_urls, 
+  image, 
+  images, 
+  model, 
+  systemPrompt, 
+  feature 
+} = {}) {
   let enhancedPrompt = prompt;
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   if (feature === "chat" || feature === "chat_to_flashcards" || feature === "chat_to_quiz" || feature === "voice_chat") {
     enhancedPrompt = `[User Timezone: ${timezone}]\n\n${prompt}`;
   }
 
-  const needsInternet = !!add_context_from_internet;
-  const needsVision = !!(file_urls && file_urls.length > 0);
+  // 1. Normalize image/file parameters into a single standard array
+  const rawImages = [
+    ...(file_urls || []),
+    ...(images || []),
+    ...(image ? [image] : [])
+  ].filter(Boolean);
 
-  // If internet search or vision → Gemini first
-  // If internet search or vision, Gemini first then fall back to other providers like Lynx etc.
+  const needsInternet = !!add_context_from_internet;
+  const needsVision = rawImages.length > 0;
+
+  // Helper to extract clean mimeType and Base64 string from data URLs or external URLs
+  const processImagePayload = async (img) => {
+    // If it's already a Data URL (e.g. data:image/png;base64,iVBOR...)
+    if (typeof img === "string" && img.startsWith("data:")) {
+      const matches = img.match(/^data:(image\/[a-zA-Z0-9+\-]+);base64,(.+)$/);
+      if (matches && matches.length === 3) {
+        return { mimeType: matches[1], data: matches[2] };
+      }
+    }
+    // If it's an external HTTP/HTTPS URL
+    if (typeof img === "string" && (img.startsWith("http://") || img.startsWith("https://"))) {
+      if (typeof fetchImageAsBase64 === "function") {
+        const b64 = await fetchImageAsBase64(img);
+        return { mimeType: "image/jpeg", data: b64 };
+      }
+    }
+    return null;
+  };
+
+  // If internet search or vision → Gemini first then fall back to other providers
   if (needsInternet || needsVision) {
-    // 1. Try Gemini first (Best natively for both web search and vision)
     if (GEMINI_API_KEY) {
       try {
-        const visionModel = needsVision ? GEMINI_VISION_MODEL : GEMINI_MODEL;
-        const bodyParts = [{ text: `${systemPrompt || COGNITA_SYSTEM_PROMPT}\n\n${enhancedPrompt}` }];
+        const visionModel = needsVision ? (GEMINI_VISION_MODEL || "gemini-1.5-flash") : (GEMINI_MODEL || "gemini-1.5-flash");
+        const bodyParts = [];
+
+        // Attach system prompt or default instruction
+        const sysPrompt = systemPrompt || COGNITA_SYSTEM_PROMPT;
+        if (sysPrompt) {
+          bodyParts.push({ text: `${sysPrompt}\n\n${enhancedPrompt}` });
+        } else {
+          bodyParts.push({ text: enhancedPrompt });
+        }
+
+        // Attach Vision Parts
         if (needsVision) {
-          for (const url of file_urls) {
+          for (const img of rawImages) {
             try {
-              const b64 = await fetchImageAsBase64(url);
-              bodyParts.push({ inlineData: { mimeType: "image/jpeg", data: b64 } });
-            } catch {}
+              const parsed = await processImagePayload(img);
+              if (parsed && parsed.data) {
+                bodyParts.push({
+                  inlineData: {
+                    mimeType: parsed.mimeType,
+                    data: parsed.data
+                  }
+                });
+              }
+            } catch (err) {
+              console.warn("Failed to process image payload for Gemini:", err);
+            }
           }
         }
+
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${visionModel}:generateContent?key=${GEMINI_API_KEY}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             contents: [{ role: "user", parts: bodyParts }],
             ...(needsInternet ? { tools: [{ googleSearch: {} }] } : {}),
-            generationConfig: { candidateCount: 1, maxOutputTokens: 8192, temperature: 0.7, ...(response_json_schema ? { responseMimeType: "application/json" } : {}) },
+            generationConfig: { 
+              candidateCount: 1, 
+              maxOutputTokens: 8192, 
+              temperature: 0.7, 
+              ...(response_json_schema ? { responseMimeType: "application/json" } : {}) 
+            },
           }),
         });
+
         if (res.ok) {
           const data = await res.json();
           const content = data?.candidates?.[0]?.content?.parts?.[0]?.text;
           if (content) {
             logAIUsage("gemini", feature, enhancedPrompt?.length, true);
-            if (response_json_schema) { try { return JSON.parse(content); } catch {} }
-            else return content;
+            if (response_json_schema) { 
+              try { 
+                return typeof content === "string" ? JSON.parse(content) : content; 
+              } catch {} 
+            }
+            return content;
           }
         }
         logAIUsage("gemini", feature, enhancedPrompt?.length, false);
@@ -811,118 +875,75 @@ export async function callAI({ prompt, response_json_schema, add_context_from_in
     }
 
     // ─── GEMINI FAILED OR DISABLED ───
-    // Fallback pipeline for Vision/Internet tasks using your other providers:
-    const args = { enhancedPrompt, systemPrompt, response_json_schema, feature };
+    const args = { 
+      enhancedPrompt, 
+      prompt: enhancedPrompt, 
+      systemPrompt, 
+      response_json_schema, 
+      feature, 
+      file_urls: rawImages, 
+      image, 
+      images 
+    };
 
-    // 2. Try Lynx
-    try {
-      const rLynx = await tryLynx(args);
-      if (rLynx != null) return rLynx;
-    } catch (e) { console.warn("Lynx fallback failed for vision/internet:", e?.message); }
+    try { const rLynx = await tryLynx(args); if (rLynx != null) return rLynx; } catch (e) { console.warn("Lynx fallback failed:", e?.message); }
+    try { const rGroq = await tryGroq(args); if (rGroq != null) return rGroq; } catch (e) { console.warn("Groq fallback failed:", e?.message); }
+    try { const rNvidia = await tryNvidia(args); if (rNvidia != null) return rNvidia; } catch (e) { console.warn("Nvidia fallback failed:", e?.message); }
+    try { const rOR = await tryOpenRouter(args); if (rOR != null) return rOR; } catch (e) { console.warn("OpenRouter fallback failed:", e?.message); }
+    try { const rHackClub = await tryHackClub(args); if (rHackClub != null) return rHackClub; } catch (e) { console.warn("HackClub fallback failed:", e?.message); }
+    try { const rCohere = await tryCohere(args); if (rCohere != null) return rCohere; } catch (e) { console.warn("Cohere fallback failed:", e?.message); }
+    try { const rPickle = await tryBigPickle(args); if (rPickle != null) return rPickle; } catch (e) { console.warn("Big Pickle fallback failed:", e?.message); }
+    try { const rClaude = await tryClaude(args); if (rClaude != null) return rClaude; } catch (e) { console.warn("Claude fallback failed:", e?.message); }
 
-    try {
-      const rGroq = await tryGroq(args);
-      if (rGroq != null) return rGroq;
-    } catch (e) { console.warn("Groq fallback failed:", e?.message); }
-
-    // Try Nvidia
-    try {
-      const rNvidia = await tryNvidia(args);
-      if (rNvidia != null) return rNvidia;
-    } catch (e) { console.warn("Nvidia fallback failed:", e?.message); }
-
-    // 2.5 Try OpenRouter
-    try {
-      const rOR = await tryOpenRouter(args);
-      if (rOR != null) return rOR;
-    } catch (e) { console.warn("OpenRouter fallback failed:", e?.message); }
-
-    try {
-      const rHackClub = await tryHackClub(args);
-      if (rHackClub != null) return rHackClub;
-    } catch (e) { console.warn("HackClub fallback failed:", e?.message); }
-
-    // 4. Try Cohere
-    try {
-      const rCohere = await tryCohere(args);
-      if (rCohere != null) return rCohere;
-    } catch (e) { console.warn("Cohere fallback failed for vision/internet:", e?.message); }
-
-    // 5. Try Big Pickle
-    try {
-      const rPickle = await tryBigPickle(args);
-      if (rPickle != null) return rPickle;
-    } catch (e) { console.warn("Big Pickle fallback failed for vision/internet:", e?.message); }
-
-    // 6. Try Claude
-    try {
-      const rClaude = await tryClaude(args);
-      if (rClaude != null) return rClaude;
-    } catch (e) { console.warn("Claude fallback failed for vision/internet:", e?.message); }
-
-    // 7. Base44 Final Absolute Fallback
+    // Final Base44 Absolute Fallback
     const result = await db.integrations.Core.InvokeLLM({
       prompt: enhancedPrompt,
       ...(response_json_schema ? { response_json_schema } : {}),
       ...(add_context_from_internet ? { add_context_from_internet } : {}),
-      ...(file_urls ? { file_urls } : {}),
+      ...(rawImages.length > 0 ? { file_urls: rawImages } : {}),
       ...(model ? { model } : {}),
     });
     logAIUsage("base44_fallback", feature, enhancedPrompt?.length, true);
     return result;
   }
 
-  const args = { enhancedPrompt, systemPrompt, response_json_schema, feature };
+  const args = { 
+    enhancedPrompt, 
+    prompt: enhancedPrompt, 
+    systemPrompt, 
+    response_json_schema, 
+    feature 
+  };
 
-  // Code helper uses Cohere first, then Lynx
   const isCodeFeature = feature === "code_sandbox_ai" || feature === "code_helper";
   
   if (isCodeFeature) {
-    const r1 = await tryCohere(args).catch(() => null);
-    if (r1 != null) return r1;
-    const r2 = await tryLynx(args).catch(() => null);
-    if (r2 != null) return r2;
-    const rOR = await tryOpenRouter(args).catch(() => null);
-    if (rOR != null) return rOR;
-    const rNvidia = await tryNvidia(args).catch(() => null); 
-    if (rNvidia != null) return rNvidia;
-    const rHackClub = await tryHackClub(args).catch(() => null);
-    if (rHackClub != null) return rHackClub;
-    const r3 = await tryGemini(args).catch(() => null);
-    if (r3 != null) return r3;
+    const r1 = await tryCohere(args).catch(() => null); if (r1 != null) return r1;
+    const r2 = await tryLynx(args).catch(() => null); if (r2 != null) return r2;
+    const rOR = await tryOpenRouter(args).catch(() => null); if (rOR != null) return rOR;
+    const rNvidia = await tryNvidia(args).catch(() => null); if (rNvidia != null) return rNvidia;
+    const rHackClub = await tryHackClub(args).catch(() => null); if (rHackClub != null) return rHackClub;
+    const r3 = await tryGemini(args).catch(() => null); if (r3 != null) return r3;
   } else {
-    // Standard
-    const rGroq = await tryGroq(args).catch(() => null);
-    if (rGroq != null) return rGroq;
-    const r1 = await tryLynx(args).catch(() => null);
-    if (r1 != null) return r1;
-    const rOR = await tryOpenRouter(args).catch(() => null);
-    if (rOR != null) return rOR;
-    const rHackClub = await tryHackClub(args).catch(() => null);
-    if (rHackClub != null) return rHackClub;
-    const rNvidia = await tryNvidia(args).catch(() => null); // Nvidia update! let's go
-    if (rNvidia != null) return rNvidia;
-    const r3 = await tryCohere(args).catch(() => null);
-    if (r3 != null) return r3;
-    const r2 = await tryGemini(args).catch(() => null);
-    if (r2 != null) return r2;
+    const rGroq = await tryGroq(args).catch(() => null); if (rGroq != null) return rGroq;
+    const r2 = await tryGemini(args).catch(() => null); if (r2 != null) return r2;
+    const r1 = await tryLynx(args).catch(() => null); if (r1 != null) return r1;
+    const rOR = await tryOpenRouter(args).catch(() => null); if (rOR != null) return rOR;
+    const rHackClub = await tryHackClub(args).catch(() => null); if (rHackClub != null) return rHackClub;
+    const rNvidia = await tryNvidia(args).catch(() => null); if (rNvidia != null) return rNvidia;
+    const r3 = await tryCohere(args).catch(() => null); if (r3 != null) return r3;
   }
 
-  // Shared fallbacks: Big Pickle, Claude, Base44
-  const r4 = await tryBigPickle(args).catch(() => null);
-  if (r4 != null) return r4;
-  const r5 = await tryClaude(args).catch(() => null);
-  if (r5 != null) return r5;
+  const r4 = await tryBigPickle(args).catch(() => null); if (r4 != null) return r4;
+  const r5 = await tryClaude(args).catch(() => null); if (r5 != null) return r5;
 
-  // Base44 final fallback
   const result = await db.integrations.Core.InvokeLLM({
     prompt: enhancedPrompt,
     ...(response_json_schema ? { response_json_schema } : {}),
     ...(add_context_from_internet ? { add_context_from_internet } : {}),
-    ...(file_urls ? { file_urls } : {}),
     ...(model ? { model } : {}),
   });
-  logAIUsage("gemini", feature, enhancedPrompt?.length, true);
+  logAIUsage("base44_fallback", feature, enhancedPrompt?.length, true);
   return result;
 }
 
