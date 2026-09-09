@@ -1,6 +1,22 @@
-import { Award, Download, GraduationCap, Medal } from "lucide-react";
+import { useState } from "react";
 
-export default function CourseCertificate({ course = {}, userName = "Valued Student", issuedAt }) {
+const Icons = {
+  Download: (props) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="7 10 12 15 17 10" />
+      <line x1="12" y1="15" x2="12" y2="3" />
+    </svg>
+  ),
+  Verified: (props) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <circle cx="12" cy="12" r="10" />
+      <path d="m9 12 2 2 4-4" />
+    </svg>
+  )
+};
+
+export default function CourseCertificate({ course = {}, userName = "Valued Student", issuedAt, instructorName = "Cognita Academic Board" }) {
   const safeTitle = course?.title || course?.name || "Course Completion";
   const safeName = userName || "Valued Student";
   const moduleCount = course?.modules?.length || course?.lessons?.length || 0;
@@ -8,6 +24,8 @@ export default function CourseCertificate({ course = {}, userName = "Valued Stud
   const date = issuedAt 
     ? new Date(issuedAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) 
     : new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+
+  const certId = `COG-${Math.floor(100000 + Math.random() * 900000)}`;
 
   const handlePrint = () => {
     const win = window.open("", "_blank");
@@ -17,64 +35,67 @@ export default function CourseCertificate({ course = {}, userName = "Valued Stud
       <head>
         <title>Certificate — ${safeTitle}</title>
         <style>
-          @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;600&display=swap');
+          @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600&display=swap');
           * { margin:0; padding:0; box-sizing:border-box; }
-          body { background:#fff; display:flex; align-items:center; justify-content:center; min-height:100vh; font-family:'Inter',sans-serif; }
-          .cert { width:800px; border:3px solid #7c3aed; border-radius:24px; padding:60px; text-align:center; position:relative; overflow:hidden; }
-          .cert::before { content:''; position:absolute; inset:8px; border:1px solid #ede9fe; border-radius:18px; pointer-events:none; }
-          .top { font-size:13px; letter-spacing:4px; text-transform:uppercase; color:#7c3aed; margin-bottom:12px; }
-          .org { font-family:'Playfair Display',serif; font-size:32px; color:#1e1b4b; margin-bottom:4px; }
-          .divider { width:80px; height:3px; background:linear-gradient(90deg,#7c3aed,#3b82f6); border-radius:2px; margin:16px auto; }
-          .icon-header { display:flex; justify-content:center; margin:16px 0; color:#7c3aed; }
-          .presented { font-size:14px; color:#6b7280; margin-bottom:8px; }
-          .name { font-family:'Playfair Display',serif; font-size:40px; color:#1e1b4b; margin-bottom:8px; }
-          .completed { font-size:14px; color:#6b7280; margin-bottom:6px; }
-          .course { font-size:22px; font-weight:600; color:#4f46e5; margin-bottom:24px; }
-          .desc { font-size:12px; color:#9ca3af; margin-bottom:32px; line-height:1.6; }
-          .footer { display:flex; justify-content:space-between; align-items:flex-end; }
-          .sig-line { width:160px; height:1px; background:#d1d5db; margin-bottom:6px; }
-          .sig-label { font-size:11px; color:#9ca3af; letter-spacing:1px; text-transform:uppercase; }
-          .badge { display:flex; flex-direction:column; align-items:center; gap:4px; }
-          .badge-circle { width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg,#7c3aed,#3b82f6); display:flex; align-items:center; justify-content:center; color:#fff; }
-          .cpd { font-size:10px; color:#9ca3af; }
+          body { background:#f8fafc; display:flex; align-items:center; justify-content:center; min-height:100vh; font-family:'Inter',sans-serif; color:#0f172a; padding:20px; }
+          .cert-container { width:900px; background:#ffffff; border:1px solid #cbd5e1; box-shadow:0 10px 25px -5px rgba(0,0,0,0.05); padding:16px; }
+          .cert-inner { border:2px solid #0056D2; padding:50px 60px; position:relative; }
+          .header { display:flex; justify-size:space-between; justify-content:space-between; align-items:center; margin-bottom:40px; border-bottom:1px solid #e2e8f0; padding-bottom:20px; }
+          .brand { font-size:22px; font-weight:700; color:#0056D2; letter-spacing:-0.5px; }
+          .cert-id { font-size:11px; font-family:monospace; color:#64748b; }
+          .body { text-align:left; }
+          .sub-title { font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:1.5px; color:#475569; margin-bottom:16px; }
+          .recipient-label { font-size:14px; color:#64748b; margin-bottom:8px; }
+          .name { font-family:'EB Garamond',serif; font-size:42px; font-weight:700; color:#0f172a; margin-bottom:20px; line-height:1.1; }
+          .statement { font-size:15px; color:#334155; line-height:1.6; margin-bottom:12px; max-w:650px; }
+          .course-title { font-family:'EB Garamond',serif; font-size:28px; font-weight:700; color:#0056D2; margin-bottom:24px; }
+          .details { font-size:13px; color:#64748b; line-height:1.6; margin-bottom:48px; max-width:600px; }
+          .footer { display:flex; justify-content:space-between; align-items:flex-end; border-t:1px solid #e2e8f0; pt:30px; }
+          .sig-block { width:220px; }
+          .sig-line { width:100%; height:1px; background:#94a3b8; margin-bottom:8px; }
+          .sig-name { font-size:13px; font-weight:600; color:#1e293b; }
+          .sig-title { font-size:11px; color:#64748b; }
+          .verify-badge { display:flex; align-items:center; gap:8px; background:#f0f7ff; border:1px solid #bae6fd; padding:8px 14px; border-radius:6px; font-size:11px; font-weight:500; color:#0284c7; }
         </style>
       </head>
       <body>
-        <div class="cert">
-          <div class="top">Certificate of Completion</div>
-          <div class="org">Cognita Learning</div>
-          <div class="divider"></div>
-          
-          <div class="icon-header">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-              <path d="M6 12v5c3 3 9 3 12 0v-5"/>
-            </svg>
-          </div>
-
-          <div class="presented">This certifies that</div>
-          <div class="name">${safeName}</div>
-          <div class="completed">has successfully completed</div>
-          <div class="course">${safeTitle}</div>
-          <div class="desc">${moduleCount > 0 ? `This course included ${moduleCount} modules of comprehensive lessons,<br/>interactive quizzes, and assessments.` : 'Has completed comprehensive course lessons, interactive quizzes, and assessments.'} CPD Certification Pending.</div>
-          
-          <div class="footer">
-            <div>
-              <div class="sig-line"></div>
-              <div class="sig-label">Date Issued: ${date}</div>
+        <div class="cert-container">
+          <div class="cert-inner">
+            <div class="header">
+              <div class="brand">cognita</div>
+              <div class="cert-id">Verify at cognita.org/verify/${certId}</div>
             </div>
-            <div class="badge">
-              <div class="badge-circle">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526"/>
-                  <circle cx="12" cy="8" r="6"/>
-                </svg>
+            
+            <div class="body">
+              <div class="sub-title">Course Certificate</div>
+              <div class="recipient-label">This is to certify that</div>
+              <div class="name">${safeName}</div>
+              <div class="statement">has successfully completed an online non-credit course authorized by Cognita and offered through the Cognita learning platform.</div>
+              <div class="course-title">${safeTitle}</div>
+              <div class="details">
+                ${moduleCount > 0 ? `Comprising ${moduleCount} modules of structured academic coursework, practical assessments, and verified evaluations.` : 'Comprising structured academic coursework, practical assessments, and verified evaluations.'}
               </div>
-              <div class="cpd">CPD Pending</div>
             </div>
-            <div>
-              <div class="sig-line"></div>
-              <div class="sig-label">Cognita Platform</div>
+
+            <div class="footer">
+              <div class="sig-block">
+                <div class="sig-line"></div>
+                <div class="sig-name">${instructorName}</div>
+                <div class="sig-title">Authorized Representative</div>
+              </div>
+
+              <div class="verify-badge">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>
+                </svg>
+                <span>Verified Certificate</span>
+              </div>
+
+              <div class="sig-block" style="text-align:right;">
+                <div class="sig-line"></div>
+                <div class="sig-name">${date}</div>
+                <div class="sig-title">Date Issued</div>
+              </div>
             </div>
           </div>
         </div>
@@ -87,33 +108,37 @@ export default function CourseCertificate({ course = {}, userName = "Valued Stud
   };
 
   return (
-    <div className="rounded-3xl overflow-hidden border-2" style={{ borderColor: "#7c3aed", background: "linear-gradient(135deg, rgba(124,58,237,0.08), rgba(59,130,246,0.08))" }}>
-      <div className="p-8 text-center">
-        <p className="text-xs font-bold tracking-widest uppercase text-violet-400 mb-2">Certificate of Completion</p>
-        <p className="text-2xl font-black mb-1">Cognita Learning</p>
-        
-        {/* Header Icon */}
-        <div className="flex justify-center my-4 text-violet-400">
-          <GraduationCap className="w-12 h-12" />
+    <div className="w-full bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-xl text-slate-100">
+      <div className="p-6 sm:p-8 bg-slate-950/40">
+        <div className="flex items-center justify-between pb-4 border-b border-slate-800/80 mb-6">
+          <span className="text-sm font-bold tracking-tight text-blue-500">cognita</span>
+          <span className="text-[10px] font-mono text-slate-500">ID: {certId}</span>
         </div>
 
-        <p className="text-sm opacity-60 mb-1">This certifies that</p>
-        <p className="text-2xl font-black text-violet-400 mb-1">{safeName}</p>
-        <p className="text-sm opacity-60 mb-1">has successfully completed</p>
-        <p className="text-xl font-black mb-4">{safeTitle}</p>
-        
-        <div className="flex items-center justify-center gap-2 mb-4">
-          <Award className="w-5 h-5 text-amber-400" />
-          <span className="text-xs text-amber-400 font-semibold">CPD Certification Pending</span>
+        <div className="space-y-3 mb-6">
+          <p className="text-[11px] font-mono tracking-wider uppercase text-slate-400">Official Certificate</p>
+          <p className="text-xs text-slate-400">This certifies that</p>
+          <h2 className="text-xl sm:text-2xl font-serif font-bold text-slate-100">{safeName}</h2>
+          <p className="text-xs text-slate-400">has completed</p>
+          <h3 className="text-base sm:text-lg font-serif font-bold text-blue-400 leading-snug">{safeTitle}</h3>
         </div>
 
-        <p className="text-xs opacity-40 mb-6">Issued: {date}</p>
-        
+        <div className="flex items-center gap-2 p-2.5 rounded-lg bg-blue-950/30 border border-blue-900/50 mb-6">
+          <Icons.Verified className="w-4 h-4 text-blue-400 shrink-0" />
+          <span className="text-xs text-blue-300 font-medium">Verified Online Course Certificate</span>
+        </div>
+
+        <div className="flex items-center justify-between pt-4 border-t border-slate-800 text-[11px] text-slate-400 mb-6">
+          <span>Issued: {date}</span>
+          <span>Cognita Platform</span>
+        </div>
+
         <button
           onClick={handlePrint}
-          className="flex items-center gap-2 mx-auto px-6 py-3 rounded-2xl font-bold text-sm text-white bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 transition-all shadow-lg shadow-violet-500/20"
+          className="w-full h-10 rounded-lg font-medium text-xs text-white bg-blue-600 hover:bg-blue-500 transition-colors flex items-center justify-center gap-2 shadow-sm"
         >
-          <Download className="w-4 h-4" /> Download / Print Certificate
+          <Icons.Download className="w-3.5 h-3.5" />
+          <span>Download Printable PDF</span>
         </button>
       </div>
     </div>
