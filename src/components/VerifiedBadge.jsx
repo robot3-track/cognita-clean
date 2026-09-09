@@ -1,30 +1,22 @@
-/**
- * VerifiedBadge — Meta-style blue verified badge (scalloped circle + checkmark)
- * Usage: <VerifiedBadge />
- */
-export default function VerifiedBadge({ size = 14 }) {
+// for this code I did a quick update to make the badge look more realistic; it uses svg designing
+export default function VerifiedBadge({ size = 16, className = "", title = "Verified" }) {
   return (
     <svg
       width={size}
       height={size}
-      viewBox="0 0 22 22"
+      viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      title="Verified deck"
-      style={{ display: "inline-block", flexShrink: 0 }}
+      className={`inline-block shrink-0 align-middle ${className}`}
+      aria-label={title}
     >
-      {/* Scalloped badge shape */}
       <path
-        d="M11 1l2.09 3.26L17 3l.5 4.09L21 9l-2.5 3.5L21 16l-3.5 1.41L17 21l-3.91-.74L11 23l-2.09-2.74L5 21l-.5-4.09L1 15l2.5-3.5L1 8l3.5-1.41L5 3l3.91.74L11 1z"
+        d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.79-4-4-4-.495 0-.965.084-1.4.238C14.55 2.475 13.18 1.6 11.6 1.6c-1.58 0-2.95.875-3.6 2.148-.435-.154-.905-.238-1.4-.238-2.21 0-4 1.79-4 4 0 .495.084.965.238 1.4C1.575 9.55.7 10.92.7 12.5c0 1.58.875 2.95 2.148 3.6-.154.435-.238.905-.238 1.4 0 2.21 1.79 4 4 4 .495 0 .965-.084 1.4-.238 1.25 1.273 2.62 2.148 4.2 2.148 1.58 0 2.95-.875 3.6-2.148.435.154.905.238 1.4.238 2.21 0 4-1.79 4-4 0-.495-.084-.965-.238-1.4 1.273-1.25 2.148-2.62 2.148-4.2z"
         fill="#1877F2"
       />
-      {/* Checkmark */}
       <path
-        d="M7.5 11l2.5 2.5 5-5"
-        stroke="white"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        d="M9.8 16.2 6.2 12.6l1.4-1.4 2.2 2.2 6.6-6.6 1.4 1.4-8 8z"
+        fill="#FFFFFF"
       />
     </svg>
   );
