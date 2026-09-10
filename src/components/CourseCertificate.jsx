@@ -17,6 +17,34 @@ const Icons = {
   )
 };
 
+function getSimilarityScore(str1 = "", str2 = "") {
+  const s1 = str1.trim().toLowerCase();
+  const s2 = str2.trim().toLowerCase();
+  
+  if (!s1 || !s2) return 0;
+  if (s1 === s2) return 1;
+
+  const track = Array(s2.length + 1).fill(null).map(() => Array(s1.length + 1).fill(null));
+
+  for (let i = 0; i <= s1.length; i += 1) track[0][i] = i;
+  for (let j = 0; j <= s2.length; j += 1) track[j][0] = j;
+
+  for (let j = 1; j <= s2.length; j += 1) {
+    for (let i = 1; i <= s1.length; i += 1) {
+      const indicator = s1[i - 1] === s2[j - 1] ? 0 : 1;
+      track[j][i] = Math.min(
+        track[j][i - 1] + 1,
+        track[j - 1][i] + 1,
+        track[j - 1][i - 1] + indicator
+      );
+    }
+  }
+
+  const distance = track[s2.length][s1.length];
+  const maxLength = Math.max(s1.length, s2.length);
+  return 1 - distance / maxLength;
+}
+
 export default function CourseCertificate({ 
   course = {}, 
   userName = "Valued Student", 
@@ -30,11 +58,16 @@ export default function CourseCertificate({
   const safeName = recipientName || "Valued Student";
   const moduleCount = course?.modules?.length || course?.lessons?.length || 0;
   
+  const similarityRatio = getSimilarityScore(recipientName, userName);
+  const isValidName = similarityRatio >= 0.6;
+
   const date = issuedAt 
     ? new Date(issuedAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) 
     : new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 
   const handlePrint = () => {
+    if (!isValidName) return;
+
     const win = window.open("", "_blank");
     win.document.write(`
       <!DOCTYPE html>
@@ -75,6 +108,8 @@ export default function CourseCertificate({
             display: flex;
             align-items: center;
             justify-content: center;
+            position: relative;
+            overflow: hidden;
           }
 
           .cert-inner {
@@ -86,6 +121,19 @@ export default function CourseCertificate({
             flex-direction: column;
             justify-content: space-between;
             position: relative;
+            z-index: 2;
+          }
+
+          .watermark-spiral {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px;
+            height: 600px;
+            opacity: 0.35;
+            pointer-events: none;
+            z-index: 1;
           }
 
           .header {
@@ -219,6 +267,14 @@ export default function CourseCertificate({
       </head>
       <body>
         <div class="cert-container">
+          <svg class="watermark-spiral" viewBox="0 0 500 500" fill="none" stroke="#0056D2" stroke-width="1.2">
+            <g transform="translate(250,250)">
+              ${Array.from({ length: 36 }).map((_, i) => `
+                <ellipse cx="0" cy="0" rx="210" ry="70" transform="rotate(${i * 10})" />
+              `).join('')}
+            </g>
+          </svg>
+
           <div class="cert-inner">
             <div class="header">
               <img src="${logoUrl}" alt="Logo" class="logo-img" />
@@ -277,14 +333,28 @@ export default function CourseCertificate({
 
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1.5">Recipient Full Name</label>
+            <div className="flex justify-between items-center mb-1.5">
+              <label className="block text-xs font-medium text-slate-400">Recipient Full Name</label>
+              <span className="text-[10px] font-mono text-slate-500">
+                Match: {Math.round(similarityRatio * 100)}%
+              </span>
+            </div>
             <input
               type="text"
               value={recipientName}
               onChange={(e) => setRecipientName(e.target.value)}
-              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm font-medium text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
+              className={`w-full bg-slate-900 border rounded-lg px-3 py-2 text-sm font-medium text-slate-100 focus:outline-none transition-colors ${
+                isValidName 
+                  ? "border-slate-700 focus:border-blue-500" 
+                  : "border-red-500/80 focus:border-red-500"
+              }`}
               placeholder="Enter your name"
             />
+            {!isValidName && (
+              <p className="mt-1.5 text-[11px] text-red-400">
+                Name must match at least 60% of original registered name ("{userName}").
+              </p>
+            )}
           </div>
 
           <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-4 space-y-2 text-xs text-slate-400">
@@ -306,14 +376,16 @@ export default function CourseCertificate({
         <div className="flex gap-3 pt-2">
           <button
             onClick={handlePrint}
-            className="flex-1 h-10 rounded-lg font-medium text-xs text-white bg-blue-600 hover:bg-blue-500 transition-colors flex items-center justify-center gap-2 shadow-sm"
+            disabled={!isValidName}
+            className="flex-1 h-10 rounded-lg font-medium text-xs text-white bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 shadow-sm"
           >
             <Icons.Printer className="w-3.5 h-3.5" />
             <span>Print Certificate</span>
           </button>
           <button
             onClick={handlePrint}
-            className="h-10 px-4 rounded-lg font-medium text-xs text-slate-300 bg-slate-800 hover:bg-slate-700 transition-colors flex items-center justify-center gap-2 border border-slate-700"
+            disabled={!isValidName}
+            className="h-10 px-4 rounded-lg font-medium text-xs text-slate-300 bg-slate-800 hover:bg-slate-700 disabled:bg-slate-800 disabled:text-slate-600 disabled:border-slate-800 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 border border-slate-700"
           >
             <Icons.Download className="w-3.5 h-3.5" />
             <span>Download PDF</span>
