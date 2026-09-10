@@ -15,7 +15,6 @@ export const LANGUAGES = [
   { code: "ko", label: "한국어", flag: "🇰🇷" },
 ];
 
-// Country code → language code mapping
 const COUNTRY_TO_LANG = {
   ES: "es", MX: "es", AR: "es", CO: "es", CL: "es", PE: "es", VE: "es", EC: "es", GT: "es", CU: "es", BO: "es", DO: "es", HN: "es", PY: "es", SV: "es", NI: "es", CR: "es", PA: "es", UY: "es",
   FR: "fr", BE: "fr", CH: "fr", LU: "fr", MC: "fr", SN: "fr", CI: "fr", CM: "fr", MG: "fr",
@@ -28,42 +27,30 @@ const COUNTRY_TO_LANG = {
   KR: "ko",
 };
 
-// Map browser/timezone locale hints to language codes
 function detectLanguageFromBrowser() {
   const saved = localStorage.getItem(LANG_KEY);
   if (saved) return saved;
   const nav = navigator.language || navigator.userLanguage || "en";
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
-  // Taiwan
   if (nav.startsWith("zh-TW") || nav.startsWith("zh-Hant") || tz.includes("Taipei")) return "zh-TW";
-  // Chinese (mainland/HK)
   if (nav.startsWith("zh")) return "zh";
-  // Japanese
   if (nav.startsWith("ja") || tz.includes("Tokyo")) return "ja";
-  // Korean
   if (nav.startsWith("ko") || tz.includes("Seoul")) return "ko";
-  // Spanish
   if (nav.startsWith("es")) return "es";
-  // French
   if (nav.startsWith("fr")) return "fr";
-  // German
   if (nav.startsWith("de")) return "de";
-  // Italian
   if (nav.startsWith("it")) return "it";
-  // Portuguese
   if (nav.startsWith("pt")) return "pt";
   return "en";
 }
 
-// Detect language from browser locale/timezone
 async function detectLanguageFromIP() {
-  if (localStorage.getItem(LANG_KEY)) return null; // already set
+  if (localStorage.getItem(LANG_KEY)) return null;
   return detectLanguageFromBrowser();
 }
 
 const TRANSLATIONS = {
   en: {
-    // Nav
     home: "Home", chat: "Chat", decks: "My Decks", study: "Study",
     groups: "Study Groups", scan: "Scan & Import", compete: "Compete",
     progress: "Progress", profile: "Profile", settings: "Settings",
@@ -74,7 +61,6 @@ const TRANSLATIONS = {
     publicDecks: "Public Decks", surveys: "Earn AI Credits",
     media: "Audio & Video", classroom: "Classroom", classroomGame: "Class Game",
     resourceLibrary: "Resource Library",
-    // Home
     welcomeBack: "Welcome back", whatStudy: "What would you like to study today?",
     startStudying: "Start Studying", newChat: "New Chat",
     addCard: "Add Card", saveQuiz: "Save Quiz", back: "Back",
@@ -82,7 +68,6 @@ const TRANSLATIONS = {
     classroomTab: "Classroom", community: "Community", account: "Account",
     moreTools: "More Tools", seeAll: "See all",
     aiPowered: "AI-Powered Studying",
-    // Decks
     myDecks: "My Decks", recentDecks: "Recent Decks", communityDecks: "Community Decks",
     searchDecks: "Search decks...", createDeck: "Create Deck", newDeck: "New Deck",
     flashcards: "Flashcards", quizMe: "Quiz Me", adaptiveLearn: "Adaptive Learn",
@@ -106,7 +91,6 @@ const TRANSLATIONS = {
     allCaughtUp: "All caught up!", backToDeckBtn: "Back to Deck",
     excellentWork: "Excellent work!", goodEffort: "Good effort!", keepPracticing: "Keep practicing!",
     correct: "correct", answered: "answered",
-    // Classroom
     createClass: "Create a Class", joinClass: "Join a Class", classesITeach: "Classes I Teach",
     classesImIn: "Classes I'm In", startGame: "Start Game", joinGame: "Join Game",
     joinGameByCode: "Join a Live Game", noClasses: "No classes yet",
@@ -118,7 +102,6 @@ const TRANSLATIONS = {
     noSubject: "No subject", students: "students",
     noDecksYet: "No decks yet. Create some in My Decks.",
     classroomDesc: "Create or join classes, assign decks, and run live games.",
-    // Progress/Stats
     totalMinutes: "Total minutes studied by all users", flashcardsReviewed: "Flashcards reviewed by all users",
     studyImprovement: "+15% avg quiz score improvement",
     studyImprovementDesc: "Based on a study of Cognita users — students reported a 15% average increase in test & quiz scores.",
@@ -127,52 +110,43 @@ const TRANSLATIONS = {
     avgQuizScore: "Avg Quiz Score", quizzesTaken: "Quizzes Taken",
     studyTimeLast7: "Study Time (Last 7 Days)", noSessionsYet: "No study sessions yet",
     recentSessions: "Recent Sessions",
-    // Settings
     theme: "Theme", language: "Language", notifications: "Notifications",
     darkMode: "Dark", lightMode: "Light", systemMode: "System",
     themeDesc: "Choose your preferred appearance",
     languageDesc: "Select your preferred language",
     notificationsDesc: "Manage notification preferences",
-    // Groups
     createGroup: "Create Group", joinGroup: "Join Group", sendMessage: "Send",
     noGroups: "No groups yet",
     groupsDesc: "Join discussions & learn together",
-    // Compete
     competeDesc: "Challenge friends & track who studies most",
     leaderboard: "Leaderboard", friends: "Friends",
     noFriendsYet: "No friends yet", addFriendsToSeeLeaderboard: "Add friends to see a leaderboard!",
     addFriend: "Add a Friend", searchByNameOrEmail: "Search by name or email...",
     myFriends: "My Friends", searchFriendsHint: "Search for friends by name above!",
     accept: "Accept", decline: "Decline", pending: "Pending",
-    // General UI
     loading: "Loading...", error: "Something went wrong", noResults: "No results found",
     rate: "Rate", newest: "Newest", topRated: "Top Rated", trending: "Trending", mostCards: "Most Cards",
     searchBy: "Search by title, subject, or author...",
     searchDecksPlaceholder: "Search decks...",
     searchResults: "Search Results",
     showMoreDecks: "Show more decks →",
-    // Flashcard study hints
     tapToReveal: "Tap or press Space to reveal",
     navigateHint: "← → navigate · G=studied · B=need review",
     studied: "Studied", needToStudy: "Need to Study", done: "Done", next: "Next", prev: "Prev",
     reviewNeedToStudy: "Review \"Need to Study\"",
     doneImGood: "Done — I'm Good!",
-    // Chat
     askCognitaAI: "Ask Cognita AI", askCognitaDesc: "Ask anything about your studies — explanations, summaries, quiz practice, and more.",
     convertToFlashcards: "Convert to Flashcards", convertToQuiz: "Convert to Quiz",
     askAnything: "Ask anything...",
-    // Surveys / Rewards
     surveysTitle: "Earn AI Credits", surveysDesc: "Complete surveys to earn bonus AI credits",
     earnCredits: "Earn Credits", donateCredits: "Donate Credits",
     donateDesc: "Support other learners by donating your extra credits",
     donatePlaceholder: "Enter amount to donate...",
     donateBtn: "Donate",
-    // About
     aboutTitle: "About Cognita", aboutDesc: "Your AI-powered study companion",
     madeBy: "Made by Yohan Chang", version: "Version",
     feedbackTitle: "Send Feedback", feedbackPlaceholder: "Share your thoughts, bugs, or suggestions...",
     submitFeedback: "Submit Feedback", feedbackSent: "Feedback sent! Thank you.",
-    // Brain Dump
     brainDumpTitle: "Voice Brain Dump",
     brainDumpDesc: "Speak freely about what you just learned. AI will clean it up, summarize it, and suggest flashcards.",
     tapToSpeak: "Tap to start speaking", recordingTapToStop: "Recording... tap to stop",
@@ -181,26 +155,19 @@ const TRANSLATIONS = {
     aiSummary: "✨ AI Summary", suggestedFlashcards: "📚 Suggested Flashcards",
     saveToDeck: "-- Save to a deck --", saveFlashcardsToDeck: "Save Flashcards to Deck",
     flashcardsSaved: "Flashcards saved!", startNewBrainDump: "Start New Brain Dump",
-    // Pomodoro
     pomodoroTitle: "Group Pomodoro", pomodoroDesc: "Focus together with your study group",
     focusing: "Focusing", onBreak: "On Break", idle: "Idle",
     startFocus: "Start Focus", takeBreak: "Take Break", endSession: "End Session",
-    // Write Mode
     writeModeTitle: "Write Mode", writeModeDesc: "Type the answer to test your memory",
     typeAnswer: "Type your answer...", checkAnswer: "Check Answer",
     correct2: "Correct!", tryAgain: "Try Again",
-    // Spaced Repetition
     spacedRepTitle: "Spaced Repetition", spacedRepDesc: "Review cards at optimal intervals",
     dueToday: "Due Today", reviewAll: "Review All",
-    // Resource Library
     resourceLibTitle: "Resource Library", resourceLibDesc: "Study materials shared by the community",
-    // Media
     mediaTitle: "AI Audio & Video", mediaDesc: "Generate audio and video study content",
     generateAudio: "Generate Audio", generateVideo: "Generate Video",
-    // Pricing
     pricingTitle: "Upgrade Cognita", pricingDesc: "Get unlimited AI credits and more",
     upgradePlan: "Upgrade Plan", currentPlan: "Current Plan",
-    // Game
     termInvaders: "Term Invaders", termInvadersDesc: "Defend your base by answering flashcard questions",
     startGame2: "Start Game", selectDeck: "Select Deck", selectBackground: "Background",
     selectLevel: "Starting Level", cardCount: "Cards to Use", leaderboardTitle: "Leaderboard",
@@ -208,49 +175,40 @@ const TRANSLATIONS = {
     livesLeft: "Lives", level: "Level", score: "Score",
     gameOver: "Game Over", playAgain: "Play Again", submitScore: "Submit Score",
     viewLeaderboard: "View Leaderboard",
-    // Notifications
     newFriendRequest: "New Friend Request", friendRequestAccepted: "Friend Request Accepted",
     addedToGroup: "Added to Study Group", newMessage: "New Message",
-    // Test Mode
     generatingTest: "Generating your test...", submitTest: "Submit Test",
     matchEachTerm: "Match each term to its definition", choose: "Choose",
-    // Spaced Repetition
     sessionCompleteReviewed: "You reviewed", cardsScheduled: "Cards are scheduled for optimal review times.",
     pickDeck: "Pick Deck", reviewAgain: "Review Again",
     allCaughtUpSRS: "All caught up!", noCardsDueToday: "No cards are due for review today. Check back tomorrow!",
     backToDecks: "← Back to Decks", hard: "Hard", medium: "Medium", easy: "Easy", tomorrow: "Tomorrow",
     myDecks2: "My Decks", publicDecks2: "Public Decks",
     srsDesc: "Cards are automatically scheduled for optimal review based on how well you know them (SM-2 algorithm).",
-    // Profile
     profileTitle: "Profile", displayName: "Display Name", bio: "Bio",
     publicProfile: "Public Profile", savingProfile: "Saving...", saveProfile: "Save Profile",
     notificationSettings: "Notification Settings", signOut: "Sign Out",
     dangerZone: "Danger Zone", deleteAccountDesc: "Deleting your account is permanent. All your decks, flashcards, and data will be permanently removed.",
     deleteMyAccount: "Delete My Account", deleteConfirmMsg: "This will permanently delete all your data. Are you sure?",
     deleting: "Deleting...", yesDelete: "Yes, Delete",
-    // Settings
     settingsTitle: "Settings", appearance: "Appearance", screenMode: "Screen Mode",
     weeklyReminders: "Weekly Study Reminders", notificationsBlocked: "Notifications blocked in browser settings",
     reminderEnabled: "You'll be reminded once a week", privacySecurity: "Privacy & Security",
-    // Progress
     overview: "Overview", dailyGoals: "Daily Goals", todaysProgress: "Today's Progress",
     studyTime: "Study Time", goalReached: "✓ Goal reached!", setDailyGoals: "Set Daily Goals",
     dailyStudyTime: "Daily Study Time (minutes)", dailyCardsToReview: "Daily Cards to Review",
     saveGoals: "Save Goals", averageScore: "Average Score",
     basedOn: "Based on", testsTaken: "Tests Taken", testHistory: "Test History",
     practiceTest: "Practice Test", questions: "questions",
-    // Compete
     pendingRequests: "Pending Requests", sentRequests: "Sent Requests",
     alreadyFriendsPending: "Already friends or request pending!", friendRequestSent: "Friend request sent to",
     noUsersFound: "No users found matching",
-    // Streak & Badges
     streakTab: "🔥 Streak", badgesTab: "🏅 Badges",
     newBadgeUnlocked: "New Badge Unlocked!",
     studiedTodayMsg: "✅ Studied today — keep it up!",
     studyTodayWarning: "⚠️ Study today to keep your streak!",
     studyStreakLabel: "Study Streak", earnedBadge: "✓ Earned",
     dayLabel: "day", daysLabel: "days",
-    // Footer / donate
     unlimitedAiAccess: "Unlimited AI Access",
     unlimitedConfirmed: "Your payment has been confirmed. Enjoy unlimited AI features!",
     donateForUnlimited: "Donate for Unlimited AI",
@@ -268,7 +226,6 @@ const TRANSLATIONS = {
     paymentQuestionsOnly: "Payment questions only:",
     copyrightText: "Cognita. All rights reserved.",
     earnedTodayLabel: "earned today",
-    // Courses
     courses: "Courses", browseCourses: "Browse Courses",
     myCompleted: "Completed", createCourse: "Create a Course",
     backToApp: "Back to App", categories: "Categories",
@@ -293,30 +250,24 @@ const TRANSLATIONS = {
     addModule: "Add Module", moduleTitle: "Module Title",
     moduleVideoId: "YouTube Video ID", moduleSummary: "Module Summary",
     publishBtn: "Publish Course", publishingBtn: "Publishing...",
-    // Decks
     mergeDecksBtn: "Merge", importDeckBtn: "Import",
     surveysAutoReward: "Surveys are provided by CPX Research. Rewards are granted automatically upon completion.",
-    // Feedback
     sendFeedback: "Send Feedback", feedbackSending: "Sending...", feedbackSend: "Send",
     feedbackThanks: "Thanks for your feedback!", ratingLabel: "Rating",
-    // Nav groups & new pages
     advancedTools: "Advanced Tools", examPrep: "Exam Prep",
     codeSandbox: "Code Sandbox", chemBalancer: "Chem Balancer", periodicTable: "Periodic Table",
     apTestPrep: "AP Test Prep", apTips: "AP Tips", stateTestPrep: "State Test Prep", iReadyPrep: "iReady Prep",
     courses: "Courses",
-    // Pomodoro
     pomodoroStudyWith: "Study together with focused intervals",
     focusTimeLabel: "\uD83C\uDF45 Focus Time", breakTimeLabel: "\u2615 Break Time",
     pomodoroSessions: "Sessions", pomodoroMinutesFocused: "Minutes focused",
     pomodoroToBonus: "To bonus credits", pomodoroDeepWorkBonus: "\uD83C\uDF89 Deep Work Bonus! +2 AI credits earned!",
     studyRoomLabel: "Study Room", focusingNow: "focusing now",
     noOneFocusing: "No one is focusing right now. Start a session to kick things off!",
-    // Roadmap
     examDateLabel: "Exam Date", deckOptionalLabel: "Flashcard Deck (optional)",
     whatAreYouStudying: "What are you studying? (optional)",
     generateRoadmapBtn: "Generate Study Roadmap", buildingRoadmap: "Building your roadmap...",
     newPlanBtn: "New Plan",
-    // Media / Decks
     privateLabel: "Private", publicLabel: "Public", myMedia: "My Media",
   },
 
@@ -1969,7 +1920,6 @@ export function useTranslation() {
     return () => window.removeEventListener("lang_change", handler);
   }, []);
 
-  // On first mount, attempt IP geolocation to set language if none saved
   useEffect(() => {
     if (localStorage.getItem(LANG_KEY)) return;
     detectLanguageFromIP().then(code => {

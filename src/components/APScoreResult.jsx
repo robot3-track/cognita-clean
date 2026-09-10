@@ -1,6 +1,5 @@
 import { useState } from "react";
 
-// Score descriptions matching College Board language
 const SCORE_INFO = {
   5: {
     label: "Extremely well qualified",
@@ -39,59 +38,57 @@ const SCORE_INFO = {
   },
 };
 
-// Building icons SVG (college campus illustration)
 function CampusIllustration() {
   return (
     <svg viewBox="0 0 280 80" className="w-full max-w-xs mx-auto" fill="none">
-      {/* Left building */}
+      
       <rect x="10" y="35" width="40" height="45" rx="2" fill="none" stroke="#9ca3af" strokeWidth="1.5"/>
       <rect x="18" y="45" width="8" height="10" rx="1" fill="none" stroke="#9ca3af" strokeWidth="1"/>
       <rect x="32" y="45" width="8" height="10" rx="1" fill="none" stroke="#9ca3af" strokeWidth="1"/>
       <rect x="24" y="60" width="12" height="20" rx="1" fill="none" stroke="#9ca3af" strokeWidth="1"/>
-      {/* Flag on left */}
+      
       <line x1="30" y1="35" x2="30" y2="20" stroke="#9ca3af" strokeWidth="1.5"/>
       <polygon points="30,20 42,24 30,28" fill="none" stroke="#9ca3af" strokeWidth="1"/>
       
-      {/* Center main building (largest) */}
+      
       <rect x="80" y="20" width="120" height="60" rx="2" fill="none" stroke="#6b7280" strokeWidth="2"/>
-      {/* Columns */}
+      
       {[98, 112, 126, 140, 154, 168, 182].map((x, i) => (
         <rect key={i} x={x} y="55" width="5" height="25" rx="1" fill="none" stroke="#6b7280" strokeWidth="1.5"/>
       ))}
-      {/* Triangular pediment */}
+      
       <polygon points="80,20 140,2 200,20" fill="none" stroke="#6b7280" strokeWidth="2"/>
-      {/* Center door */}
+      
       <rect x="130" y="60" width="20" height="20" rx="2" fill="none" stroke="#6b7280" strokeWidth="1.5"/>
-      {/* Windows row */}
+      
       {[90, 112, 158, 180].map((x, i) => (
         <rect key={i} x={x} y="28" width="14" height="14" rx="1" fill="none" stroke="#6b7280" strokeWidth="1"/>
       ))}
-      {/* Dome */}
+      
       <path d="M125,20 Q140,8 155,20" stroke="#6b7280" strokeWidth="1.5" fill="none"/>
       <circle cx="140" cy="8" r="3" fill="none" stroke="#6b7280" strokeWidth="1.5"/>
       
-      {/* Right building */}
+      
       <rect x="230" y="35" width="40" height="45" rx="2" fill="none" stroke="#9ca3af" strokeWidth="1.5"/>
       <rect x="238" y="45" width="8" height="10" rx="1" fill="none" stroke="#9ca3af" strokeWidth="1"/>
       <rect x="252" y="45" width="8" height="10" rx="1" fill="none" stroke="#9ca3af" strokeWidth="1"/>
       <rect x="244" y="60" width="12" height="20" rx="1" fill="none" stroke="#9ca3af" strokeWidth="1"/>
-      {/* Flag on right */}
+      
       <line x1="250" y1="35" x2="250" y2="20" stroke="#9ca3af" strokeWidth="1.5"/>
       <polygon points="250,20 262,24 250,28" fill="none" stroke="#9ca3af" strokeWidth="1"/>
       
-      {/* Trees */}
+      
       <circle cx="65" cy="55" r="8" fill="none" stroke="#9ca3af" strokeWidth="1"/>
       <line x1="65" y1="63" x2="65" y2="75" stroke="#9ca3af" strokeWidth="1.5"/>
       <circle cx="215" cy="55" r="8" fill="none" stroke="#9ca3af" strokeWidth="1"/>
       <line x1="215" y1="63" x2="215" y2="75" stroke="#9ca3af" strokeWidth="1.5"/>
       
-      {/* Ground line */}
+      
       <line x1="0" y1="80" x2="280" y2="80" stroke="#d1d5db" strokeWidth="1"/>
     </svg>
   );
 }
 
-// Circular score display
 function ScoreCircle({ score }) {
   const info = SCORE_INFO[score] || SCORE_INFO[1];
   const circumference = 2 * Math.PI * 52;
@@ -101,9 +98,9 @@ function ScoreCircle({ score }) {
     <div className="flex flex-col items-center">
       <div className="relative w-36 h-36 flex items-center justify-center">
         <svg viewBox="0 0 120 120" className="absolute inset-0 w-full h-full -rotate-90">
-          {/* Background circle */}
+          
           <circle cx="60" cy="60" r="52" fill="none" stroke="#e5e7eb" strokeWidth="6"/>
-          {/* Score arc */}
+          
           <circle
             cx="60" cy="60" r="52"
             fill="none"
@@ -129,7 +126,7 @@ export default function APScoreResult({ score, subject, mcqPct, frqScore, onReta
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.5)" }}>
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden" style={{ fontFamily: "system-ui" }}>
-        {/* AP Classroom header bar */}
+        
         <div className="flex items-center px-5 py-3 border-b border-gray-200" style={{ background: "#f8f9fa" }}>
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded flex items-center justify-center font-black text-white text-xs" style={{ background: "#1a56db" }}>AP</div>
@@ -139,15 +136,15 @@ export default function APScoreResult({ score, subject, mcqPct, frqScore, onReta
         </div>
 
         <div className="px-6 py-8 flex flex-col items-center text-center space-y-5">
-          {/* Score circle */}
+          
           <ScoreCircle score={score} />
 
-          {/* Campus illustration */}
+          
           <div className="w-full py-2">
             <CampusIllustration />
           </div>
 
-          {/* Description */}
+          
           <div className="space-y-2">
             <p className="text-sm font-semibold text-gray-800 leading-relaxed">{info.desc}</p>
             {score >= 3 && (
@@ -155,7 +152,7 @@ export default function APScoreResult({ score, subject, mcqPct, frqScore, onReta
             )}
           </div>
 
-          {/* Buttons */}
+          
           <div className="w-full space-y-2.5">
             <button
               onClick={() => setShowDetails(d => !d)}

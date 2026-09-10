@@ -1,4 +1,3 @@
-// for this code I did a quick update to make the badge look more realistic; it uses svg designing
 export default function VerifiedBadge({ size = 16, className = "", title = "Verified" }) {
   return (
     <svg

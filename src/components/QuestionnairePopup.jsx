@@ -16,21 +16,18 @@ export default function QuestionnairePopup({ user }) {
 
   useEffect(() => {
     if (!user?.email) return;
-    // Only check once per browser session to avoid rate limiting
     if (sessionStorage.getItem(SESSION_CHECKED_KEY)) return;
     sessionStorage.setItem(SESSION_CHECKED_KEY, "1");
     loadQuestionnaire();
   }, [user]);
 
   const loadQuestionnaire = async () => {
-    // Only show after user has logged in 3+ times
     const loginEvents = await db.entities.UserLoginEvent.filter({ user_email: user.email });
     if (loginEvents.length < 3) return;
 
     const dismissed = JSON.parse(localStorage.getItem(DISMISSED_KEY) || "[]");
     const all = await db.entities.Questionnaire.filter({ active: true }, "-created_date", 10);
     
-    // Find one the user hasn't answered yet
     const responses = await db.entities.QuestionnaireResponse.filter({ user_email: user.email });
     const answeredIds = new Set(responses.map(r => r.questionnaire_id));
     
@@ -85,7 +82,7 @@ export default function QuestionnairePopup({ user }) {
               className="w-full max-w-md rounded-3xl shadow-2xl pointer-events-auto overflow-hidden"
               style={{ background: "var(--app-surface)", border: "1px solid var(--app-border)", color: "var(--app-text)" }}
             >
-              {/* Header */}
+              
               <div className="flex items-start justify-between p-6 pb-4">
                 <div>
                   <p className="text-xs font-bold text-violet-400 mb-1">📋 Quick Survey</p>

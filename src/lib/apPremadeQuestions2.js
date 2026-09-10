@@ -1,7 +1,4 @@
-// ─── AP Premade Question Bank — Part 2 ───────────────────────────────────────
-// Additional subjects: World History, Chemistry, Statistics, US Gov, Calc BC, Microecon
 
-// ─── AP World History ─────────────────────────────────────────────────────────
 export const AP_WORLD_HISTORY_V1 = {
   mcq: [
     {
@@ -225,7 +222,6 @@ export const AP_WORLD_HISTORY_V1 = {
   ]
 };
 
-// ─── AP Chemistry ─────────────────────────────────────────────────────────────
 export const AP_CHEMISTRY_V1 = {
   mcq: [
     {
@@ -356,7 +352,6 @@ export const AP_CHEMISTRY_V1 = {
   ]
 };
 
-// ─── AP Statistics ────────────────────────────────────────────────────────────
 export const AP_STATISTICS_V1 = {
   mcq: [
     {
@@ -494,7 +489,6 @@ export const AP_STATISTICS_V1 = {
   ]
 };
 
-// ─── AP US Government ─────────────────────────────────────────────────────────
 export const AP_US_GOV_V1 = {
   mcq: [
     {
@@ -683,7 +677,6 @@ export const AP_US_GOV_V1 = {
   ]
 };
 
-// ─── AP Calculus BC ───────────────────────────────────────────────────────────
 export const AP_CALCULUS_BC_V1 = {
   mcq: [
     {
@@ -796,7 +789,6 @@ export const AP_CALCULUS_BC_V1 = {
   ]
 };
 
-// ─── AP Microeconomics ────────────────────────────────────────────────────────
 export const AP_MICROECONOMICS_V1 = {
   mcq: [
     {

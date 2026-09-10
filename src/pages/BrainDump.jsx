@@ -14,7 +14,7 @@ export default function BrainDump() {
   const [recording, setRecording] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [processing, setProcessing] = useState(false);
-  const [result, setResult] = useState(null); // { summary, flashcards: [{front, back}] }
+  const [result, setResult] = useState(null);
   const [selectedDeck, setSelectedDeck] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -51,7 +51,6 @@ export default function BrainDump() {
       setTranscript(final + interim);
     };
     recognition.onend = () => {
-      // Restart automatically unless user explicitly stopped
       if (recognitionRef.current && recognitionRef.current._shouldKeepGoing) {
         try { recognition.start(); } catch {}
       } else {
@@ -130,7 +129,7 @@ export default function BrainDump() {
         </div>
         <p className="text-sm mb-8" style={mutedStyle}>{t('brainDumpDesc')}</p>
 
-        {/* Record button */}
+        
         <div className="rounded-3xl p-8 text-center mb-6" style={cardStyle}>
           <button
             onClick={recording ? stopRecording : startRecording}
@@ -148,7 +147,7 @@ export default function BrainDump() {
           )}
         </div>
 
-        {/* Transcript */}
+        
         {(transcript || recording) && (
           <div className="rounded-3xl p-5 mb-4" style={cardStyle}>
             <p className="text-xs font-semibold mb-2" style={mutedStyle}>{t('transcript')}</p>

@@ -7,7 +7,7 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { incrementAiUsage } from "../components/aiUsageLimit";
 import { generateQuizFromCards } from "../lib/lynxApi";
-import { ChevronLeft, ChevronRight, Check, Brain, Target, Loader2, Plus, Trash2, Edit3, Save, BookmarkCheck, Bookmark, FolderOpen, Folder, Shuffle, Gamepad2, Type, RefreshCw, PenLine, Flag, AlertTriangle, ClipboardList, Globe, Lock } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, Brain, Target, Loader2, Plus, Trash2, Edit3, Save, BookmarkCheck, Bookmark, Folder, Shuffle, Gamepad2, PenLine, Flag, AlertTriangle, ClipboardList, Globe, Lock } from "lucide-react";
 import DyslexiaToolbar from "@/components/DyslexiaToolbar";
 import DeckCoverPicker from "@/components/DeckCoverPicker";
 import LatexRenderer from "../components/LatexRenderer";

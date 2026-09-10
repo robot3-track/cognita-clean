@@ -1,6 +1,4 @@
-// ─── Additional AP Question Banks — HuG (V4, V5), Chemistry (V3), World History (V3) ──
 
-// ─── AP Human Geography V4 ────────────────────────────────────────────────────
 export const AP_HUMAN_GEO_V4 = {
   mcq: [
     {
@@ -215,7 +213,6 @@ export const AP_HUMAN_GEO_V4 = {
   ]
 };
 
-// ─── AP Human Geography V5 ────────────────────────────────────────────────────
 export const AP_HUMAN_GEO_V5 = {
   mcq: [
     {
@@ -408,7 +405,6 @@ export const AP_HUMAN_GEO_V5 = {
   ]
 };
 
-// ─── AP Chemistry V3 ──────────────────────────────────────────────────────────
 export const AP_CHEMISTRY_V3 = {
   mcq: [
     {
@@ -637,7 +633,6 @@ export const AP_CHEMISTRY_V3 = {
   ]
 };
 
-// ─── AP World History V3 ──────────────────────────────────────────────────────
 export const AP_WORLD_HISTORY_V3 = {
   mcq: [
     {

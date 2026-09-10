@@ -5,11 +5,10 @@ import { useEffect, useRef } from "react";
 const RATE_KEY = "cognita_act_log";
 const FLAGGED_KEY = "cognita_flagged";
 
-// Thresholds
 const THRESHOLDS = {
-  ai_requests_per_minute: 15,       // >15 AI calls in 60s
-  deck_creates_per_minute: 10,      // >10 decks created in 60s
-  flashcard_creates_per_minute: 60, // >60 cards in 60s
+  ai_requests_per_minute: 15,
+  deck_creates_per_minute: 10,
+  flashcard_creates_per_minute: 60,
 };
 
 function getLog() {
@@ -41,7 +40,6 @@ async function suspendUser(user, trigger, details) {
     details,
     status: "suspended",
   });
-  // Notify admin
   await db.integrations.Core.SendEmail({
     to: "yohanyinyuchang@gmail.com",
     subject: `⚠️ Suspicious Activity — ${user.email}`,
@@ -59,7 +57,6 @@ export function useSuspiciousActivity(user) {
     if (!user?.email || checkedRef.current) return;
     checkedRef.current = true;
 
-    // Subscribe to entity creates to detect bursts
     const unsubDecks = db.entities.Deck.subscribe(event => {
       if (event.type !== "create") return;
       if (event.data?.created_by !== user.email) return;

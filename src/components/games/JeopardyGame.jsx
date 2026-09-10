@@ -12,20 +12,18 @@ const COLORS = [
 ];
 
 function buildBoard(cards) {
-  // Group cards into up to 5 categories of 5 questions each
   const shuffled = [...cards].sort(() => Math.random() - 0.5);
   const categories = [];
   const chunkSize = 5;
   for (let i = 0; i < Math.min(shuffled.length, 25); i += chunkSize) {
     const chunk = shuffled.slice(i, i + chunkSize);
     if (chunk.length < 2) break;
-    // Use the first card's front as a loose "category" name — or just label them
     categories.push({
       name: `Category ${categories.length + 1}`,
       clues: chunk.map((card, j) => ({
         value: VALUES[j] || (j + 1) * 100,
-        question: card.back, // the answer = "question" in jeopardy
-        answer: card.front,  // the term = "answer" in jeopardy
+        question: card.back,
+        answer: card.front,
         card,
         used: false,
       })),
@@ -37,10 +35,10 @@ function buildBoard(cards) {
 export default function JeopardyGame({ cards, onExit }) {
   const [board, setBoard] = useState(null);
   const [score, setScore] = useState(0);
-  const [selected, setSelected] = useState(null); // { catIdx, clueIdx }
-  const [phase, setPhase] = useState("board"); // board | clue | reveal | done
+  const [selected, setSelected] = useState(null);
+  const [phase, setPhase] = useState("board");
   const [userAnswer, setUserAnswer] = useState("");
-  const [feedback, setFeedback] = useState(null); // correct | wrong
+  const [feedback, setFeedback] = useState(null);
   const [allUsed, setAllUsed] = useState(false);
 
   useEffect(() => {
@@ -67,7 +65,6 @@ export default function JeopardyGame({ cards, onExit }) {
   const submitAnswer = () => {
     if (!selected || !userAnswer.trim()) return;
     const clue = board[selected.catIdx].clues[selected.clueIdx];
-    // Flexible match: check if user's answer contains the key term (case insensitive)
     const correct = clue.answer.toLowerCase().split(/\s+/).some(word =>
       word.length > 3 && userAnswer.toLowerCase().includes(word)
     ) || userAnswer.toLowerCase().trim() === clue.answer.toLowerCase().trim();
@@ -89,7 +86,6 @@ export default function JeopardyGame({ cards, onExit }) {
     setSelected(null);
     setPhase("board");
     setFeedback(null);
-    // Check if all used
     const allDone = newBoard.every(cat => cat.clues.every(c => c.used));
     if (allDone) setAllUsed(true);
   };
@@ -115,7 +111,7 @@ export default function JeopardyGame({ cards, onExit }) {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "#0a0a2e", color: "white" }}>
-      {/* Header */}
+      
       <div className="flex items-center justify-between px-4 py-3 shrink-0" style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)" }}>
         <button onClick={onExit} className="text-white/60 hover:text-white"><X className="w-5 h-5" /></button>
         <div className="text-center">
@@ -125,17 +121,17 @@ export default function JeopardyGame({ cards, onExit }) {
         <div className="w-8" />
       </div>
 
-      {/* Board */}
+      
       <div className="flex-1 overflow-auto p-2">
         <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${board.length}, 1fr)` }}>
-          {/* Category headers */}
+          
           {board.map((cat, ci) => (
             <div key={ci} className="rounded-xl p-2 text-center text-[10px] font-black uppercase tracking-wide text-white/80 min-h-[48px] flex items-center justify-center"
               style={{ background: "rgba(30,30,120,0.8)" }}>
               {cat.name}
             </div>
           ))}
-          {/* Clues */}
+          
           {VALUES.map((val, vi) =>
             board.map((cat, ci) => {
               const clue = cat.clues[vi];
@@ -158,7 +154,7 @@ export default function JeopardyGame({ cards, onExit }) {
         </div>
       </div>
 
-      {/* Clue Modal */}
+      
       <AnimatePresence>
         {phase !== "board" && selected !== null && (
           <motion.div

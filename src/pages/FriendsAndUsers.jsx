@@ -10,7 +10,7 @@ export default function FriendsAndUsers() {
   const [friendships, setFriendships] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
-  const [pendingActions, setPendingActions] = useState({}); // userId -> "sending"|"accepting"|"declining"
+  const [pendingActions, setPendingActions] = useState({});
   const [viewingUser, setViewingUser] = useState(null);
 
   const DEV_EMAILS = ["yychang100@student.hbuhsd.edu", "yohanyinyuchang@gmail.com", "yohanchang@outlook.com"];
@@ -42,7 +42,6 @@ export default function FriendsAndUsers() {
 
   const isDev = me && DEV_EMAILS.includes(me.email);
 
-  // Normalizes emails to lower-case so comparisons never fail due to capitalization differences
   const getFriendship = (userEmail) => {
     if (!me?.email || !userEmail) return null;
     const myEmail = me.email.toLowerCase();
@@ -133,7 +132,7 @@ export default function FriendsAndUsers() {
               : <p className="text-xs opacity-30">No bio</p>}
           </div>
           <div onClick={e => e.stopPropagation()}>
-            {/* Show Add button ONLY if not myself AND no friendship record exists at all */}
+            
             {!isMyEmail && !friendship && (
               <button
                 onClick={() => sendFriendRequest(u)}
@@ -145,7 +144,7 @@ export default function FriendsAndUsers() {
               </button>
             )}
 
-            {/* Pending states */}
+            
             {isPending && (friendship.requester_email || friendship.requesterEmail)?.toLowerCase() === me?.email?.toLowerCase() && (
               <span className="text-xs px-2.5 py-1 rounded-xl opacity-50" style={cardStyle}>Pending</span>
             )}
@@ -160,12 +159,12 @@ export default function FriendsAndUsers() {
               </div>
             )}
 
-            {/* Friends state */}
+            
             {isAccepted && (
               <span className="text-xs px-2.5 py-1.5 rounded-xl text-emerald-400 bg-emerald-500/15 font-semibold">Friends</span>
             )}
 
-            {/* Declined state */}
+            
             {friendship?.status === "declined" && (
               <button onClick={() => sendFriendRequest(u)} className="text-xs px-2.5 py-1.5 rounded-xl opacity-40 hover:opacity-80 transition-all" style={cardStyle}>
                 Re-add

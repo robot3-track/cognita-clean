@@ -2,17 +2,14 @@ import { useState, useEffect, useRef } from "react";
 import { PenLine, Loader2, CheckCircle2, ChevronDown, ChevronUp, MoreHorizontal, Bookmark, BookmarkCheck } from "lucide-react";
 import StimulusRenderer from "./APStimulusRenderer";
 
-// ── FRQ visual resolver — returns a visual component or null based on title/stimulus
 function FRQVisual({ frq }) {
   const t = (frq.title || "").toLowerCase();
   const s = (frq.stimulus || "").toLowerCase();
   const desc = frq.stimulus_image_description || "";
 
-  // Japan population pyramid
   if (t.includes("japan population pyramid") || s.includes("japan population pyramid") || desc.toLowerCase().includes("japan")) {
     return <StimulusRenderer q={{ diagram_type: "population_pyramid", stimulus_image_description: "japan" }} isDark={false} muted="rgba(0,0,0,0.5)" text="#1a1a2e" />;
   }
-  // Milk & Pork maps
   if ((t.includes("milk") && t.includes("pork")) || (s.includes("cow's milk") && s.includes("pork"))) {
     return <FRQMapImage
       src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Cow_milk_production_by_country.png/1200px-Cow_milk_production_by_country.png"
@@ -21,7 +18,6 @@ function FRQVisual({ frq }) {
       source="Food and Agriculture Organization (FAO), 2018"
     />;
   }
-  // Saskatchewan & Finland
   if ((t.includes("saskatchewan") || s.includes("saskatchewan")) || (t.includes("finland") && t.includes("political"))) {
     return <FRQMapImage
       src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Saskatchewan_map.png/640px-Saskatchewan_map.png"
@@ -30,7 +26,6 @@ function FRQVisual({ frq }) {
       source="Statistics Canada / ESRI Data Partners"
     />;
   }
-  // Asian ethnic neighborhoods in LA
   if ((t.includes("asian ethnic") && t.includes("los angeles")) || (s.includes("los angeles county") && s.includes("asian"))) {
     return <FRQMapImage
       src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Los_Angeles_County_location_map.svg/800px-Los_Angeles_County_location_map.svg.png"
@@ -39,7 +34,6 @@ function FRQVisual({ frq }) {
       source="U.S. Census Bureau"
     />;
   }
-  // Washington DC metro
   if ((t.includes("washington") && (t.includes("metro") || t.includes("metrorail"))) || (s.includes("metrorail") && s.includes("washington"))) {
     return <FRQMapImage
       src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Washington_Metro_Map.svg/800px-Washington_Metro_Map.svg.png"
@@ -48,7 +42,6 @@ function FRQVisual({ frq }) {
       source="WMATA / ESRI Data Partners"
     />;
   }
-  // Metacities / world cities
   if (t.includes("metacities") || (s.includes("metacities") && s.includes("world cities"))) {
     return <FRQMapImage
       src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/World_cities_by_size.svg/1200px-World_cities_by_size.svg.png"
@@ -57,7 +50,6 @@ function FRQVisual({ frq }) {
       source="United Nations, 2020"
     />;
   }
-  // Sahel / Pastoral Nomadism
   if (t.includes("sahel") || s.includes("sahel") || (t.includes("pastoral") && s.includes("pastoral"))) {
     return <FRQMapImage
       src="https://upload.wikimedia.org/wikipedia/commons/8/8e/Sahel_Map-Africa_rough.png"
@@ -66,7 +58,6 @@ function FRQVisual({ frq }) {
       source="Food and Agriculture Organization (FAO)"
     />;
   }
-  // Boston biotech
   if (t.includes("boston") && (t.includes("biotech") || t.includes("high-technology") || t.includes("medical"))) {
     return <FRQMapImage
       src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Boston_metro_area_map.png/800px-Boston_metro_area_map.png"
@@ -75,7 +66,6 @@ function FRQVisual({ frq }) {
       source="National Institutes of Health"
     />;
   }
-  // Silk Road / trade routes
   if (t.includes("silk road") || s.includes("silk road") || (t.includes("trade") && s.includes("trade routes"))) {
     return <FRQMapImage
       src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Silk_Road_Trade_%28c.1200_CE%29.jpg/1280px-Silk_Road_Trade_%28c.1200_CE%29.jpg"
@@ -84,14 +74,12 @@ function FRQVisual({ frq }) {
       source="Adapted from Janet Abu-Lughod / Wikimedia Commons"
     />;
   }
-  // Demographic Transition Model data table
   if (t.includes("demographic transition") || s.includes("demographic transition model")) {
     return <StimulusRenderer q={{ diagram_type: "dtm" }} isDark={false} muted="rgba(0,0,0,0.5)" text="#1a1a2e" />;
   }
   return null;
 }
 
-// Simple map image display for FRQs
 function FRQMapImage({ src, alt, caption, source }) {
   const [failed, setFailed] = useState(false);
   if (failed) return null;
@@ -106,14 +94,11 @@ function FRQMapImage({ src, alt, caption, source }) {
   );
 }
 
-// FRQ stimulus block — shows visual then text
-// Uses StimulusRenderer for visual detection so all map/diagram logic is unified
 function FRQStimulusBlock({ frq, text, muted }) {
   const visual = FRQVisual({ frq });
   const hasStimulus = frq.stimulus || frq.stimulus_image_description || frq.map_description || frq.diagram_type;
   if (!hasStimulus && !visual) return null;
 
-  // If FRQVisual found something, show it + optional stimulus text
   if (visual) {
     return (
       <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(0,0,0,0.09)" }}>
@@ -129,7 +114,6 @@ function FRQStimulusBlock({ frq, text, muted }) {
     );
   }
 
-  // Fall back to StimulusRenderer which handles all visual detection
   return (
     <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(0,0,0,0.09)" }}>
       <div className="p-5" style={{ background: "#f8f9fa" }}>
@@ -179,7 +163,6 @@ export function SectionBreakScreen({ subject, mcqCount, frqCount, onContinue, on
   );
 }
 
-// ── AP Classroom FRQ Interface — two-pane College Board style ─────────────────
 export function APFRQInterface({ frqQuestions, subject, frqResponses, setFrqResponses, onSubmit, onExit, grading }) {
   const [currentFRQ, setCurrentFRQ] = useState(0);
   const [seconds, setSeconds] = useState(0);
@@ -207,7 +190,6 @@ export function APFRQInterface({ frqQuestions, subject, frqResponses, setFrqResp
       const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
       const rect = containerRef.current.getBoundingClientRect();
       const raw = ((clientX - rect.left) / rect.width) * 100;
-      // Snap to 25%, 50%, 75% if within 3%
       const snaps = [25, 50, 75];
       const snapped = snaps.find(s => Math.abs(raw - s) < 3);
       setSplitPct(Math.min(75, Math.max(25, snapped !== undefined ? snapped : raw)));
@@ -227,7 +209,6 @@ export function APFRQInterface({ frqQuestions, subject, frqResponses, setFrqResp
     window.addEventListener("touchend", onUp);
   };
 
-  // ~25 min per FRQ
   const EXAM_TOTAL = frqQuestions.length * 25 * 60;
 
   useEffect(() => { timerHiddenRef.current = timerHidden; }, [timerHidden]);
@@ -256,15 +237,14 @@ export function APFRQInterface({ frqQuestions, subject, frqResponses, setFrqResp
   const muted = "rgba(0,0,0,0.5)";
   const headerBg = "#f0f0f0";
 
-  // Total points for this FRQ
   const totalPts = frq?.parts?.reduce((s, p) => s + (p.points || 0), 0) || null;
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col" style={{ background: bg, color: text, fontFamily: "Georgia, serif" }}>
 
-      {/* ── Top Header ── */}
+      
       <div className="flex items-center px-4 py-2 shrink-0 gap-3" style={{ background: headerBg, borderBottom: `1px solid ${border}` }}>
-        {/* Directions toggle */}
+        
         <button onClick={() => setShowDirections(d => !d)}
           className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded transition-all hover:bg-black/10"
           style={{ color: text, fontFamily: "system-ui" }}>
@@ -274,7 +254,7 @@ export function APFRQInterface({ frqQuestions, subject, frqResponses, setFrqResp
           Section II — Free Response · {subject}
         </span>
 
-        {/* Timer */}
+        
         <div className="flex items-center gap-2 shrink-0">
           {timerHidden
             ? <span className="text-xl font-black tabular-nums text-gray-400" style={{ fontFamily: "system-ui" }}>--:--</span>
@@ -287,7 +267,7 @@ export function APFRQInterface({ frqQuestions, subject, frqResponses, setFrqResp
           </button>
         </div>
 
-        {/* Three-dot menu */}
+        
         <div className="relative shrink-0" ref={moreMenuRef}>
           <button onClick={() => setShowMoreMenu(m => !m)}
             className={`p-1.5 rounded transition-all ${showMoreMenu ? "bg-black/10" : "hover:bg-black/10 opacity-60 hover:opacity-100"}`}>
@@ -320,17 +300,17 @@ export function APFRQInterface({ frqQuestions, subject, frqResponses, setFrqResp
         <span className="px-3 py-1 rounded text-xs font-black text-white shrink-0" style={{ background: "#1a56db", fontFamily: "system-ui" }}>AP©</span>
       </div>
 
-      {/* Directions dropdown */}
+      
       {showDirections && (
         <div className="px-6 py-3 text-sm border-b" style={{ background: headerBg, borderColor: border, fontFamily: "system-ui", color: muted }}>
           <strong style={{ color: text }}>Directions:</strong> Write your response in the space provided for each part. For full credit, address each part of the question completely using complete sentences. Show all work where applicable. Use specific evidence to support your answers.
         </div>
       )}
 
-      {/* ── Two-pane main area ── */}
+      
       <div ref={containerRef} className="flex flex-1 overflow-hidden">
 
-        {/* Left pane — FRQ prompt & stimulus */}
+        
         <div className="overflow-y-auto p-8" style={{ borderRight: `1px solid ${border}`, width: `${splitPct}%`, minWidth: "25%", maxWidth: "75%" }}>
           {frq && (
             <div className="space-y-5 max-w-prose" style={{ fontSize: `${zoom}em`, transformOrigin: "top left" }}>
@@ -339,15 +319,15 @@ export function APFRQInterface({ frqQuestions, subject, frqResponses, setFrqResp
                 {totalPts !== null && <span className="ml-3 normal-case font-semibold">({totalPts} points)</span>}
               </p>
 
-              {/* Stimulus block — image + text. Always render; component decides internally if there's anything to show */}
+              
               <FRQStimulusBlock frq={frq} text={text} muted={muted} />
 
-              {/* FRQ title / prompt */}
+              
               <p className="text-base font-bold leading-relaxed" style={{ fontFamily: "Georgia, serif" }}>
                 {frq.prompt || frq.title}
               </p>
 
-              {/* Parts listed on left as read-only context */}
+              
               {frq.parts?.map((part, pi) => (
                 <div key={pi} className="space-y-1.5">
                   <p className="text-sm font-bold" style={{ fontFamily: "system-ui" }}>
@@ -364,7 +344,7 @@ export function APFRQInterface({ frqQuestions, subject, frqResponses, setFrqResp
           )}
         </div>
 
-        {/* Draggable divider */}
+        
         <div
           onMouseDown={onDividerMouseDown}
           className="w-2 flex items-center justify-center shrink-0 cursor-col-resize select-none group"
@@ -379,11 +359,11 @@ export function APFRQInterface({ frqQuestions, subject, frqResponses, setFrqResp
           </div>
         </div>
 
-        {/* Right pane — response writing area */}
+        
         <div className="overflow-y-auto p-8 flex flex-col gap-5" style={{ flex: 1 }}>
           {frq && (
             <div style={{ fontSize: `${zoom}em`, transformOrigin: "top left" }}>
-              {/* Mark for review */}
+              
               <div className="flex items-center justify-between" style={{ fontFamily: "system-ui" }}>
                 <button
                   onClick={() => setMarked(prev => ({ ...prev, [currentFRQ]: !prev[currentFRQ] }))}
@@ -394,7 +374,7 @@ export function APFRQInterface({ frqQuestions, subject, frqResponses, setFrqResp
                 </button>
               </div>
 
-              {/* Per-part textareas or single textarea */}
+              
               {frq.parts?.length > 0 ? (
                 <div className="space-y-5">
                   {frq.parts.map((part, pi) => (
@@ -437,7 +417,7 @@ export function APFRQInterface({ frqQuestions, subject, frqResponses, setFrqResp
         </div>
       </div>
 
-      {/* ── Bottom bar ── */}
+      
       <div className="flex items-center px-6 py-3 shrink-0 gap-3" style={{ background: headerBg, borderTop: `1px solid ${border}`, fontFamily: "system-ui" }}>
         <button onClick={() => setCurrentFRQ(i => Math.max(0, i - 1))} disabled={currentFRQ === 0}
           className="px-4 py-2 rounded text-sm font-semibold border disabled:opacity-30 transition-all hover:bg-black/10"
@@ -445,7 +425,7 @@ export function APFRQInterface({ frqQuestions, subject, frqResponses, setFrqResp
           Back
         </button>
 
-        {/* Question nav pill */}
+        
         <button onClick={() => setNavOpen(o => !o)}
           className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all"
           style={{ background: "#e0e0e0", color: text }}>
@@ -473,7 +453,7 @@ export function APFRQInterface({ frqQuestions, subject, frqResponses, setFrqResp
         </div>
       </div>
 
-      {/* FRQ nav overlay */}
+      
       {navOpen && (
         <div className="absolute bottom-14 left-1/2 -translate-x-1/2 rounded-2xl shadow-2xl p-4 z-10 w-64"
           style={{ background: "#ffffff", border: `1px solid ${border}`, fontFamily: "system-ui" }}>
@@ -495,7 +475,7 @@ export function APFRQInterface({ frqQuestions, subject, frqResponses, setFrqResp
         </div>
       )}
 
-      {/* Exit confirmation modal */}
+      
       {showExitConfirm && (
         <div className="absolute inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.5)" }}>
           <div className="rounded-2xl p-6 w-80 shadow-2xl" style={{ background: "#ffffff", fontFamily: "system-ui" }}>

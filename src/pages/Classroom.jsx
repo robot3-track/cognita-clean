@@ -20,7 +20,6 @@ function genId() {
 
 const CLASS_COLORS = ["#7c3aed","#2563eb","#059669","#dc2626","#d97706","#0891b2","#be185d","#0f766e"];
 
-// ── Class Card ────────────────────────────────────────────────────────────────
 function ClassCard({ cls, isTeacher, onClick }) {
   const color = cls.color || CLASS_COLORS[0];
   const assignmentCount = (cls.assignments || []).length;
@@ -44,7 +43,6 @@ function ClassCard({ cls, isTeacher, onClick }) {
   );
 }
 
-// ── Progress Tab ──────────────────────────────────────────────────────────────
 function ProgressTab({ cls, allDecks, color }) {
   const [sessions, setSessions] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -79,7 +77,6 @@ function ProgressTab({ cls, allDecks, color }) {
     </div>
   );
 
-  // Build completion matrix: for each assignment, which students have a session?
   return (
     <div className="space-y-4">
       <p className="text-xs opacity-40">{students.length} student{students.length!==1?"s":""} · {assignments.length} assignment{assignments.length!==1?"s":""}</p>
@@ -109,11 +106,11 @@ function ProgressTab({ cls, allDecks, color }) {
                 <p className="text-xs opacity-40">{completedCount}/{students.length} started</p>
               </div>
             </div>
-            {/* Progress bar */}
+            
             <div className="h-1.5 rounded-full mb-3 overflow-hidden" style={{ background: "var(--app-bg)" }}>
               <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: color }} />
             </div>
-            {/* Per-student breakdown */}
+            
             {students.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
                 {students.map(email => {
@@ -134,7 +131,6 @@ function ProgressTab({ cls, allDecks, color }) {
   );
 }
 
-// ── Classroom Detail View ─────────────────────────────────────────────────────
 function ClassroomDetail({ cls, user, myDecks, allDecks, onUpdate, onBack, onDelete }) {
   const navigate = useNavigate();
   const isTeacher = cls.teacher_email === user?.email;
@@ -143,22 +139,19 @@ function ClassroomDetail({ cls, user, myDecks, allDecks, onUpdate, onBack, onDel
   const [copied, setCopied] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Folder management
   const [newFolderName, setNewFolderName] = useState("");
   const [showFolderInput, setShowFolderInput] = useState(false);
-  const [movingDeck, setMovingDeck] = useState(null); // deck_id being moved
+  const [movingDeck, setMovingDeck] = useState(null);
 
-  // Add student directly
   const [addInput, setAddInput] = useState("");
-  const [addMode, setAddMode] = useState("email"); // "email" | "name"
+  const [addMode, setAddMode] = useState("email");
   const [addingStudent, setAddingStudent] = useState(false);
   const [allUsers, setAllUsers] = useState([]);
   const [usersLoaded, setUsersLoaded] = useState(false);
   const [transferEmail, setTransferEmail] = useState("");
   const [transferring, setTransferring] = useState(false);
 
-  // Assign modal
-  const [assigningDeck, setAssigningDeck] = useState(null); // deck object
+  const [assigningDeck, setAssigningDeck] = useState(null);
   const [assignTitle, setAssignTitle] = useState("");
   const [assignDueDate, setAssignDueDate] = useState("");
   const [assignFolder, setAssignFolder] = useState("");
@@ -174,7 +167,6 @@ function ClassroomDetail({ cls, user, myDecks, allDecks, onUpdate, onBack, onDel
   const resources = (cls.resource_deck_ids || []);
   const assignments = cls.assignments || [];
 
-  // ── resource management ──
   const toggleResource = async (deckId) => {
     const current = resources;
     const newIds = current.includes(deckId) ? current.filter(id => id !== deckId) : [...current, deckId];
@@ -186,14 +178,12 @@ function ClassroomDetail({ cls, user, myDecks, allDecks, onUpdate, onBack, onDel
 
   const removeResource = async (deckId) => {
     const newIds = resources.filter(id => id !== deckId);
-    // Also remove from deck_folders
     const newFolders = { ...deckFolders };
     delete newFolders[deckId];
     const updated = await db.entities.ClassroomClass.update(cls.id, { resource_deck_ids: newIds, deck_folders: newFolders });
     onUpdate(updated);
   };
 
-  // ── folder management ──
   const createFolder = async () => {
     if (!newFolderName.trim()) return;
     const updated = await db.entities.ClassroomClass.update(cls.id, { folders: [...folders, newFolderName.trim()] });
@@ -209,7 +199,6 @@ function ClassroomDetail({ cls, user, myDecks, allDecks, onUpdate, onBack, onDel
     setMovingDeck(null);
   };
 
-  // ── assignment ──
   const openAssign = (deck) => {
     setAssigningDeck(deck);
     setAssignTitle(deck.title);
@@ -235,7 +224,6 @@ function ClassroomDetail({ cls, user, myDecks, allDecks, onUpdate, onBack, onDel
     });
     onUpdate(updated);
 
-    // Notify all students
     const dueStr = assignDueDate ? ` — due ${new Date(assignDueDate).toLocaleDateString()}` : "";
     const notifPromises = (cls.student_emails || []).map(email =>
       db.entities.AppNotification.create({
@@ -259,7 +247,6 @@ function ClassroomDetail({ cls, user, myDecks, allDecks, onUpdate, onBack, onDel
     onUpdate(updated);
   };
 
-  // load users lazily when People tab is opened
   const loadUsers = async () => {
     if (usersLoaded) return;
     const users = await db.entities.User.list("-created_date");
@@ -267,7 +254,6 @@ function ClassroomDetail({ cls, user, myDecks, allDecks, onUpdate, onBack, onDel
     setUsersLoaded(true);
   };
 
-  // ── people ──
   const addStudentByEmail = async (email) => {
     const e = (email || addInput).trim().toLowerCase();
     if (!e) return;
@@ -292,7 +278,7 @@ function ClassroomDetail({ cls, user, myDecks, allDecks, onUpdate, onBack, onDel
     });
     onUpdate(updated);
     setTransferring(false);
-    onBack(); // current user is no longer teacher
+    onBack();
   };
 
   const removeStudent = async (email) => {
@@ -320,7 +306,6 @@ function ClassroomDetail({ cls, user, myDecks, allDecks, onUpdate, onBack, onDel
     !deckSearch || d.title.toLowerCase().includes(deckSearch.toLowerCase())
   );
 
-  // Group resources by folder
   const resourcesByFolder = {};
   const unfolderedResources = [];
   resources.forEach(id => {
@@ -333,7 +318,6 @@ function ClassroomDetail({ cls, user, myDecks, allDecks, onUpdate, onBack, onDel
     }
   });
 
-  // Load users when switching to people tab
   useEffect(() => {
     if (tab === "people") loadUsers();
   }, [tab]);
@@ -382,7 +366,7 @@ function ClassroomDetail({ cls, user, myDecks, allDecks, onUpdate, onBack, onDel
 
   return (
     <div className="min-h-screen pb-28" style={bgStyle}>
-      {/* Header */}
+      
       <div className="relative h-32 sm:h-40 flex items-end px-6 pb-5" style={{ background: `linear-gradient(135deg, ${color}ee, ${color}77)` }}>
         <button onClick={onBack} className="absolute top-4 left-4 p-2 rounded-xl bg-black/20 text-white hover:bg-black/30 transition-all">
           <ChevronLeft className="w-5 h-5" />
@@ -394,7 +378,7 @@ function ClassroomDetail({ cls, user, myDecks, allDecks, onUpdate, onBack, onDel
         </div>
       </div>
 
-      {/* Tabs */}
+      
       <div className="flex gap-0 border-b overflow-x-auto px-2" style={{ borderColor: "var(--app-border)", background: "var(--app-surface)" }}>
         {tabs.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
@@ -406,7 +390,7 @@ function ClassroomDetail({ cls, user, myDecks, allDecks, onUpdate, onBack, onDel
 
       <div className="max-w-3xl mx-auto px-4 py-6">
 
-        {/* ── STREAM ── */}
+        
         {tab === "stream" && (
           <div className="space-y-4">
             {isTeacher && (
@@ -425,7 +409,7 @@ function ClassroomDetail({ cls, user, myDecks, allDecks, onUpdate, onBack, onDel
               </div>
             )}
 
-            {/* Live game */}
+            
             <div className="rounded-2xl p-4" style={{ background: "rgba(245,158,11,0.07)", border: "1px solid rgba(245,158,11,0.2)" }}>
               <div className="flex items-center gap-3">
                 <Gamepad2 className="w-5 h-5 text-amber-400 shrink-0" />
@@ -441,7 +425,7 @@ function ClassroomDetail({ cls, user, myDecks, allDecks, onUpdate, onBack, onDel
               </div>
             </div>
 
-            {/* Active assignments */}
+            
             {assignments.length > 0 && (
               <div className="rounded-2xl p-5" style={cardStyle}>
                 <p className="font-bold text-sm mb-3">Active Assignments ({assignments.length})</p>
@@ -471,7 +455,7 @@ function ClassroomDetail({ cls, user, myDecks, allDecks, onUpdate, onBack, onDel
               </div>
             )}
 
-            {/* Resources preview */}
+            
             {resources.length > 0 && (
               <div className="rounded-2xl p-5" style={cardStyle}>
                 <p className="font-bold text-sm mb-3">Class Resources ({resources.length})</p>
@@ -502,7 +486,7 @@ function ClassroomDetail({ cls, user, myDecks, allDecks, onUpdate, onBack, onDel
           </div>
         )}
 
-        {/* ── DECKS / RESOURCES TAB ── */}
+        
         {tab === "decks" && (
           <div className="space-y-5">
             {isTeacher && (
@@ -534,7 +518,7 @@ function ClassroomDetail({ cls, user, myDecks, allDecks, onUpdate, onBack, onDel
               </div>
             )}
 
-            {/* Folder management */}
+            
             {isTeacher && resources.length > 0 && (
               <div className="flex items-center gap-2">
                 <p className="text-xs font-bold opacity-40 uppercase tracking-widest flex-1">Folders</p>
@@ -552,7 +536,7 @@ function ClassroomDetail({ cls, user, myDecks, allDecks, onUpdate, onBack, onDel
               </div>
             )}
 
-            {/* Resources grouped by folder */}
+            
             {resources.length === 0 ? (
               <div className="text-center py-16 opacity-30">
                 <Layers className="w-10 h-10 mx-auto mb-3" />
@@ -561,7 +545,7 @@ function ClassroomDetail({ cls, user, myDecks, allDecks, onUpdate, onBack, onDel
               </div>
             ) : (
               <div className="space-y-4 relative">
-                {/* Unfoldered */}
+                
                 {unfolderedResources.length > 0 && (
                   <div>
                     {folders.length > 0 && <p className="text-xs font-bold opacity-30 mb-2 uppercase tracking-wider">No Folder</p>}
@@ -570,7 +554,7 @@ function ClassroomDetail({ cls, user, myDecks, allDecks, onUpdate, onBack, onDel
                     </div>
                   </div>
                 )}
-                {/* Folders */}
+                
                 {folders.map(folder => {
                   const folderDecks = resourcesByFolder[folder] || [];
                   return (
@@ -581,7 +565,6 @@ function ClassroomDetail({ cls, user, myDecks, allDecks, onUpdate, onBack, onDel
                         <span className="text-xs opacity-40">({folderDecks.length})</span>
                         {isTeacher && (
                           <button onClick={async () => {
-                            // Remove folder, unassign decks from it
                             const newMap = { ...deckFolders };
                             folderDecks.forEach(id => delete newMap[id]);
                             const updated = await db.entities.ClassroomClass.update(cls.id, { folders: folders.filter(f => f !== folder), deck_folders: newMap });
@@ -606,7 +589,7 @@ function ClassroomDetail({ cls, user, myDecks, allDecks, onUpdate, onBack, onDel
           </div>
         )}
 
-        {/* ── ASSIGNMENTS TAB (teacher only) ── */}
+        
         {tab === "assignments" && isTeacher && (
           <div className="space-y-4">
             <div className="rounded-2xl p-5" style={cardStyle}>
@@ -666,15 +649,15 @@ function ClassroomDetail({ cls, user, myDecks, allDecks, onUpdate, onBack, onDel
           </div>
         )}
 
-        {/* ── PROGRESS TAB (teacher only) ── */}
+        
         {tab === "progress" && isTeacher && (
           <ProgressTab cls={cls} allDecks={allDecks} color={color} />
         )}
 
-        {/* ── PEOPLE TAB (teacher only) ── */}
+        
         {tab === "people" && isTeacher && (
           <div className="space-y-4">
-            {/* Add student */}
+            
             <div className="rounded-2xl p-5" style={cardStyle}>
               <div className="flex items-center justify-between mb-3">
                 <p className="font-bold text-sm">Add Student</p>
@@ -728,7 +711,7 @@ function ClassroomDetail({ cls, user, myDecks, allDecks, onUpdate, onBack, onDel
               <p className="text-xs opacity-30 mt-3">Or share the class code: <span className="font-mono font-bold">{cls.join_code}</span></p>
             </div>
 
-            {/* Student list */}
+            
             <div className="rounded-2xl p-5" style={cardStyle}>
               <p className="font-bold text-sm mb-3">Students ({(cls.student_emails||[]).length})</p>
               {(cls.student_emails||[]).length === 0 ? (
@@ -761,7 +744,7 @@ function ClassroomDetail({ cls, user, myDecks, allDecks, onUpdate, onBack, onDel
           </div>
         )}
 
-        {/* ── SETTINGS TAB ── */}
+        
         {tab === "settings" && isTeacher && (
           <div className="space-y-4">
             <div className="rounded-2xl p-5" style={cardStyle}>
@@ -785,7 +768,7 @@ function ClassroomDetail({ cls, user, myDecks, allDecks, onUpdate, onBack, onDel
                 </div>
               </div>
             </div>
-            {/* Transfer Ownership */}
+            
             <div className="rounded-2xl p-5" style={{ background: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.2)" }}>
               <p className="font-bold text-sm text-amber-400 mb-1">Transfer Ownership</p>
               <p className="text-xs opacity-50 mb-3">Hand over teacher control to another user. You will lose teacher access immediately.</p>
@@ -819,7 +802,7 @@ function ClassroomDetail({ cls, user, myDecks, allDecks, onUpdate, onBack, onDel
           </div>
         )}
 
-        {/* Student: assigned decks view */}
+        
         {tab === "decks" && !isTeacher && (
           <div className="space-y-4">
             {assignments.length === 0 ? (
@@ -896,7 +879,7 @@ function ClassroomDetail({ cls, user, myDecks, allDecks, onUpdate, onBack, onDel
         )}
       </div>
 
-      {/* ── ASSIGN MODAL ── */}
+      
       {assigningDeck && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setAssigningDeck(null)}>
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
@@ -949,7 +932,6 @@ function ClassroomDetail({ cls, user, myDecks, allDecks, onUpdate, onBack, onDel
   );
 }
 
-// ── Main Classroom Page ───────────────────────────────────────────────────────
 export default function Classroom() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -983,7 +965,6 @@ export default function Classroom() {
       ]);
       const myCls = cls.filter(c => c.teacher_email === me.email || (c.student_emails||[]).includes(me.email));
       setClasses(myCls);
-      // Auto-open class from notification link
       if (openClassId) {
         const target = myCls.find(c => c.id === openClassId);
         if (target) setActiveClass(target);
@@ -1073,7 +1054,7 @@ export default function Classroom() {
       </div>
 
       <div className="max-w-4xl mx-auto px-6 py-6">
-        {/* Quick game join */}
+        
         <div className="rounded-2xl p-4 mb-6 flex items-center gap-4" style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.2)" }}>
           <Gamepad2 className="w-5 h-5 text-amber-400 shrink-0" />
           <div className="flex-1">
@@ -1115,7 +1096,7 @@ export default function Classroom() {
         )}
       </div>
 
-      {/* Create Modal */}
+      
       {showCreate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowCreate(false)}>
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
@@ -1142,7 +1123,7 @@ export default function Classroom() {
         </div>
       )}
 
-      {/* Join Modal */}
+      
       {showJoin && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowJoin(false)}>
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />

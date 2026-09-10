@@ -67,7 +67,6 @@ int main() {
     for (int n : nums) sum += n;
     cout << "Sum: " << sum << endl;
 
-    // Simple loop
     for (int i = 1; i <= 5; i++) {
         cout << i << " * " << i << " = " << i * i << endl;
     }
@@ -77,7 +76,6 @@ int main() {
 `,
 };
 
-// ── Pyodide Python runner (loads once) ───────────────────────────────────────
 let pyodideInstance = null;
 let pyodideLoading = false;
 let pyodideCallbacks = [];
@@ -112,10 +110,8 @@ async function runPython(code) {
   return output.join("\n") || "(no output)";
 }
 
-// ── C++ simulated interpreter (basic) ────────────────────────────────────────
 function simulateCpp(code) {
   const lines = [];
-  // Extract cout << "..." << endl; and cout << expr;
   const coutRegex = /cout\s*<<\s*((?:(?:"[^"]*"|[^;,<>]+)(?:\s*<<\s*)?)+)\s*(?:<<\s*endl\s*)?;/g;
   let match;
   while ((match = coutRegex.exec(code)) !== null) {
@@ -123,9 +119,7 @@ function simulateCpp(code) {
     let line = parts.map(p => {
       if (p.startsWith('"') && p.endsWith('"')) return p.slice(1, -1);
       if (p === "endl") return "";
-      // try to evaluate simple expressions
       try {
-        // replace i*i pattern etc.
         return String(Function(`"use strict"; return (${p})`)());
       } catch {
         return p;
@@ -157,13 +151,11 @@ export default function CodeSandbox() {
 
   useEffect(() => {
     db.auth.me().then(setUser).catch(() => {});
-    // Load saved snippets from localStorage
     try {
       const saved = JSON.parse(localStorage.getItem("cognita_code_snippets") || "[]");
       setSavedSnippets(saved);
     } catch {}
 
-    // Read URL params from Chat smart-navigate
     const params = new URLSearchParams(window.location.search);
     const prompt = params.get("prompt");
     if (prompt) {
@@ -179,7 +171,6 @@ export default function CodeSandbox() {
       prompt: `Generate working code for the following request. Choose the best language (html, python, or cpp). Return ONLY the raw code, no explanation, no markdown fences.\n\nRequest: ${prompt}`,
       feature: "code_sandbox_generate",
     });
-    // Detect language from content
     let detectedLang = "html";
     if (result.includes("print(") || result.includes("def ") || result.includes("import ")) detectedLang = "python";
     else if (result.includes("#include") || result.includes("cout")) detectedLang = "cpp";
@@ -189,7 +180,6 @@ export default function CodeSandbox() {
     setAiGenerating(false);
   };
 
-  // Tab key support in textarea
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
@@ -218,7 +208,6 @@ export default function CodeSandbox() {
     setOutput("");
     try {
       if (lang === "html") {
-        // Inject into iframe
         if (iframeRef.current) {
           iframeRef.current.srcdoc = code;
         }
@@ -230,7 +219,6 @@ export default function CodeSandbox() {
         setOutput(result);
         setLoadingPy(false);
       } else if (lang === "cpp") {
-        // Simulate C++ output
         const result = simulateCpp(code);
         setOutput(result);
       }
@@ -288,7 +276,7 @@ export default function CodeSandbox() {
 
   return (
     <div className="min-h-screen pb-20" style={bgStyle}>
-      {/* Header */}
+      
       <div className="sticky top-0 z-10 px-4 py-3 flex items-center gap-3 flex-wrap" style={{ background: "var(--app-nav-bg)", borderBottom: "1px solid var(--app-border)", backdropFilter: "blur(12px)" }}>
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-600 to-blue-600 flex items-center justify-center">
@@ -302,7 +290,7 @@ export default function CodeSandbox() {
           )}
         </div>
 
-        {/* Language selector */}
+        
         <div className="flex gap-1.5">
           {LANGUAGES.map(l => (
             <button key={l.id} onClick={() => switchLang(l.id)}
@@ -314,27 +302,27 @@ export default function CodeSandbox() {
         </div>
 
         <div className="flex items-center gap-2 ml-auto">
-          {/* Saved snippets */}
+          
           <button onClick={() => setShowSaved(o => !o)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all hover:opacity-80"
             style={cardStyle}>
             <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showSaved ? "rotate-180" : ""}`} />
             Saved ({savedSnippets.length})
           </button>
-          {/* Copy */}
+          
           <button onClick={copyCode} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all hover:opacity-80" style={cardStyle}>
             {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
             {copied ? "Copied!" : "Copy"}
           </button>
-          {/* Save */}
+          
           <button onClick={() => setShowSaveModal(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all hover:opacity-80" style={cardStyle}>
             <Save className="w-3.5 h-3.5" /> Save
           </button>
-          {/* Download */}
+          
           <button onClick={downloadCode} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all hover:opacity-80" style={cardStyle}>
             <Download className="w-3.5 h-3.5" /> Download
           </button>
-          {/* Run */}
+          
           <button onClick={runCode} disabled={running}
             className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 transition-all">
             {running ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
@@ -343,7 +331,7 @@ export default function CodeSandbox() {
         </div>
       </div>
 
-      {/* Saved snippets dropdown */}
+      
       {showSaved && (
         <div className="mx-4 mt-2 rounded-2xl overflow-hidden" style={cardStyle}>
           {savedSnippets.length === 0 ? (
@@ -367,7 +355,7 @@ export default function CodeSandbox() {
         </div>
       )}
 
-      {/* Save modal */}
+      
       {showSaveModal && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center px-4" style={{ background: "rgba(0,0,0,0.6)" }} onClick={() => setShowSaveModal(false)}>
           <div className="w-full max-w-xs rounded-3xl p-6" style={{ background: "#1a1033", border: "1px solid rgba(139,92,246,0.3)" }} onClick={e => e.stopPropagation()}>
@@ -386,9 +374,9 @@ export default function CodeSandbox() {
         </div>
       )}
 
-      {/* Main layout */}
+      
       <div className="flex flex-col lg:flex-row h-[calc(100vh-60px)] overflow-hidden">
-        {/* Editor panel */}
+        
         <div className="flex-1 flex flex-col min-h-0 border-r" style={{ borderColor: "var(--app-border)" }}>
           <div className="flex items-center gap-2 px-4 py-2 shrink-0" style={{ borderBottom: "1px solid var(--app-border)" }}>
             <div className={`w-2.5 h-2.5 rounded-full bg-gradient-to-br ${currentLang.color}`} />
@@ -407,9 +395,9 @@ export default function CodeSandbox() {
           />
         </div>
 
-        {/* Output panel */}
+        
         <div className="flex-1 flex flex-col min-h-0 lg:max-w-[50%]">
-          {/* HTML preview */}
+          
           {lang === "html" && (
             <div className="flex-1 flex flex-col min-h-0">
               <div className="flex items-center gap-2 px-4 py-2 shrink-0" style={{ borderBottom: "1px solid var(--app-border)" }}>
@@ -426,7 +414,7 @@ export default function CodeSandbox() {
             </div>
           )}
 
-          {/* Console output (Python / C++) */}
+          
           {lang !== "html" && (
             <div className="flex-1 flex flex-col min-h-0">
               <div className="flex items-center gap-2 px-4 py-2 shrink-0" style={{ borderBottom: "1px solid var(--app-border)" }}>
@@ -449,14 +437,14 @@ export default function CodeSandbox() {
             </div>
           )}
 
-          {/* Note for C++ */}
+          
           {lang === "cpp" && (
             <div className="px-4 py-2.5 text-[11px] shrink-0" style={{ borderTop: "1px solid var(--app-border)", color: "rgba(255,255,255,0.3)" }}>
               ⚡ C++ output is simulated (cout statements). For full compilation, download your code and run with a local compiler (g++).
             </div>
           )}
 
-          {/* AI Code Helper */}
+          
           <CodeSandboxAI lang={lang} code={code} user={user} />
         </div>
       </div>

@@ -1,7 +1,5 @@
 import { db } from '@/lib/firebase';
 
-// Shows active announcement banners to ALL users (read-only display)
-// The admin panel for creating/managing banners lives in DevDashboard.
 import { useState, useEffect } from "react";
 
 import { X, AlertTriangle, CheckCircle, Info } from "lucide-react";

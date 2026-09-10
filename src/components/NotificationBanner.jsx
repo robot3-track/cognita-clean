@@ -6,7 +6,6 @@ import { useNavigate } from "react-router-dom";
 import { Users, UserPlus, MessageCircle, Bell, Flag, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-// Creates a persistent notification for a specific user
 export async function createAppNotification({ recipient_email, title, message, icon = "bell", link = "" }) {
   try {
     await db.entities.AppNotification.create({ recipient_email, title, message, icon, link, read: false });
@@ -28,8 +27,6 @@ export default function NotificationBanner() {
       if (!u) return;
       userRef.current = u;
 
-      // --- 1. Subscribe to AppNotification (card reports, study reminders, etc.) ---
-      // Poll every 10 seconds for new unread notifications for this user
       const pollNotifications = async () => {
         try {
           const notifs = await db.entities.AppNotification.filter({ recipient_email: u.email, read: false });
@@ -43,7 +40,6 @@ export default function NotificationBanner() {
                 message: n.message,
                 link: n.link || "",
               });
-              // Mark as read after showing
               db.entities.AppNotification.update(n.id, { read: true }).catch(() => {});
             }
           }
@@ -53,7 +49,6 @@ export default function NotificationBanner() {
       pollNotifications();
       const pollInterval = setInterval(pollNotifications, 10000);
 
-      // --- Streak reminder ---
       const STREAK_REMINDER_KEY = `cognita_streak_reminder_${u.email}_${new Date().toISOString().slice(0, 10)}`;
       if (!localStorage.getItem(STREAK_REMINDER_KEY)) {
         try {
@@ -74,7 +69,6 @@ export default function NotificationBanner() {
         } catch {}
       }
 
-      // --- 2. Real-time: AppNotification subscribe ---
       unsubNotif = db.entities.AppNotification.subscribe((event) => {
         const me = userRef.current;
         if (!me) return;
@@ -92,12 +86,10 @@ export default function NotificationBanner() {
         db.entities.AppNotification.update(event.data.id, { read: true }).catch(() => {});
       });
 
-      // Request push permission on load
       if ("Notification" in window && Notification.permission === "default") {
         Notification.requestPermission().catch(() => {});
       }
 
-      // --- 3. Friend requests ---
       unsubFriend = db.entities.Friendship.subscribe((event) => {
         const me = userRef.current;
         if (!me) return;
@@ -112,7 +104,6 @@ export default function NotificationBanner() {
         }
       });
 
-      // --- 4. Group added ---
       const prevMembers = {};
       const myGroups = new Set();
       try {
@@ -141,8 +132,6 @@ export default function NotificationBanner() {
         }
       });
 
-      // Group messages are now handled via AppNotification records (persistent, works offline)
-      // The poll above picks them up. No separate GroupMessage subscription needed here.
 
       return () => clearInterval(pollInterval);
     }).catch(() => {});
@@ -165,7 +154,6 @@ export default function NotificationBanner() {
       if (prev.find(n => n.id === notif.id)) return prev;
       return [...prev, { ...notif, timestamp: Date.now() }];
     });
-    // No auto-dismiss — stays until user clicks X
   };
 
   const dismiss = (id) => setNotifications(prev => prev.filter(n => n.id !== id));

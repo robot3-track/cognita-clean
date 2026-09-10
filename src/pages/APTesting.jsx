@@ -11,7 +11,6 @@ import { gradeAPFRQ } from "../lib/apFrqGrader";
 import { SectionBreakScreen, APFRQInterface } from "../components/APExamSections";
 import StimulusRenderer from "../components/APStimulusRenderer";
 
-// Real AP exam MCQ counts per subject
 const AP_MCQ_COUNTS = {
   "AP Biology": 60,
   "AP Chemistry": 60,
@@ -40,20 +39,17 @@ const AP_MCQ_COUNTS = {
   "AP Japanese Language": 65,
 };
 
-// Subjects where graphs/tables/data are very common on the real exam
 const DATA_HEAVY_SUBJECTS = new Set([
   "AP Biology", "AP Chemistry", "AP Physics 1", "AP Physics 2", "AP Physics C",
   "AP Calculus AB", "AP Calculus BC", "AP Statistics", "AP Environmental Science",
   "AP Macroeconomics", "AP Microeconomics", "AP Psychology",
 ]);
 
-// Geography/social science subjects where maps and regional descriptions apply
 const GEO_SUBJECTS = new Set([
   "AP Human Geography", "AP Environmental Science", "AP US History",
   "AP World History", "AP European History", "AP Comparative Government",
 ]);
 
-// Build a deeply specific subject context string for the AI prompt
 function getSubjectContext(subject) {
   const contexts = {
     "AP Human Geography": `You are writing questions at the level of the ACTUAL AP Human Geography exam. 
@@ -137,7 +133,6 @@ thermodynamic data tables (ΔH°f, ΔG°f, S° values).`,
   return contexts[subject] || `Use real-world data, named locations, actual statistics, and scenarios grounded in the specific curriculum of ${subject}. Reference real events, people, places, and measurements.`;
 }
 
-// ─── AP Classroom MCQ Interface (College Board style) ────────────────────────
 function APMCQInterface({ questions, subject, onSubmit, onBack }) {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [answers, setAnswers] = useState({});
@@ -147,13 +142,11 @@ function APMCQInterface({ questions, subject, onSubmit, onBack }) {
   const [navOpen, setNavOpen] = useState(false);
   const [showDirections, setShowDirections] = useState(false);
 
-  // Hide timer
   const [timerHidden, setTimerHidden] = useState(false);
   const [fiveMinAlert, setFiveMinAlert] = useState(false);
   const EXAM_TOTAL = questions.length * 90;
   const timerHiddenRef = useRef(false);
 
-  // Draggable divider
   const [splitPct, setSplitPct] = useState(50);
   const isDragging = useRef(false);
   const containerRef = useRef(null);
@@ -187,22 +180,19 @@ function APMCQInterface({ questions, subject, onSubmit, onBack }) {
     window.addEventListener("touchend", onUp);
   };
 
-  // Highlights & Notes panel
   const [showHighlights, setShowHighlights] = useState(false);
-  const [highlights, setHighlights] = useState([]); // { id, qIdx, text, color, note }
-  const [noteInput, setNoteInput] = useState(""); // for the active highlight
+  const [highlights, setHighlights] = useState([]);
+  const [noteInput, setNoteInput] = useState("");
   const [activeHighlightId, setActiveHighlightId] = useState(null);
   const [highlightColor, setHighlightColor] = useState("#fde68a");
   const leftPaneRef = useRef(null);
 
-  // Three-dot menu
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const moreMenuRef = useRef(null);
   const [lineReaderOn, setLineReaderOn] = useState(false);
   const [lineReaderY, setLineReaderY] = useState(200);
   const [zoom, setZoom] = useState(1);
 
-  // Exit confirmation
   const [showExitConfirm, setShowExitConfirm] = useState(false);
 
   const timerRef = useRef(null);
@@ -223,7 +213,6 @@ function APMCQInterface({ questions, subject, onSubmit, onBack }) {
     return () => clearInterval(timerRef.current);
   }, [EXAM_TOTAL]);
 
-  // Close more menu on outside click
   useEffect(() => {
     if (!showMoreMenu) return;
     const handler = (e) => {
@@ -247,7 +236,6 @@ function APMCQInterface({ questions, subject, onSubmit, onBack }) {
     });
   };
 
-  // Highlight selected text in the left pane
   const handleHighlight = () => {
     const sel = window.getSelection();
     if (!sel || sel.isCollapsed) return;
@@ -280,7 +268,7 @@ function APMCQInterface({ questions, subject, onSubmit, onBack }) {
   return (
     <div className="fixed inset-0 z-50 flex flex-col" style={{ background: bg, color: text, fontFamily: "Georgia, serif" }}>
 
-      {/* ── 5-minute alert banner ── */}
+      
       {fiveMinAlert && (
         <div className="absolute top-14 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-xl text-sm font-bold text-white shadow-lg animate-bounce"
           style={{ background: "#dc2626", fontFamily: "system-ui" }}>
@@ -288,7 +276,7 @@ function APMCQInterface({ questions, subject, onSubmit, onBack }) {
         </div>
       )}
 
-      {/* ── Top Header ── */}
+      
       <div className="flex items-center px-4 py-2 shrink-0" style={{ background: headerBg, borderBottom: `1px solid ${border}` }}>
         <div className="flex items-center gap-4 flex-1">
           <button onClick={() => setShowDirections(d => !d)}
@@ -299,7 +287,7 @@ function APMCQInterface({ questions, subject, onSubmit, onBack }) {
           <span className="text-xs font-semibold" style={{ color: muted, fontFamily: "system-ui" }}>Section I, Part A — {subject}</span>
         </div>
 
-        {/* Timer */}
+        
         <div className="flex items-center gap-2">
           {timerHidden ? (
             <span className="text-xl font-black tabular-nums text-gray-400" style={{ fontFamily: "system-ui" }}>--:--</span>
@@ -317,14 +305,14 @@ function APMCQInterface({ questions, subject, onSubmit, onBack }) {
         </div>
 
         <div className="flex items-center gap-3 flex-1 justify-end" style={{ fontFamily: "system-ui" }}>
-          {/* Highlights & Notes */}
+          
           <button
             onClick={() => setShowHighlights(h => !h)}
             className={`flex items-center gap-1.5 text-xs font-semibold transition-all px-2 py-1 rounded ${showHighlights ? "bg-yellow-100 text-yellow-700" : "opacity-60 hover:opacity-100"}`}>
             <Highlighter className="w-3.5 h-3.5" /> Highlights &amp; Notes
           </button>
 
-          {/* Three-dot menu */}
+          
           <div className="relative" ref={moreMenuRef}>
             <button
               onClick={() => setShowMoreMenu(m => !m)}
@@ -334,7 +322,7 @@ function APMCQInterface({ questions, subject, onSubmit, onBack }) {
             {showMoreMenu && (
               <div className="absolute right-0 top-8 w-52 rounded-xl shadow-2xl py-1 z-50 border"
                 style={{ background: "#ffffff", borderColor: border, fontFamily: "system-ui" }}>
-                {/* Line Reader */}
+                
                 <button
                   onClick={() => { setLineReaderOn(r => !r); setShowMoreMenu(false); }}
                   className="w-full flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-gray-100 transition-all">
@@ -342,7 +330,7 @@ function APMCQInterface({ questions, subject, onSubmit, onBack }) {
                   <span>{lineReaderOn ? "Hide" : "Show"} Line Reader</span>
                   {lineReaderOn && <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">ON</span>}
                 </button>
-                {/* Zoom controls */}
+                
                 <div className="flex items-center gap-2 px-4 py-2.5 text-sm">
                   <span className="text-base">🔍</span>
                   <span className="flex-1">Zoom</span>
@@ -366,14 +354,14 @@ function APMCQInterface({ questions, subject, onSubmit, onBack }) {
         </div>
       </div>
 
-      {/* Directions dropdown */}
+      
       {showDirections && (
         <div className="px-6 py-3 text-sm border-b" style={{ background: headerBg, borderColor: border, fontFamily: "system-ui", color: muted }}>
           <strong style={{ color: text }}>Directions:</strong> The questions or incomplete statements below are each followed by four suggested answers or completions. Select the one that is best in each case and then fill in the corresponding circle on the answer sheet.
         </div>
       )}
 
-      {/* Highlights & Notes sidebar */}
+      
       {showHighlights && (
         <div className="fixed right-0 top-10 bottom-12 w-72 z-40 flex flex-col shadow-2xl border-l"
           style={{ background: "#fffdf0", borderColor: "#fde68a", fontFamily: "system-ui" }}>
@@ -381,7 +369,7 @@ function APMCQInterface({ questions, subject, onSubmit, onBack }) {
             <span className="font-bold text-sm text-amber-700 flex items-center gap-1.5"><Highlighter className="w-3.5 h-3.5" /> Highlights &amp; Notes</span>
             <button onClick={() => setShowHighlights(false)} className="p-1 rounded hover:bg-amber-100"><X className="w-3.5 h-3.5 text-amber-600" /></button>
           </div>
-          {/* Color picker */}
+          
           <div className="px-4 py-2 border-b flex items-center gap-2" style={{ borderColor: "#fde68a" }}>
             <span className="text-xs text-amber-700 font-semibold">Color:</span>
             {["#fde68a", "#bbf7d0", "#bfdbfe", "#fecaca", "#e9d5ff"].map(c => (
@@ -437,38 +425,38 @@ function APMCQInterface({ questions, subject, onSubmit, onBack }) {
         </div>
       )}
 
-      {/* ── Main two-pane area ── */}
+      
       <div ref={containerRef} className="flex flex-1 overflow-hidden relative">
-        {/* Line Reader overlay */}
+        
         {lineReaderOn && (
           <div
             className="absolute inset-x-0 z-30 pointer-events-none"
             style={{ top: 0, bottom: 0 }}
           >
-            {/* Dark overlay above the reader line */}
+            
             <div className="absolute inset-x-0 top-0 pointer-events-auto cursor-ns-resize"
               style={{ height: lineReaderY - 16, background: "rgba(0,0,0,0.25)" }}
               onMouseMove={e => { if (e.buttons === 1) setLineReaderY(e.clientY - 120); }} />
-            {/* The bright reader strip */}
+            
             <div className="absolute inset-x-0 pointer-events-auto cursor-ns-resize"
               style={{ top: lineReaderY - 16, height: 32, background: "rgba(255,251,205,0.95)", borderTop: "2px solid #fbbf24", borderBottom: "2px solid #fbbf24" }}
               onMouseMove={e => { if (e.buttons === 1) setLineReaderY(e.clientY - 120); }}
               onMouseDown={e => setLineReaderY(e.clientY - 120)} />
-            {/* Dark overlay below */}
+            
             <div className="absolute inset-x-0 bottom-0 pointer-events-auto cursor-ns-resize"
               style={{ top: lineReaderY + 16, background: "rgba(0,0,0,0.25)" }}
               onMouseMove={e => { if (e.buttons === 1) setLineReaderY(e.clientY - 120); }} />
           </div>
         )}
 
-        {/* Left pane: passage / stimulus */}
+        
         <div ref={leftPaneRef} className="overflow-y-auto p-8" style={{ borderRight: `1px solid ${border}`, width: `${splitPct}%`, minWidth: "25%", maxWidth: "75%" }}>
           <div style={{ fontSize: `${zoom}em`, transformOrigin: "top left" }}>
             <StimulusRenderer q={q} isDark={false} muted={muted} text={text} />
           </div>
         </div>
 
-        {/* Draggable divider */}
+        
         <div
           onMouseDown={onDividerMouseDown}
           className="w-2 flex items-center justify-center shrink-0 cursor-col-resize select-none group"
@@ -483,10 +471,10 @@ function APMCQInterface({ questions, subject, onSubmit, onBack }) {
           </div>
         </div>
 
-        {/* Right pane: question + choices */}
+        
         <div className="overflow-y-auto p-8 flex flex-col gap-5" style={{ flex: 1 }}>
           <div style={{ fontSize: `${zoom}em`, transformOrigin: "top left" }}>
-          {/* Mark for Review */}
+          
           <div className="flex items-center justify-between" style={{ fontFamily: "system-ui" }}>
             <button
               onClick={() => setMarked(prev => ({ ...prev, [currentIdx]: !prev[currentIdx] }))}
@@ -552,7 +540,7 @@ function APMCQInterface({ questions, subject, onSubmit, onBack }) {
         </div>
       </div>
 
-      {/* ── Bottom bar ── */}
+      
       <div className="flex items-center px-6 py-3 shrink-0" style={{ background: headerBg, borderTop: `1px solid ${border}`, fontFamily: "system-ui" }}>
         <div className="flex-1 text-sm font-semibold" style={{ color: muted }} />
 
@@ -590,7 +578,7 @@ function APMCQInterface({ questions, subject, onSubmit, onBack }) {
         </div>
       </div>
 
-      {/* Question nav overlay */}
+      
       {navOpen && (
         <div className="absolute bottom-14 left-1/2 -translate-x-1/2 rounded-2xl shadow-2xl p-4 z-10 w-80"
           style={{ background: "#ffffff", border: `1px solid ${border}`, fontFamily: "system-ui" }}>
@@ -617,7 +605,7 @@ function APMCQInterface({ questions, subject, onSubmit, onBack }) {
         </div>
       )}
 
-      {/* Exit confirmation modal */}
+      
       {showExitConfirm && (
         <div className="absolute inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.5)" }}>
           <div className="rounded-2xl p-6 w-80 shadow-2xl" style={{ background: "#ffffff", fontFamily: "system-ui" }}>
@@ -654,7 +642,6 @@ const AP_SUBJECTS = [
 
 const LETTERS = ["A", "B", "C", "D", "E"];
 
-// ─── FRQ Maker / Grader ───────────────────────────────────────────────────────
 function FRQTool({ user, onSave }) {
   const [subject, setSubject] = useState(AP_SUBJECTS[0]);
   const [customSubject, setCustomSubject] = useState("");
@@ -665,7 +652,7 @@ function FRQTool({ user, onSave }) {
   const [feedback, setFeedback] = useState(null);
   const [generating, setGenerating] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [frqMode, setFrqMode] = useState("premade"); // "premade" | "ai" | "custom"
+  const [frqMode, setFrqMode] = useState("premade");
   const [examMode, setExamMode] = useState(false);
   const [frqResponses, setFrqResponses] = useState({});
   const [showScore, setShowScore] = useState(false);
@@ -740,9 +727,7 @@ JSONで以下を返してください：
       }
     });
     
-    // Convert AI-generated FRQ to exam format
     if (res) {
-      // Build parts array from rubric for APFRQInterface compatibility
       const rubricParts = res.rubric ? Object.entries(res.rubric).map(([label, info]) => ({
         label,
         question: info?.criteria || "",
@@ -771,7 +756,6 @@ JSONで以下を返してください：
     setGrading(false);
     setExamMode(false);
     if (res) setShowScore(true);
-    // Auto-save
     if (res && user?.email) {
       await db.entities.APSession.create({
         user_email: user.email,
@@ -792,9 +776,7 @@ JSONで以下を返してください：
     }
   };
 
-  // Handle submission from APFRQInterface
   const handleExamSubmit = () => {
-    // Compile all responses
     const compiled = frq?.parts?.length
       ? frq.parts.map((p, pi) => frqResponses[`0_${pi}`] || "").join("\n\n")
       : (frqResponses["0_0"] || "");
@@ -805,7 +787,6 @@ JSONで以下を返してください：
   const pct = feedback ? Math.round((feedback.score / feedback.total) * 100) : 0;
   const frqPredictedScore = pct >= 75 ? 5 : pct >= 50 ? 4 : pct >= 41 ? 3 : pct >= 20 ? 2 : 1;
 
-  // If FRQ is loaded and in exam mode, show the fullscreen FRQ interface
   if (examMode && frq) {
     return (
       <APFRQInterface
@@ -820,7 +801,6 @@ JSONで以下を返してください：
     );
   }
 
-  // Show feedback review after grading
   if (feedback && !examMode) {
     return (
       <div className="space-y-4">
@@ -833,7 +813,7 @@ JSONで以下を返してください：
             onRetake={() => { setShowScore(false); setFrq(null); setFeedback(null); setSaved(false); }}
           />
         )}
-        {/* FRQ Detailed Feedback */}
+        
         <div className="rounded-lg p-5 border bg-white" style={{ borderColor: "rgba(0,0,0,0.1)" }}>
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-bold text-base text-gray-800">FRQ Results</h3>
@@ -882,7 +862,7 @@ JSONで以下を返してください：
       <div className="rounded-2xl p-5" style={cardStyle}>
         <h3 className="font-bold text-sm mb-4 flex items-center gap-2"><PenLine className="w-4 h-4 text-pink-400" /> FRQ Practice</h3>
         <div className="space-y-3">
-          {/* Mode selector */}
+          
           <div className="grid grid-cols-3 gap-2">
             {[
               { id: "premade", label: "Premade", icon: "📋", sub: "Free · Official style" },
@@ -899,7 +879,7 @@ JSONで以下を返してください：
             ))}
           </div>
 
-          {/* Subject selector (premade and ai modes) */}
+          
           {frqMode !== "custom" && (
             <div>
               <label className="text-xs font-semibold mb-1 block" style={mutedStyle}>Subject</label>
@@ -914,7 +894,7 @@ JSONで以下を返してください：
             </div>
           )}
 
-          {/* Custom subject input */}
+          
           {frqMode === "custom" && (
             <div>
               <label className="text-xs font-semibold mb-1 block" style={mutedStyle}>Subject / Course Name</label>
@@ -925,7 +905,7 @@ JSONで以下を返してください：
             </div>
           )}
 
-          {/* Topic (ai and custom modes) */}
+          
           {frqMode !== "premade" && (
             <div>
               <label className="text-xs font-semibold mb-1 block" style={mutedStyle}>Specific Topic (optional)</label>
@@ -950,7 +930,6 @@ JSONで以下を返してください：
   );
 }
 
-// ─── AP MCQ Practice ──────────────────────────────────────────────────────────
 function MCQTool({ user, onSave }) {
   const [subject, setSubject] = useState(AP_SUBJECTS[0]);
   const [count, setCount] = useState(20);
@@ -961,7 +940,7 @@ function MCQTool({ user, onSave }) {
   const [expandedExpl, setExpandedExpl] = useState({});
   const [saved, setSaved] = useState(false);
   const [examMode, setExamMode] = useState(false);
-  const [mode, setMode] = useState("premade"); // "premade" | "ai"
+  const [mode, setMode] = useState("premade");
   const [showScore, setShowScore] = useState(false);
   const [finalPredictedScore, setFinalPredictedScore] = useState(null);
   const [finalPct, setFinalPct] = useState(null);
@@ -1090,7 +1069,6 @@ Return JSON with "questions" array. Each question object:
     }
   };
 
-  // Show exam interface
   if (examMode && questions.length > 0) {
     return <APMCQInterface questions={questions} subject={subject} onSubmit={handleSubmit} onBack={() => { setExamMode(false); setQuestions([]); }} />;
   }
@@ -1130,7 +1108,7 @@ Return JSON with "questions" array. Each question object:
               </p>
             </div>
 
-            {/* Question count slider: 20–60 */}
+            
             <div>
               <label className="text-xs font-semibold mb-2 block" style={mutedStyle}>
                 Question Count: <span className="text-blue-400 font-black">{count}</span>
@@ -1142,7 +1120,7 @@ Return JSON with "questions" array. Each question object:
               </div>
             </div>
 
-            {/* Mode selector */}
+            
             <div>
               <label className="text-xs font-semibold mb-2 block" style={mutedStyle}>Question Source</label>
               <div className="grid grid-cols-2 gap-2">
@@ -1227,7 +1205,6 @@ Return JSON with "questions" array. Each question object:
   );
 }
 
-// ─── AP Exam Simulator ────────────────────────────────────────────────────────
 function ExamSimulator({ user, onSave }) {
   const [subject, setSubject] = useState(AP_SUBJECTS[0]);
   const [mcqCount, setMcqCount] = useState(20);
@@ -1243,7 +1220,6 @@ function ExamSimulator({ user, onSave }) {
   const [expandedExpl, setExpandedExpl] = useState({});
   const [showScoreResult, setShowScoreResult] = useState(false);
   
-  // Mobile Tab State for Results View: 'summary' | 'mcq' | 'frq'
   const [mobileTab, setMobileTab] = useState("summary");
 
   const cardStyle = { background: "#ffffff", border: "1px solid rgba(0,0,0,0.1)", color: "#1a1a2e" };
@@ -1363,7 +1339,6 @@ Return JSON "frqs" array, each: { "score": number (0-10), "feedback": string }`,
     setMobileTab("summary");
   };
 
-  // Fullscreen phases
   if (phase === "mcq" && mcqQuestions.length > 0) {
     return <APMCQInterface questions={mcqQuestions} subject={subject}
       onSubmit={(answers) => { setMcqAnswers(answers); setPhase("section_break"); }}
@@ -1379,7 +1354,6 @@ Return JSON "frqs" array, each: { "score": number (0-10), "feedback": string }`,
       onSubmit={gradeExam} onExit={reset} grading={grading} />;
   }
 
-  // Helper renderers for results
   const renderSummarySection = () => (
     <div className="space-y-4">
       <div className="rounded-lg p-4 md:p-6 text-center border" style={{ background: "#f5f3ff", borderColor: "#ddd6fe" }}>
@@ -1476,7 +1450,7 @@ Return JSON "frqs" array, each: { "score": number (0-10), "feedback": string }`,
               </select>
             </div>
 
-            {/* MCQ count slider */}
+            
             <div>
               <label className="text-xs font-semibold mb-1 block" style={mutedStyle}>
                 Section I: <span className="text-violet-400 font-black">{mcqCount} MCQs</span>
@@ -1488,7 +1462,7 @@ Return JSON "frqs" array, each: { "score": number (0-10), "feedback": string }`,
               </div>
             </div>
 
-            {/* Mode selector */}
+            
             <div className="grid grid-cols-2 gap-2">
               <button onClick={() => setMode("premade")} disabled={!subjectHasPremade}
                 className={`flex flex-col items-center justify-center gap-1 px-2 md:px-3 py-2.5 md:py-3 rounded-xl border text-xs font-semibold transition-all active:scale-[0.98] disabled:opacity-30 ${mode === "premade" ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-600" : ""}`}
@@ -1555,7 +1529,7 @@ Return JSON "frqs" array, each: { "score": number (0-10), "feedback": string }`,
             )}
           </div>
 
-          {/* MOBILE NAVIGATION TABS */}
+          
           <div className="md:hidden sticky top-0 z-10 bg-white/95 backdrop-blur-sm pt-1 pb-2">
             <div className="flex rounded-xl bg-gray-100 p-1 border text-xs font-bold gap-1" style={{ borderColor: "rgba(0,0,0,0.08)" }}>
               <button
@@ -1579,14 +1553,14 @@ Return JSON "frqs" array, each: { "score": number (0-10), "feedback": string }`,
             </div>
           </div>
 
-          {/* MOBILE CONTENT DISPLAY */}
+          
           <div className="md:hidden">
             {mobileTab === "summary" && renderSummarySection()}
             {mobileTab === "frq" && renderFrqFeedbackSection()}
             {mobileTab === "mcq" && renderMcqReviewSection()}
           </div>
 
-          {/* DESKTOP CONTENT DISPLAY */}
+          
           <div className="hidden md:block space-y-4">
             {renderSummarySection()}
             {renderFrqFeedbackSection()}
@@ -1609,7 +1583,6 @@ Return JSON "frqs" array, each: { "score": number (0-10), "feedback": string }`,
   );
 }
 
-// ─── Session Review Panel ─────────────────────────────────────────────────────
 function ReviewHistory({ user, refreshKey }) {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1660,7 +1633,7 @@ function ReviewHistory({ user, refreshKey }) {
         const tStyle = typeColorStyle[s.type] || typeColorStyle.frq;
         return (
           <div key={s.id} className="rounded-lg overflow-hidden bg-white border" style={{ borderColor: "rgba(0,0,0,0.1)" }}>
-            {/* Header row */}
+            
             <button className="w-full flex items-center gap-3 px-5 py-4 text-left transition-all hover:bg-gray-50"
               onClick={() => setExpanded(isOpen ? null : s.id)}>
               <span className="text-[10px] font-bold px-2.5 py-1 rounded-full shrink-0" style={tStyle}>{typeLabel[s.type] || s.type}</span>
@@ -1676,12 +1649,12 @@ function ReviewHistory({ user, refreshKey }) {
               {isOpen ? <ChevronUp className="w-4 h-4 text-gray-400 shrink-0" /> : <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />}
             </button>
 
-            {/* Expanded review */}
+            
             {isOpen && data && (
               <div className="px-5 pb-5 space-y-4 border-t" style={{ borderColor: "rgba(0,0,0,0.08)" }}>
                 <div className="pt-4" />
 
-                {/* FRQ review (new compact format) */}
+                
                 {s.type === "frq" && (
                   <>
                     {data.frqQuestion && (
@@ -1719,7 +1692,7 @@ function ReviewHistory({ user, refreshKey }) {
                   </>
                 )}
 
-                {/* MCQ review */}
+                
                 {s.type === "mcq" && data.questions && (
                   <div className="space-y-3">
                     <p className="text-xs font-semibold text-blue-600">{data.questions.length} Questions · {s.mcq_pct}% correct</p>
@@ -1748,7 +1721,7 @@ function ReviewHistory({ user, refreshKey }) {
                   </div>
                 )}
 
-                {/* Exam review */}
+                
                 {s.type === "exam" && data.results && (
                   <div className="space-y-4">
                     <div className="text-center rounded-lg p-4 border" style={{ background: "#f5f3ff", borderColor: "#ddd6fe" }}>
@@ -1797,7 +1770,6 @@ function ReviewHistory({ user, refreshKey }) {
   );
 }
 
-// ─── AP CS Code Project Grader ───────────────────────────────────────────────
 const CS_SUBJECTS = ["AP Computer Science A", "AP Computer Science Principles", "Other CS / Coding Class"];
 
 function CodeProjectGrader({ user, onSave }) {
@@ -1971,7 +1943,6 @@ Return JSON:
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
 const TOOL_META = {
   frq:  { color: "#db2777", label: "FRQ Practice",        desc: "Official-style free response with AP grading" },
   mcq:  { color: "#1a56db", label: "MCQ Practice",        desc: "Authentic multiple choice in AP Classroom format" },
@@ -1998,7 +1969,7 @@ export default function APTesting() {
   return (
     <div className="min-h-screen" style={{ background: apBg, color: apText, fontFamily: "system-ui, sans-serif" }}>
 
-      {/* AP Classroom-style top bar */}
+      
       <div className="sticky top-0 z-10 flex items-center gap-4 px-6 py-3 border-b" style={{ background: "#ffffff", borderColor: apBorder, boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}>
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded flex items-center justify-center font-black text-white text-xs shrink-0" style={{ background: apBlue }}>AP</div>
@@ -2023,10 +1994,10 @@ export default function APTesting() {
 
       <div className="max-w-3xl mx-auto px-5 py-8 pb-28">
 
-        {/* Practice selection */}
+        
         {!activeTool && (
           <>
-            {/* Tab bar */}
+            
             <div className="flex border-b mb-6" style={{ borderColor: apBorder }}>
               {[{ id: "practice", label: "Practice" }, { id: "history", label: "Score History" }].map(t => (
                 <button key={t.id} onClick={() => setTab(t.id)}
@@ -2078,7 +2049,7 @@ export default function APTesting() {
           </>
         )}
 
-        {/* Active tools */}
+        
         {activeTool === "frq"  && <FRQTool user={user} onSave={handleSave} />}
         {activeTool === "mcq"  && <MCQTool user={user} onSave={handleSave} />}
         {activeTool === "exam" && <ExamSimulator user={user} onSave={handleSave} />}

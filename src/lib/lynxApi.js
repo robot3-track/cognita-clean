@@ -15,7 +15,6 @@ async function logAIUsage(provider, feature, promptLength, success = true) {
   } catch {}
 }
 
-// ─── API Keys & Config (Loaded from Environment Variables) ───────────────────
 export const LYNX_API_KEY = import.meta.env.VITE_LYNX_API_KEY || "";
 export const LYNX_BASE_URL = import.meta.env.VITE_LYNX_BASE_URL || "https://api.lynxbytss.net/v1";
 export const LYNX_MODEL = import.meta.env.VITE_LYNX_MODEL || "lynx-5.2-scout";
@@ -25,7 +24,6 @@ export const LYNX_ENABLED_KEY = "cognita_use_lynx_api";
 export const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || "";
 export const OPENROUTER_MODEL = import.meta.env.VITE_OPENROUTER_MODEL || "openrouter/free";
 
-// ─── Hack Club API ───────────────────────────────────────────────────────────
 export const HACKCLUB_API_KEY = import.meta.env.VITE_HACKCLUB_API_KEY || "";
 export const HACKCLUB_DEFAULT_MODEL = import.meta.env.VITE_HACKCLUB_MODEL || "anthropic/claude-opus-5";
 export const HACKCLUB_BASE_URL = "https://ai.hackclub.com/proxy/v1/chat/completions";
@@ -42,11 +40,10 @@ export const GEMINI_BASE_URL = `https://generativelanguage.googleapis.com/v1beta
 export const NVIDIA_API_KEY = import.meta.env.VITE_NVIDIA_API_KEY || "";
 export const NVIDIA_BASE_URL = import.meta.env.VITE_NVIDIA_BASE_URL || "https://integrate.api.nvidia.com/v1";
 
-// Optimized lightweight, ultra-fast NVIDIA models
 const NVIDIA_GENERAL_MODELS = [
   "meta/llama-3.1-8b-instruct",
   "mistralai/mistral-7b-instruct-v0.3",
-  "meta/llama-3.3-70b-instruct" // Kept as a heavy fallback option at the end
+  "meta/llama-3.3-70b-instruct"
 ];
 
 const NVIDIA_CODE_MODELS = [
@@ -57,29 +54,24 @@ const NVIDIA_CODE_MODELS = [
 
 export const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY || "";
 export const GROQ_BASE_URL = "https://api.groq.com/openai/v1/chat/completions";
-export const GROQ_MODEL = "openai/gpt-oss-20b"; // Blazing fast & reliable
+export const GROQ_MODEL = "openai/gpt-oss-20b";
 
-// Imagen 3 for scene image generation
 export const IMAGEN_MODEL = "imagen-3.0-generate-002";
 export const IMAGEN_BASE_URL = `https://generativelanguage.googleapis.com/v1beta/models/${IMAGEN_MODEL}:predict`;
 
-// ─── JSON2Video API ───────────────────────────────────────────────────────────
 export const JSON2VIDEO_API_KEY = import.meta.env.VITE_JSON2VIDEO_API_KEY || "";
 export const JSON2VIDEO_BASE_URL = "https://api.json2video.com/v2/movies";
 export const JSON2VIDEO_MONTHLY_LIMIT = 1;
 
-// ─── Cohere API ───────────────────────────────────────────────────────────────
 export const COHERE_API_KEY = import.meta.env.VITE_COHERE_API_KEY || "";
 export const COHERE_MODEL = import.meta.env.VITE_COHERE_MODEL || "command-r-plus-08-2024";
 export const COHERE_BASE_URL = "https://api.cohere.com/v2/chat";
 
-// ─── Claude via Anthropic API ─────────────────────────────────────────────────
 export const VERCEL_AI_KEY = import.meta.env.VITE_VERCEL_AI_KEY || "";
 export const CLAUDE_API_KEY = import.meta.env.VITE_CLAUDE_API_KEY || "";
 export const CLAUDE_MODEL = import.meta.env.VITE_CLAUDE_MODEL || "claude-opus-4-5";
 export const CLAUDE_GATEWAY_URL = "https://api.anthropic.com/v1/messages";
 
-// Lynx is ENABLED by default. Only disabled if explicitly set to "false".
 export function isLynxEnabled() {
   const stored = localStorage.getItem(LYNX_ENABLED_KEY);
   return stored !== "false";
@@ -127,9 +119,7 @@ const COGNITA_CODE_SYSTEM_PROMPT =
   "When showing code, always use markdown fenced code blocks with the language name. " +
   "For math, use $inline$ or $$block$$ LaTeX. Keep answers focused, practical, and beginner-friendly.";
 
-/**
- * Direct Claude call — routed via Base44 InvokeLLM (Anthropic blocks direct browser requests due to CORS)
- */
+
 export async function callClaudeDirect({ prompt, systemPrompt, feature, max_tokens } = {}) {
   if (!prompt?.trim()) throw new Error("Prompt is required for Claude");
   const sysPrompt = systemPrompt || COGNITA_CODE_SYSTEM_PROMPT;
@@ -142,9 +132,7 @@ export async function callClaudeDirect({ prompt, systemPrompt, feature, max_toke
   return result;
 }
 
-/**
- * Direct Gemini call — used as primary for coding tasks.
- */
+
 export async function callGeminiDirect({ prompt, systemPrompt, response_json_schema, feature } = {}) {
   const sysPrompt = systemPrompt || COGNITA_CODE_SYSTEM_PROMPT;
   const res = await fetch(`${GEMINI_BASE_URL}?key=${GEMINI_API_KEY}`, {
@@ -180,9 +168,7 @@ export async function callGeminiDirect({ prompt, systemPrompt, response_json_sch
   return content;
 }
 
-/**
- * Helper: fetch a URL and return base64 data (for Gemini vision).
- */
+
 async function fetchImageAsBase64(url) {
   const res = await fetch(url);
   const blob = await res.blob();
@@ -193,9 +179,7 @@ async function fetchImageAsBase64(url) {
   });
 }
 
-/**
- * Call Lynx API — tries primary model then fallback models on 502/503
- */
+
 async function tryLynx({ enhancedPrompt, systemPrompt, response_json_schema, feature }) {
   if (!isLynxEnabled()) return null;
   const userContent = response_json_schema
@@ -220,9 +204,8 @@ async function tryLynx({ enhancedPrompt, systemPrompt, response_json_schema, fea
         }),
       });
     } catch {
-      continue; // network error, try next model
+      continue;
     }
-    // On any error status, try next model
     if (!res.ok) { continue; }
     const data = await res.json();
     const content = data?.choices?.[0]?.message?.content;
@@ -240,7 +223,6 @@ async function tryLynx({ enhancedPrompt, systemPrompt, response_json_schema, fea
     return content;
   }
 
-  // All Lynx models failed
   logAIUsage("lynx", feature, enhancedPrompt?.length, false);
   return null;
 }
@@ -272,13 +254,11 @@ async function tryOpenRouter({ enhancedPrompt, systemPrompt, response_json_schem
       }),
     });
   } catch (err) {
-    // Network or preflight CORS error
     logAIUsage("openrouter", feature, enhancedPrompt?.length, false);
     return null;
   }
 
   if (!res.ok) {
-    // 429, 405, or other HTTP error codes
     logAIUsage("openrouter", feature, enhancedPrompt?.length, false);
     return null;
   }
@@ -293,7 +273,6 @@ async function tryOpenRouter({ enhancedPrompt, systemPrompt, response_json_schem
 
     if (response_json_schema) {
       try {
-        // Safely using hex codes (\x60) for backticks to prevent markdown glitches
         const cleanRegexStart = new RegExp("^\\x60\\x60\\x60(?:json)?\\s*", "im");
         const cleanRegexEnd = new RegExp("\\s*\\x60\\x60\\x60\\s*$", "im");
         let cleaned = content.replace(cleanRegexStart, "").replace(cleanRegexEnd, "").trim();
@@ -319,15 +298,12 @@ async function tryOpenRouter({ enhancedPrompt, systemPrompt, response_json_schem
     logAIUsage("openrouter", feature, enhancedPrompt?.length, true);
     return content;
   } catch (err) {
-    // Handles unexpected response JSON formatting or parsing exceptions safely
     logAIUsage("openrouter", feature, enhancedPrompt?.length, false);
     return null;
   }
 }
 
-/**
- * Call Hack Club API
- */
+
 async function tryHackClub({ enhancedPrompt, systemPrompt, response_json_schema, feature }) {
   const userContent = response_json_schema
     ? `${enhancedPrompt}\n\nIMPORTANT: Respond with ONLY valid JSON. No markdown fences, no explanation, no text before or after the JSON object.`
@@ -335,7 +311,6 @@ async function tryHackClub({ enhancedPrompt, systemPrompt, response_json_schema,
 
   let res;
   try {
-    // Route request through the internal /api/hackclub endpoint to avoid CORS issues
     res = await fetch("/api/hackclub", {
       method: "POST",
       headers: {
@@ -398,7 +373,6 @@ async function tryHackClub({ enhancedPrompt, systemPrompt, response_json_schema,
 }
 
 async function tryNvidia({ enhancedPrompt, systemPrompt, response_json_schema, feature }) {
-  // Use model selections based on feature
   const isCode = feature === "code_sandbox_ai" || feature === "code_helper";
   const candidateModels = isCode ? NVIDIA_CODE_MODELS : NVIDIA_GENERAL_MODELS;
 
@@ -408,7 +382,6 @@ async function tryNvidia({ enhancedPrompt, systemPrompt, response_json_schema, f
 
   for (const model of candidateModels) {
     try {
-      // Call your Vercel serverless endpoint instead of calling NVIDIA directly
       const res = await fetch("/api/nvidia", {
         method: "POST",
         headers: {
@@ -431,13 +404,9 @@ async function tryNvidia({ enhancedPrompt, systemPrompt, response_json_schema, f
       const content = data?.choices?.[0]?.message?.content;
       if (!content) continue;
 
-      // ==========================================
-      // BULLETPROOF JSON PARSING (NO COMPLEX REGEX)
-      // ==========================================
       if (response_json_schema) {
         let cleaned = content.trim();
         
-        // Safely strip starting markdown code blocks
         if (cleaned.startsWith("```")) {
           const firstNewline = cleaned.indexOf("\n");
           if (firstNewline !== -1) {
@@ -445,18 +414,15 @@ async function tryNvidia({ enhancedPrompt, systemPrompt, response_json_schema, f
           }
         }
         
-        // Safely strip ending markdown code blocks
         if (cleaned.endsWith("```")) {
           cleaned = cleaned.substring(0, cleaned.length - 3).trim();
         }
 
         try { 
-          // Attempt 1: Direct Parse
           const parsed = JSON.parse(cleaned);
           logAIUsage("nvidia", feature, enhancedPrompt?.length, true); 
           return parsed; 
         } catch (e1) {
-          // Attempt 2: Fallback to finding the first { and last }
           try {
             const firstBrace = content.indexOf("{");
             const lastBrace = content.lastIndexOf("}");
@@ -467,19 +433,15 @@ async function tryNvidia({ enhancedPrompt, systemPrompt, response_json_schema, f
               return parsed;
             }
           } catch (e2) {
-            // Both attempts failed
           }
         }
         
-        // Move to next model if JSON parsing fails
         continue;
       }
 
-      // Standard text response
       logAIUsage("nvidia", feature, enhancedPrompt?.length, true);
       return content;
     } catch {
-      // Network or fetch error, move to next model
       continue;
     }
   }
@@ -488,9 +450,7 @@ async function tryNvidia({ enhancedPrompt, systemPrompt, response_json_schema, f
   return null;
 }
 
-/**
- * Call Groq API — ultra-fast LPU open-source inference
- */
+
 async function tryGroq({ enhancedPrompt, systemPrompt, response_json_schema, feature }) {
   if (!GROQ_API_KEY) return null;
 
@@ -565,10 +525,7 @@ async function tryGroq({ enhancedPrompt, systemPrompt, response_json_schema, fea
     return null;
   }
 }
-/**
- * Call Big Pickle API via InvokeLLM proxy (direct browser fetch blocked by CORS).
- * Uses Base44 as a server-side proxy to reach opencode.ai/zen/v1.
- */
+
 async function tryBigPickle({ enhancedPrompt, systemPrompt, response_json_schema, feature }) {
   if (!BIG_PICKLE_API_KEY) return null;
   const sysPrompt = systemPrompt || COGNITA_SYSTEM_PROMPT;
@@ -610,7 +567,6 @@ async function tryBigPickle({ enhancedPrompt, systemPrompt, response_json_schema
       try {
         let cleaned = content.trim();
 
-        // Strip leading markdown block (e.g. ```json)
         if (cleaned.startsWith("```")) {
           const firstNewLine = cleaned.indexOf("\n");
           if (firstNewLine !== -1) {
@@ -620,20 +576,17 @@ async function tryBigPickle({ enhancedPrompt, systemPrompt, response_json_schema
           }
         }
 
-        // Strip trailing markdown block
         if (cleaned.endsWith("```")) {
           cleaned = cleaned.slice(0, -3);
         }
 
         cleaned = cleaned.trim();
 
-        // Direct JSON attempt
         try {
           logAIUsage("bigpickle", feature, enhancedPrompt?.length, true);
           return JSON.parse(cleaned);
         } catch {}
 
-        // Fallback: extract substring between first '{' and last '}'
         const firstBrace = cleaned.indexOf("{");
         const lastBrace = cleaned.lastIndexOf("}");
         if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
@@ -658,12 +611,9 @@ async function tryBigPickle({ enhancedPrompt, systemPrompt, response_json_schema
   }
 }
 
-/**
- * Call Gemini API
- */
+
 async function tryGemini({ enhancedPrompt, systemPrompt, response_json_schema, feature }) {
   if (!GEMINI_API_KEY) return null;
-  // When JSON needed, explicitly instruct Gemini to output clean JSON matching the schema
   const userText = response_json_schema
     ? `${systemPrompt || COGNITA_SYSTEM_PROMPT}\n\n${enhancedPrompt}\n\nIMPORTANT: Respond with ONLY a valid JSON object matching this schema: ${JSON.stringify(response_json_schema)}. No markdown fences, no explanation, no text before or after the JSON.`
     : `${systemPrompt || COGNITA_SYSTEM_PROMPT}\n\n${enhancedPrompt}`;
@@ -692,12 +642,9 @@ async function tryGemini({ enhancedPrompt, systemPrompt, response_json_schema, f
   return content;
 }
 
-/**
- * Call Cohere API
- */
+
 async function tryCohere({ enhancedPrompt, systemPrompt, response_json_schema, feature }) {
   if (!COHERE_API_KEY) return null;
-  // When JSON is needed, prepend explicit instruction so Cohere outputs clean JSON
   const userContent = response_json_schema
     ? `${enhancedPrompt}\n\nIMPORTANT: Respond with ONLY valid JSON. No markdown fences, no explanation, no text before or after the JSON object.`
     : enhancedPrompt;
@@ -719,7 +666,6 @@ async function tryCohere({ enhancedPrompt, systemPrompt, response_json_schema, f
   if (!content) { logAIUsage("cohere", feature, enhancedPrompt?.length, false); return null; }
   if (response_json_schema) {
     try {
-      // Strip markdown fences and find first {...} block
       let cleaned = content.replace(/^```(?:json)?\s*/im, "").replace(/\s*```\s*$/im, "").trim();
       try { logAIUsage("cohere", feature, enhancedPrompt?.length, true); return JSON.parse(cleaned); } catch {}
       const jsonMatch = cleaned.match(/(\{[\s\S]*\})/);
@@ -731,9 +677,7 @@ async function tryCohere({ enhancedPrompt, systemPrompt, response_json_schema, f
   return content;
 }
 
-/**
- * Call Claude via Base44 InvokeLLM (avoids CORS — Anthropic blocks direct browser requests)
- */
+
 async function tryClaude({ enhancedPrompt, systemPrompt, response_json_schema, feature }) {
   try {
     const fullPrompt = systemPrompt
@@ -753,12 +697,7 @@ async function tryClaude({ enhancedPrompt, systemPrompt, response_json_schema, f
   }
 }
 
-/**
- * Universal AI call — Lynx → Gemini → Cohere → Claude → Base44
- *
- * For CODE HELPER: Cohere → Lynx → Gemini → Claude → Base44
- * For internet/vision requests: Gemini first (only provider supporting both)
- */
+
 export async function callAI({ 
   prompt, 
   response_json_schema, 
@@ -776,7 +715,6 @@ export async function callAI({
     enhancedPrompt = `[User Timezone: ${timezone}]\n\n${prompt}`;
   }
 
-  // 1. Normalize image/file parameters into a single standard array
   const rawImages = [
     ...(file_urls || []),
     ...(images || []),
@@ -786,16 +724,13 @@ export async function callAI({
   const needsInternet = !!add_context_from_internet;
   const needsVision = rawImages.length > 0;
 
-  // Helper to extract clean mimeType and Base64 string from data URLs or external URLs
   const processImagePayload = async (img) => {
-    // If it's already a Data URL (e.g. data:image/png;base64,iVBOR...)
     if (typeof img === "string" && img.startsWith("data:")) {
       const matches = img.match(/^data:(image\/[a-zA-Z0-9+\-]+);base64,(.+)$/);
       if (matches && matches.length === 3) {
         return { mimeType: matches[1], data: matches[2] };
       }
     }
-    // If it's an external HTTP/HTTPS URL
     if (typeof img === "string" && (img.startsWith("http://") || img.startsWith("https://"))) {
       if (typeof fetchImageAsBase64 === "function") {
         const b64 = await fetchImageAsBase64(img);
@@ -805,14 +740,12 @@ export async function callAI({
     return null;
   };
 
-  // If internet search or vision → Gemini first then fall back to other providers
   if (needsInternet || needsVision) {
     if (GEMINI_API_KEY) {
       try {
         const visionModel = needsVision ? (GEMINI_VISION_MODEL || "gemini-1.5-flash") : (GEMINI_MODEL || "gemini-1.5-flash");
         const bodyParts = [];
 
-        // Attach system prompt or default instruction
         const sysPrompt = systemPrompt || COGNITA_SYSTEM_PROMPT;
         if (sysPrompt) {
           bodyParts.push({ text: `${sysPrompt}\n\n${enhancedPrompt}` });
@@ -820,7 +753,6 @@ export async function callAI({
           bodyParts.push({ text: enhancedPrompt });
         }
 
-        // Attach Vision Parts
         if (needsVision) {
           for (const img of rawImages) {
             try {
@@ -874,7 +806,6 @@ export async function callAI({
       }
     }
 
-    // ─── GEMINI FAILED OR DISABLED ───
     const args = { 
       enhancedPrompt, 
       prompt: enhancedPrompt, 
@@ -895,7 +826,6 @@ export async function callAI({
     try { const rPickle = await tryBigPickle(args); if (rPickle != null) return rPickle; } catch (e) { console.warn("Big Pickle fallback failed:", e?.message); }
     try { const rClaude = await tryClaude(args); if (rClaude != null) return rClaude; } catch (e) { console.warn("Claude fallback failed:", e?.message); }
 
-    // Final Base44 Absolute Fallback
     const result = await db.integrations.Core.InvokeLLM({
       prompt: enhancedPrompt,
       ...(response_json_schema ? { response_json_schema } : {}),
@@ -947,9 +877,7 @@ export async function callAI({
   return result;
 }
 
-/**
- * Direct Lynx call — tries primary then fallback models. Used for explicit Lynx tests.
- */
+
 export async function callLynxDirect({ prompt, systemPrompt } = {}) {
   const modelsToTry = [LYNX_MODEL, ...LYNX_FALLBACK_MODELS];
   let lastError = null;
@@ -977,7 +905,7 @@ export async function callLynxDirect({ prompt, systemPrompt } = {}) {
     }
     if (!res.ok) {
       lastError = new Error(`Lynx ${model} returned ${res.status} ${res.statusText}`);
-      continue; // try next model on ANY error status
+      continue;
     }
     const data = await res.json();
     const content = data?.choices?.[0]?.message?.content;
@@ -988,14 +916,10 @@ export async function callLynxDirect({ prompt, systemPrompt } = {}) {
   throw lastError || new Error("All Lynx models failed (502/503)");
 }
 
-/**
- * Generate a scene image using Gemini Imagen 3 directly first, then Base44 GenerateImage as fallback.
- * Returns a public URL string or null on failure.
- */
+
 export async function generateSceneImage({ prompt } = {}) {
   if (!prompt) return null;
 
-  // Try Gemini Imagen 3 directly (no base44 LLM needed)
   try {
     const res = await fetch(`${IMAGEN_BASE_URL}?key=${GEMINI_API_KEY}`, {
       method: "POST",
@@ -1010,7 +934,6 @@ export async function generateSceneImage({ prompt } = {}) {
       const b64 = data?.predictions?.[0]?.bytesBase64Encoded;
       const mimeType = data?.predictions?.[0]?.mimeType || "image/png";
       if (b64) {
-        // Upload b64 image via base44 UploadFile so we get a hosted URL
         const blob = await fetch(`data:${mimeType};base64,${b64}`).then(r => r.blob());
         const { file_url } = await db.integrations.Core.UploadFile({ file: blob });
         if (file_url) return file_url;
@@ -1020,7 +943,6 @@ export async function generateSceneImage({ prompt } = {}) {
     console.warn("Imagen 3 direct failed:", err?.message);
   }
 
-  // Fallback: Base44 GenerateImage
   try {
     const result = await db.integrations.Core.GenerateImage({ prompt });
     const url = result?.url || null;
@@ -1032,33 +954,21 @@ export async function generateSceneImage({ prompt } = {}) {
   }
 }
 
-/**
- * Generate a scene image via Imagen 3. Returns { url, type: "image" }.
- * Note: Veo (video generation) requires Vertex AI service account auth which is
- * not available from the browser. We use Imagen for high-quality scene images instead.
- */
+
 export async function generateSceneMedia({ prompt } = {}) {
   const imageUrl = await generateSceneImage({ prompt });
   return { url: imageUrl || null, type: "image" };
 }
 
-// Legacy compat
 export const generateVeoVideo = generateSceneMedia;
 
-// ─── File Upload ──────────────────────────────────────────────────────────────
-/**
- * Upload a file and return its public URL.
- * Wraps Base44's UploadFile integration — works from browser with no backend needed.
- */
+
 export async function uploadFile(file) {
   const { file_url } = await db.integrations.Core.UploadFile({ file });
   return file_url;
 }
 
-/**
- * Extract text content from an uploaded file (PDF, image, doc, csv, xlsx, json, html).
- * Returns extracted text string or null.
- */
+
 export async function extractTextFromFile(file) {
   const file_url = await uploadFile(file);
   const result = await db.integrations.Core.ExtractDataFromUploadedFile({
@@ -1068,24 +978,14 @@ export async function extractTextFromFile(file) {
   return result?.output?.content || null;
 }
 
-// ─── Audio Transcription ──────────────────────────────────────────────────────
-/**
- * Transcribe an audio file to text using Whisper via db.
- * Supported formats: ogg, oga, mp3, wav, webm, m4a, mp4, mpeg, mpga, flac. Max 25MB.
- * Returns transcript string or null.
- */
+
 export async function transcribeAudio(file) {
   const audio_url = await uploadFile(file);
   const transcript = await db.integrations.Core.TranscribeAudio({ audio_url });
   return transcript || null;
 }
 
-// ─── Speech Synthesis ─────────────────────────────────────────────────────────
-/**
- * Generate TTS audio from text and return a playable MP3 URL.
- * Uses Base44 GenerateSpeech (stored, shareable). Falls back to browser SpeechSynthesis.
- * voice options: 'river' (calm), 'honey' (warm), 'sunny' (bright), 'storm' (formal), 'spark' (energetic)
- */
+
 export async function generateSpeech(text, { voice = "river", language_code } = {}) {
   try {
     const result = await db.integrations.Core.GenerateSpeech({
@@ -1100,10 +1000,7 @@ export async function generateSpeech(text, { voice = "river", language_code } = 
   }
 }
 
-/**
- * Speak text using browser SpeechSynthesis (no cost, instant, no storage).
- * Returns the utterance so caller can cancel it.
- */
+
 export function speakText(text, { rate = 0.95, pitch = 1.05, onEnd } = {}) {
   if (!window.speechSynthesis) return null;
   window.speechSynthesis.cancel();
@@ -1118,10 +1015,7 @@ export function speakText(text, { rate = 0.95, pitch = 1.05, onEnd } = {}) {
   return utt;
 }
 
-/**
- * Generate a quiz from flashcards — routes through full AI chain with proper logging.
- * Returns parsed JSON { questions: [...] } or throws.
- */
+
 export async function generateQuizFromCards({ cards, count = 10, feature = "quiz_generation" } = {}) {
   const cardText = cards.map(c => `Q: ${c.front}\nA: ${c.back}`).join("\n\n");
   const prompt =
@@ -1153,15 +1047,11 @@ export async function generateQuizFromCards({ cards, count = 10, feature = "quiz
   };
   const result = await callAI({ prompt, response_json_schema: schema, feature });
   if (typeof result === "object" && result?.questions) return result;
-  // Try to parse if string returned
   const parsed = typeof result === "string" ? JSON.parse(result) : result;
   return parsed;
 }
 
-/**
- * Generate flashcards from text — routes through full AI chain with proper logging.
- * Returns parsed JSON { flashcards: [{front, back}] } or throws.
- */
+
 export async function generateFlashcardsFromText({ text, count = 10, feature = "flashcard_generation" } = {}) {
   const prompt =
     `Create exactly ${count} flashcards from the following content:\n\n${text}\n\n` +
@@ -1185,9 +1075,7 @@ export async function generateFlashcardsFromText({ text, count = 10, feature = "
   return parsed;
 }
 
-/**
- * Generate a practice test from flashcards (mixed types) with proper logging.
- */
+
 export async function generateTestFromCards({ cards, config = {}, feature = "test_generation" } = {}) {
   const { mc = 10, written = 5, truefalse = 5 } = config;
   const cardText = cards.map(c => `Q: ${c.front}\nA: ${c.back}`).join("\n\n");
@@ -1218,12 +1106,7 @@ export async function generateTestFromCards({ cards, config = {}, feature = "tes
   return JSON.parse(result);
 }
 
-// ─── JSON2Video ───────────────────────────────────────────────────────────────
 
-/**
- * Check how many JSON2Video videos this user has generated this calendar month.
- * Uses GeneratedMedia records with type="video" and file_url set (indicates a real rendered video).
- */
 export async function getMonthlyVideoCount(userEmail) {
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
@@ -1240,9 +1123,7 @@ export async function getMonthlyVideoCount(userEmail) {
   }
 }
 
-/**
- * Log a JSON2Video attempt to AIUsageLog for DevDashboard tracking.
- */
+
 async function logJson2VideoAttempt(status, details = "") {
   try {
     let userEmail = "";
@@ -1257,11 +1138,7 @@ async function logJson2VideoAttempt(status, details = "") {
   } catch {}
 }
 
-/**
- * Submit a video render job to JSON2Video and poll until complete.
- * Uses Base44 backend integration with internet context to bypass CORS restrictions.
- * Returns the CDN MP4 URL on success, throws on error.
- */
+
 export async function renderVideoWithJson2Video(payload, onStatus) {
   const notify = (msg) => { if (onStatus) onStatus(msg); };
 
@@ -1273,7 +1150,6 @@ export async function renderVideoWithJson2Video(payload, onStatus) {
   const payloadStr = JSON.stringify(payload);
   console.log("[JSON2Video] Submitting payload size:", payloadStr.length);
 
-  // ── 1. Submit Render Job via Backend Integration Proxy ─────────────────────
   let projectId;
   const submitPrompt = `Send an HTTP POST request to endpoint "${JSON2VIDEO_BASE_URL}".
 Headers:
@@ -1302,7 +1178,6 @@ Return the exact JSON response returned by the JSON2Video endpoint.`;
 
     console.log("[JSON2Video] Submit response:", submitResult);
 
-    // Parse response
     const resObj = typeof submitResult === "string" ? JSON.parse(submitResult) : submitResult;
     projectId = resObj?.project;
 
@@ -1319,7 +1194,6 @@ Return the exact JSON response returned by the JSON2Video endpoint.`;
   await logJson2VideoAttempt("submitted", `project=${projectId}`);
   notify(`Render job submitted (Project ID: ${projectId}). Waiting for render…`);
 
-  // ── 2. Poll Render Status Every 8 Seconds (Up to 5 Minutes) ───────────────
   for (let i = 0; i < 38; i++) {
     await new Promise(r => setTimeout(r, 8000));
     notify(`Rendering video… (${Math.round((i + 1) * 8)}s elapsed)`);
@@ -1381,9 +1255,7 @@ Return the exact JSON status response.`;
   throw new Error("JSON2Video render timed out after 5 minutes.");
 }
 
-/**
- * Build a JSON2Video movie payload matching JSON2Video v2 schema specifications.
- */
+
 export function buildJson2VideoPayload(scriptData, imageUrls = []) {
   const scenes = scriptData?.scenes || [];
   const bgColors = ["#1a1a2e", "#16213e", "#0f3460", "#1b1f3b", "#12112e"];
@@ -1397,7 +1269,6 @@ export function buildJson2VideoPayload(scriptData, imageUrls = []) {
 
     const elements = [];
 
-    // Background image element
     if (imageUrl) {
       elements.push({
         type: "image",
@@ -1409,7 +1280,6 @@ export function buildJson2VideoPayload(scriptData, imageUrls = []) {
       });
     }
 
-    // Top-left Scene Counter Header
     elements.push({
       type: "text",
       text: `Scene ${sceneNum} / ${scenes.length}`,
@@ -1425,7 +1295,6 @@ export function buildJson2VideoPayload(scriptData, imageUrls = []) {
       },
     });
 
-    // Main Headline Banner
     elements.push({
       type: "text",
       text: headline,
@@ -1443,7 +1312,6 @@ export function buildJson2VideoPayload(scriptData, imageUrls = []) {
       },
     });
 
-    // TTS Voice Narration
     if (narration) {
       elements.push({
         type: "voice",
@@ -1469,7 +1337,6 @@ export function buildJson2VideoPayload(scriptData, imageUrls = []) {
   };
 }
 
-// System prompt specifically for media generation, teaching all providers the exact format.
 const MEDIA_SYSTEM_PROMPT =
   "You are Cognita Media Generator. You create educational audio narration scripts and structured video scripts for students. " +
   "CRITICAL RULES:\n" +
@@ -1480,9 +1347,7 @@ const MEDIA_SYSTEM_PROMPT =
   "Always include exactly 5 scenes. Never wrap JSON in ```json``` blocks. Output raw JSON only.\n" +
   "- Be educational, clear, and engaging. Write for a student audience.";
 
-/**
- * Robustly parse JSON from AI response — strips markdown fences and finds first {...} block.
- */
+
 function extractJSON(content) {
   if (!content) throw new Error("Empty content");
   let cleaned = content.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
@@ -1492,11 +1357,7 @@ function extractJSON(content) {
   throw new Error("No valid JSON found in response");
 }
 
-/**
- * Media Generation Chain.
- * For VIDEO scripts: Gemini first (best JSON compliance), then Lynx → Cohere → Claude → Base44
- * For AUDIO narration: Lynx first → Gemini → Cohere → Claude → Base44
- */
+
 export async function callAIForMedia({ prompt, response_json_schema, feature } = {}) {
   const isVideo = !!response_json_schema;
 
@@ -1571,7 +1432,6 @@ export async function callAIForMedia({ prompt, response_json_schema, feature } =
     return isVideo ? extractJSON(content) : content;
   };
 
-  // Order: video → Gemini first; audio → Lynx first
   const orderedProviders = isVideo
     ? [["gemini", tryGeminiMedia], ["lynx", tryLynxMedia], ["cohere", tryCohereMedia], ["claude", tryClaudeMedia]]
     : [["lynx", tryLynxMedia], ["gemini", tryGeminiMedia], ["cohere", tryCohereMedia], ["claude", tryClaudeMedia]];
@@ -1587,7 +1447,6 @@ export async function callAIForMedia({ prompt, response_json_schema, feature } =
     }
   }
 
-  // Base44 last resort
   try {
     const result = await db.integrations.Core.InvokeLLM({
       prompt: `${MEDIA_SYSTEM_PROMPT}\n\n${prompt}`,

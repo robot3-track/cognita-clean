@@ -3,7 +3,6 @@ import * as PopoverPrimitive from "@radix-ui/react-popover"
 import { cn } from "@/lib/utils"
 import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer"
 
-// Mobile-aware Popover: uses Drawer bottom sheet on mobile
 function useIsMobile() {
   const [isMobile, setIsMobile] = React.useState(false)
   React.useEffect(() => {

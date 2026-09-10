@@ -5,12 +5,11 @@ import { Brain, Check, X, Trophy } from "lucide-react";
 
 import LatexRenderer from "./LatexRenderer";
 
-// Adaptive learn: tracks difficulty, re-shows hard cards more often
 export default function AdaptiveLearnMode({ cards, deck, user, onExit }) {
   const [queue, setQueue] = useState([]);
   const [current, setCurrent] = useState(null);
   const [flipped, setFlipped] = useState(false);
-  const [scores, setScores] = useState({}); // card.id -> {correct, incorrect}
+  const [scores, setScores] = useState({});
   const [round, setRound] = useState(1);
   const [done, setDone] = useState(false);
   const [sessionStart] = useState(Date.now());
@@ -24,16 +23,14 @@ export default function AdaptiveLearnMode({ cards, deck, user, onExit }) {
   }, [cards]);
 
   const buildQueue = (allCards, currentScores) => {
-    // Cards with more incorrect answers appear more often
     const q = [];
     allCards.forEach(c => {
       const s = currentScores[c.id] || { correct: 0, incorrect: 0 };
       const weight = s.incorrect > 0 ? Math.max(1, s.incorrect) : 1;
-      if (s.correct < 2) { // need 2 correct to "graduate"
+      if (s.correct < 2) {
         for (let i = 0; i < weight; i++) q.push(c);
       }
     });
-    // Shuffle
     const shuffled = q.sort(() => Math.random() - 0.5);
     if (shuffled.length === 0) {
       setDone(true);
@@ -57,7 +54,6 @@ export default function AdaptiveLearnMode({ cards, deck, user, onExit }) {
 
     const remaining = queue.slice(1);
     if (remaining.length === 0) {
-      // Check if all cards graduated
       const notDone = cards.filter(c => (newScores[c.id]?.correct || 0) < 2);
       if (notDone.length === 0) {
         setDone(true);
@@ -109,7 +105,7 @@ export default function AdaptiveLearnMode({ cards, deck, user, onExit }) {
           </div>
         </div>
 
-        {/* Progress bar */}
+        
         <div className="w-full h-2 rounded-full mb-6 overflow-hidden" style={{ background: "var(--app-surface)" }}>
           <div className="h-full rounded-full bg-gradient-to-r from-violet-600 to-emerald-500 transition-all duration-500" style={{ width: `${progress}%` }} />
         </div>
@@ -149,7 +145,7 @@ export default function AdaptiveLearnMode({ cards, deck, user, onExit }) {
           </div>
         )}
 
-        {/* Card stats */}
+        
         {scores[current.id] && (
           <p className="text-xs text-center mt-4" style={mutedStyle}>
             This card: {scores[current.id].correct} correct, {scores[current.id].incorrect} missed

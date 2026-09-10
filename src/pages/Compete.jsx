@@ -118,7 +118,6 @@ export default function Compete() {
     setPublicLeaderboard(buildPublicLeaderboard(sessions, allUsersData));
   }, [buildLeaderboard, buildPublicLeaderboard]);
 
-  // Live update leaderboard via real-time subscription
   useEffect(() => {
     const unsub = db.entities.StudySession.subscribe(() => {
       if (!user) return;
@@ -127,7 +126,6 @@ export default function Compete() {
     return unsub;
   }, [user, refreshLeaderboard]);
 
-  // Live update friendships
   useEffect(() => {
     const unsub = db.entities.Friendship.subscribe(() => {
       if (!user) return;
@@ -136,7 +134,6 @@ export default function Compete() {
     return unsub;
   }, [user, refreshLeaderboard]);
 
-  // Search users by name with debounce
   useEffect(() => {
     if (!searchQuery.trim()) { setSearchResults([]); return; }
     setSearchLoading(true);
@@ -218,7 +215,7 @@ export default function Compete() {
           <p className="text-sm" style={mutedStyle}>{t('competeDesc')}</p>
         </div>
 
-        {/* Tabs */}
+        
         <div className="flex gap-2 p-1.5 rounded-2xl mb-6" style={cardStyle}>
           {[
             { id: "public", label: "Global", icon: Globe },
@@ -240,7 +237,7 @@ export default function Compete() {
           ))}
         </div>
 
-        {/* Public Leaderboard */}
+        
         {tab === "public" && (
           <div>
             <p className="text-xs font-semibold opacity-40 uppercase tracking-widest mb-4">🌐 All Cognita Users — Top 50 by Cards Reviewed</p>
@@ -285,7 +282,7 @@ export default function Compete() {
           </div>
         )}
 
-        {/* Friends Leaderboard */}
+        
         {tab === "leaderboard" && (
           <div>
             <p className="text-xs font-semibold opacity-40 uppercase tracking-widest mb-4">🏆 You + Your Friends</p>
@@ -328,7 +325,7 @@ export default function Compete() {
 
         {tab === "friends" && (
           <div className="space-y-4">
-            {/* Add friend by name search */}
+            
             <div className="rounded-3xl p-5" style={cardStyle}>
               <h3 className="font-bold text-sm mb-3">{t('addFriend')}</h3>
               <div className="relative">
@@ -343,7 +340,7 @@ export default function Compete() {
                 {searchLoading && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-violet-400 animate-spin" />}
               </div>
 
-              {/* Dropdown results */}
+              
               {searchResults.length > 0 && (
                 <div className="mt-2 rounded-2xl overflow-hidden border" style={{ borderColor: "var(--app-border)" }}>
                   {searchResults.map((u, i) => (
@@ -376,7 +373,7 @@ export default function Compete() {
               )}
             </div>
 
-            {/* Pending requests received */}
+            
             {pendingReceived.length > 0 && (
               <div className="rounded-3xl p-5" style={cardStyle}>
                 <h3 className="font-bold text-sm mb-3 text-violet-400">{t('pendingRequests')} ({pendingReceived.length})</h3>
@@ -407,7 +404,7 @@ export default function Compete() {
               </div>
             )}
 
-            {/* Friends list */}
+            
             {myFriends.length > 0 && (
               <div className="rounded-3xl p-5" style={cardStyle}>
                 <h3 className="font-bold text-sm mb-3">{t('myFriends')} ({myFriends.length})</h3>

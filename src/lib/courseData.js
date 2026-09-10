@@ -1,10 +1,6 @@
-// ─── COURSE CATALOG ──────────────────────────────────────────────────────────
-// Levels: "beginner" | "intermediate" | "advanced" | "ap" | "engineering"
-// Types:  "full" (multi-module) | "mini" (1-3 lessons, ~1-5 min skill)
 
 export const COURSES = [
 
-  // ── MINI / SKILL COURSES ─────────────────────────────────────────────────
   {
     id: "mini-git-commit", title: "Writing Good Git Commits", imageUrl: "https://images.unsplash.com/photo-1618401471353-b98afee0b2eb?w=400&auto=format&fit=crop&q=60", color: "#f97316",
     category: "Coding Skills", level: "beginner", type: "mini", duration: "2 min",
@@ -110,7 +106,6 @@ export const COURSES = [
     ]
   },
 
-  // ── BEGINNER PROGRAMMING ─────────────────────────────────────────────────
   {
     id: "python-intro", title: "Python for Beginners", imageUrl: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=400&auto=format&fit=crop&q=60", color: "#3b82f6",
     category: "Programming", level: "beginner", type: "full", duration: "~15h",
@@ -172,7 +167,6 @@ export const COURSES = [
     ]
   },
 
-  // ── INTERMEDIATE PROGRAMMING ─────────────────────────────────────────────
   {
     id: "react-course", title: "React.js", imageUrl: "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=400&auto=format&fit=crop&q=60", color: "#06b6d4",
     category: "Programming", level: "intermediate", type: "full", duration: "~20h",
@@ -224,7 +218,6 @@ export const COURSES = [
     ]
   },
 
-  // ── ADVANCED / ENGINEERING ───────────────────────────────────────────────
   {
     id: "system-design", title: "System Design", imageUrl: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400&auto=format&fit=crop&q=60", color: "#f97316",
     category: "Engineering", level: "engineering", type: "full", duration: "~25h",
@@ -300,7 +293,6 @@ export const COURSES = [
     ]
   },
 
-  // ── AP SCIENCES ──────────────────────────────────────────────────────────
   {
     id: "ap-biology", title: "AP Biology", imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRz-8jR9qjG6_cM_D8bYlC977U8aP0e2Q&s", color: "#10b981",
     category: "AP Sciences", level: "ap", type: "full", duration: "~40h",
@@ -360,7 +352,6 @@ export const COURSES = [
     ]
   },
 
-  // ── AP MATHEMATICS ──────────────────────────────────────────────────────
   {
     id: "ap-calc-ab", title: "AP Calculus AB", imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSnZ7WqTjZfB967n9H3C-lWw&s", color: "#3b82f6",
     category: "AP Mathematics", level: "ap", type: "full", duration: "~42h",
@@ -418,7 +409,6 @@ export const COURSES = [
     ]
   },
 
-  // ── AP HISTORY & SOCIAL SCIENCE ──────────────────────────────────────────
   {
     id: "ap-human-geography", title: "AP Human Geography", imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRz-8jR9qjG6_cM_D8bYlC977U8aP0e2Q&s", color: "#16a34a",
     category: "AP History & Social Science", level: "ap", type: "full", duration: "~36h",
@@ -485,7 +475,6 @@ export const COURSES = [
     ]
   },
 
-  // ── AP CS ─────────────────────────────────────────────────────────────────
   {
     id: "ap-cs-a", title: "AP Computer Science A", imageUrl: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&auto=format&fit=crop&q=60", color: "#14b8a6",
     category: "AP Computer Science", level: "ap", type: "full", duration: "~46h",
@@ -512,7 +501,6 @@ export const COURSES = [
     ]
   },
 
-  // ── LANGUAGE COURSES ─────────────────────────────────────────────────────
   {
     id: "french-beginner", title: "French for Beginners", imageUrl: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&auto=format&fit=crop&q=60", color: "#3b82f6",
     category: "Languages", level: "beginner", type: "full", duration: "~20h",
@@ -564,7 +552,6 @@ export const COURSES = [
     ]
   },
 
-  // ── FOUNDATIONAL MATH & SCIENCE ──────────────────────────────────────────
   {
     id: "algebra-1", title: "Algebra 1", imageUrl: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=400&auto=format&fit=crop&q=60", color: "#4f46e5",
     category: "Mathematics", level: "beginner", type: "full", duration: "~35h",

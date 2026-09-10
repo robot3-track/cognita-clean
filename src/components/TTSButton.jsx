@@ -1,18 +1,16 @@
 import { useState } from "react";
 import { Volume2, VolumeX } from "lucide-react";
 
-// Detect script/language from text content
 function detectLang(text) {
   if (!text) return "en-US";
-  if (/[\u3040-\u309F\u30A0-\u30FF]/.test(text)) return "ja-JP"; // Japanese
-  if (/[\u4E00-\u9FFF]/.test(text)) return "zh-CN";              // Chinese
-  if (/[\uAC00-\uD7AF]/.test(text)) return "ko-KR";              // Korean
-  if (/[\u0600-\u06FF]/.test(text)) return "ar-SA";              // Arabic
-  if (/[\u0400-\u04FF]/.test(text)) return "ru-RU";              // Russian
-  if (/[\u0900-\u097F]/.test(text)) return "hi-IN";              // Hindi
-  if (/[\u0370-\u03FF]/.test(text)) return "el-GR";              // Greek
-  if (/[\u0E00-\u0E7F]/.test(text)) return "th-TH";              // Thai
-  // Latin-based language hints from common words
+  if (/[\u3040-\u309F\u30A0-\u30FF]/.test(text)) return "ja-JP";
+  if (/[\u4E00-\u9FFF]/.test(text)) return "zh-CN";
+  if (/[\uAC00-\uD7AF]/.test(text)) return "ko-KR";
+  if (/[\u0600-\u06FF]/.test(text)) return "ar-SA";
+  if (/[\u0400-\u04FF]/.test(text)) return "ru-RU";
+  if (/[\u0900-\u097F]/.test(text)) return "hi-IN";
+  if (/[\u0370-\u03FF]/.test(text)) return "el-GR";
+  if (/[\u0E00-\u0E7F]/.test(text)) return "th-TH";
   if (/\b(le|la|les|de|du|un|une|est|et|je|tu|il|nous|vous|ils)\b/i.test(text)) return "fr-FR";
   if (/\b(el|la|los|las|de|del|un|una|es|y|que|en|se|no)\b/i.test(text)) return "es-ES";
   if (/\b(der|die|das|ein|ist|und|ich|du|wir|sie|nicht|mit)\b/i.test(text)) return "de-DE";
@@ -21,7 +19,6 @@ function detectLang(text) {
   return "en-US";
 }
 
-// Pick best matching voice for a language code
 function getBestVoice(lang) {
   const voices = window.speechSynthesis.getVoices();
   if (!voices.length) return null;
@@ -52,7 +49,6 @@ export default function TTSButton({ text, lang, className = "" }) {
       utterance.lang = resolvedLang;
       utterance.rate = 0.9;
 
-      // Try to find a matching voice
       const voices = window.speechSynthesis.getVoices();
       const voice =
         voices.find(v => v.lang === resolvedLang) ||
@@ -66,7 +62,6 @@ export default function TTSButton({ text, lang, className = "" }) {
       window.speechSynthesis.speak(utterance);
     };
 
-    // Voices may not be loaded yet on first call
     if (window.speechSynthesis.getVoices().length > 0) {
       doSpeak();
     } else {
@@ -74,7 +69,6 @@ export default function TTSButton({ text, lang, className = "" }) {
         window.speechSynthesis.onvoiceschanged = null;
         doSpeak();
       };
-      // Fallback: some browsers never fire the event, speak anyway after short delay
       setTimeout(() => {
         if (!speaking) doSpeak();
       }, 500);

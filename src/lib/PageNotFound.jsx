@@ -12,7 +12,6 @@ export default function PageNotFound() {
     queryKey: ['user'],
     queryFn: async () => {
       try {
-        // Updated to reflect native firebase database integration configurations
         const user = await db.auth.me();
         return { user, isAuthenticated: true };
       } catch (error) {
@@ -24,13 +23,13 @@ export default function PageNotFound() {
   return (
     <div className="min-h-screen relative flex items-center justify-center p-6 bg-slate-950 text-slate-100 overflow-hidden">
       
-      {/* Background Ambient Glow Effects matching Cognita style Matrix */}
+      
       <div className="absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-violet-600/5 blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[-20%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-indigo-600/5 blur-[120px] pointer-events-none" />
 
       <div className="max-w-md w-full relative z-10 space-y-8">
         
-        {/* Academic Twist Graphic Display: Floating 404 Flashcard */}
+        
         <div className="relative mx-auto w-48 h-32 bg-gradient-to-br from-violet-600/20 to-slate-900 border border-violet-500/20 rounded-2xl p-4 flex flex-col justify-between shadow-2xl shadow-violet-950/40 transform -rotate-2 hover:rotate-0 transition-all duration-300 group">
           <div className="flex justify-between items-start">
             <span className="text-[10px] font-bold tracking-widest text-violet-400 uppercase bg-violet-500/10 px-2 py-0.5 rounded-md">Flashcard #404</span>
@@ -42,7 +41,7 @@ export default function PageNotFound() {
           </div>
         </div>
 
-        {/* Main Content Card Layout */}
+        
         <div className="bg-slate-900/40 backdrop-blur-md border border-slate-800/60 p-6 md:p-8 rounded-2xl space-y-6 shadow-xl text-center">
           
           <div className="space-y-2">
@@ -55,7 +54,7 @@ export default function PageNotFound() {
             </p>
           </div>
 
-          {/* Core Interactive Twist Section */}
+          
           <div className="p-4 rounded-xl border border-dashed border-slate-800 bg-slate-950/40 text-left">
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Study Break Strategy</span>
             <p className="text-[11px] text-slate-400 italic leading-relaxed">
@@ -63,7 +62,7 @@ export default function PageNotFound() {
             </p>
           </div>
 
-          {/* Admin Context Banner */}
+          
           {isFetched && authData?.isAuthenticated && authData?.user?.role === 'admin' && (
             <div className="p-4 bg-amber-500/[0.02] rounded-xl border border-amber-500/20 text-left flex gap-3">
               <AlertCircle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
@@ -76,7 +75,7 @@ export default function PageNotFound() {
             </div>
           )}
 
-          {/* Action Navigation Matrix */}
+          
           <div className="flex items-center gap-3 pt-2">
             <button
               onClick={() => navigate(-1)}
@@ -97,7 +96,7 @@ export default function PageNotFound() {
 
         </div>
 
-        {/* Minimal Platform Signature Footer */}
+        
         <div className="text-center text-[10px] text-slate-600 font-medium tracking-wide flex items-center justify-center gap-1.5">
           <Sparkles className="w-3 h-3 text-violet-500 opacity-60" />
           <span>Cognita Study is built by Yohan Chang</span>

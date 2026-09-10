@@ -1,11 +1,9 @@
 import { db } from '@/lib/firebase';
 
-// Tracks time the user spends browsing the app (non-Home pages)
-// Saves accumulated minutes to StudySession with session_type "browsing"
 import { useEffect, useRef } from "react";
 
-const SAVE_INTERVAL_MS = 60 * 1000; // save every 60 seconds
-const MIN_SAVE_MINUTES = 0.5; // only save if at least 30 seconds accumulated
+const SAVE_INTERVAL_MS = 60 * 1000;
+const MIN_SAVE_MINUTES = 0.5;
 
 export function useAppTimeTracker(pageName) {
   const startTimeRef = useRef(null);
@@ -13,7 +11,6 @@ export function useAppTimeTracker(pageName) {
   const saveTimerRef = useRef(null);
   const userEmailRef = useRef(null);
 
-  // Fetch user email once
   useEffect(() => {
     db.auth.me().then(me => {
       userEmailRef.current = me?.email || null;
@@ -43,27 +40,22 @@ export function useAppTimeTracker(pageName) {
   };
 
   useEffect(() => {
-    // Don't track Home page
     if (!pageName || pageName === "Home") return;
 
     startTimeRef.current = Date.now();
     accumulatedSecondsRef.current = 0;
 
-    // Save periodically
     saveTimerRef.current = setInterval(() => {
       saveAccumulatedTime();
     }, SAVE_INTERVAL_MS);
 
-    // Handle tab visibility changes
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        // Pause: accumulate elapsed time, stop counting
         if (startTimeRef.current) {
           accumulatedSecondsRef.current += (Date.now() - startTimeRef.current) / 1000;
           startTimeRef.current = null;
         }
       } else {
-        // Resume: restart timer
         startTimeRef.current = Date.now();
       }
     };
@@ -73,7 +65,6 @@ export function useAppTimeTracker(pageName) {
     return () => {
       clearInterval(saveTimerRef.current);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
-      // Save remaining time on unmount
       saveAccumulatedTime();
     };
   }, [pageName]);

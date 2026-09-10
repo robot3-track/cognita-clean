@@ -1,10 +1,5 @@
 import { db } from '@/lib/firebase';
 
-/**
- * AI Tutor service — powers the AI Tutors page.
- * Uses the same multi-provider fallback chain as lynxApi but isolated here
- * to keep lynxApi.js from growing too large.
- */
 
 import {
   LYNX_API_KEY, LYNX_BASE_URL, LYNX_MODEL, LYNX_FALLBACK_MODELS, isLynxEnabled,
@@ -25,16 +20,8 @@ async function logAIUsage(provider, feature, promptLength, success = true) {
   } catch {}
 }
 
-/**
- * Send a message to an AI tutor. Counts against the daily AI usage limit.
- * @param {string} userEmail - for usage tracking
- * @param {string} tutorSystemPrompt - tutor persona & subject context
- * @param {Array} history - [{role: "user"|"assistant", content: string}]
- * @param {string} userMessage - latest user message
- * @returns {Promise<string>} - AI reply text
- */
+
 export async function callTutor({ userEmail, tutorSystemPrompt, history = [], userMessage }) {
-  // Count towards daily AI limit
   incrementAiUsage(userEmail, false, 0.5);
 
   const messages = [
@@ -44,7 +31,6 @@ export async function callTutor({ userEmail, tutorSystemPrompt, history = [], us
   ];
   const feature = "ai_tutor";
 
-  // 1. Try Lynx
   if (isLynxEnabled()) {
     const modelsToTry = [LYNX_MODEL, ...LYNX_FALLBACK_MODELS];
     for (const model of modelsToTry) {
@@ -63,7 +49,6 @@ export async function callTutor({ userEmail, tutorSystemPrompt, history = [], us
     logAIUsage("lynx", feature, userMessage.length, false);
   }
 
-  // 2. Try Gemini
   try {
     const geminiMessages = history.map(m => ({
       role: m.role === "assistant" ? "model" : "user",
@@ -87,7 +72,6 @@ export async function callTutor({ userEmail, tutorSystemPrompt, history = [], us
     logAIUsage("gemini", feature, userMessage.length, false);
   } catch {}
 
-  // 3. Try Cohere
   try {
     const cohereMessages = [
       { role: "system", content: tutorSystemPrompt },
@@ -107,7 +91,6 @@ export async function callTutor({ userEmail, tutorSystemPrompt, history = [], us
     logAIUsage("cohere", feature, userMessage.length, false);
   } catch {}
 
-  // 4. Claude via Base44 (final fallback)
   try {
     const fullPrompt = `${tutorSystemPrompt}\n\n${history.map(m => `${m.role === "user" ? "Student" : "Tutor"}: ${m.content}`).join("\n")}\nStudent: ${userMessage}\nTutor:`;
     const result = await db.integrations.Core.InvokeLLM({ prompt: fullPrompt, model: "claude_sonnet_4_6" });

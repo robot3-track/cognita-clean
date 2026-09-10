@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 
-// Detect language script from text
 export function detectLanguage(text) {
   if (!text) return null;
   const s = text;
@@ -233,7 +232,7 @@ export default function LanguageKeyboard({ lang, onKey, onBackspace, onSpace }) 
 
   return (
     <div className="rounded-2xl overflow-hidden mb-4" style={cardStyle}>
-      {/* Header */}
+      
       <div className="flex items-center justify-between px-3 py-2" style={{ borderBottom: "1px solid var(--app-border)" }}>
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold text-violet-400">{kb.label} Keyboard</span>
@@ -254,7 +253,7 @@ export default function LanguageKeyboard({ lang, onKey, onBackspace, onSpace }) 
 
       {!collapsed && (
         <div className="p-2">
-          {/* Key rows */}
+          
           <div className="flex flex-wrap gap-1 mb-2">
             {tab.rows.flat().map((char, i) => (
               <button
@@ -267,7 +266,7 @@ export default function LanguageKeyboard({ lang, onKey, onBackspace, onSpace }) 
               </button>
             ))}
           </div>
-          {/* Control row */}
+          
           <div className="flex gap-1">
             <button
               onMouseDown={e => { e.preventDefault(); onSpace(); }}

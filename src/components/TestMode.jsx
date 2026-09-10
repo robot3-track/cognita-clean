@@ -1,4 +1,3 @@
-import { db } from '@/lib/firebase';
 import { useState, useEffect, useRef } from "react";
 import { incrementAiUsage } from "./aiUsageLimit";
 import { callAI } from "@/lib/lynxApi";
@@ -190,16 +189,12 @@ export default function TestMode({ cards = [], deck, user, config, onExit }) {
     startTime.current = Date.now();
 
     try {
-      // Isolate usage tracking
       try {
         await incrementAiUsage(user?.email, false, 0.5);
       } catch (usageError) {
         console.error("Non-fatal usage tracker error caught:", usageError);
       }
 
-      // Reverting to direct callAI. Your lynxApi file automatically falls back
-      // down its chain (Lynx -> Gemini -> Cohere -> Big Pickle -> Claude -> Base44)
-      // when Lynx yields 502 status errors!
       const resp = await callAI({
         prompt: buildPrompt(cards, config),
         feature: "test_mode",
@@ -246,7 +241,6 @@ export default function TestMode({ cards = [], deck, user, config, onExit }) {
     }
   };
 
-  // ADDED: The missing submit function that was causing the ReferenceError crash
   const submit = () => {
     setSubmitted(true);
   };

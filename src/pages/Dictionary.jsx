@@ -41,12 +41,10 @@ export default function Dictionary() {
     setError("");
     setResult(null);
 
-    // English: use free dictionary API
     if (lang === "en") {
       try {
         const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word.toLowerCase())}`);
         if (!res.ok) {
-          // Fallback to AI for English too if not found
           await aiLookup(word);
           return;
         }
@@ -59,7 +57,6 @@ export default function Dictionary() {
       return;
     }
 
-    // All other languages: use AI
     await aiLookup(word);
     setLoading(false);
   };
@@ -129,7 +126,6 @@ If the word does not exist in ${langLabel}, set meanings to empty array and add 
     default: "bg-white/10 text-white/60",
   };
 
-  // Render for English API result
   const renderApiResult = (data) => (
     <div className="space-y-4">
       <div className="rounded-3xl p-5" style={cardStyle}>
@@ -184,7 +180,6 @@ If the word does not exist in ${langLabel}, set meanings to empty array and add 
     </div>
   );
 
-  // Render for AI result (all languages)
   const renderAiResult = (data) => (
     <div className="space-y-4">
       <div className="rounded-3xl p-5" style={cardStyle}>
@@ -263,7 +258,7 @@ If the word does not exist in ${langLabel}, set meanings to empty array and add 
           <h1 className="text-2xl font-black">Dictionary</h1>
         </div>
 
-        {/* Language picker */}
+        
         <div className="flex flex-wrap gap-1.5 mb-4">
           {SUPPORTED_LANGS.map(l => (
             <button
@@ -277,7 +272,7 @@ If the word does not exist in ${langLabel}, set meanings to empty array and add 
           ))}
         </div>
 
-        {/* Search */}
+        
         <div className="flex gap-2 mb-6">
           <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={mutedStyle} />

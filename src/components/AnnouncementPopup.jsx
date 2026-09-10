@@ -1,7 +1,5 @@
 import { db } from '@/lib/firebase';
 
-// Mobile full-screen announcement popup
-// Shows on 2nd+ login, dismissed permanently per banner per device
 import { useState, useEffect } from "react";
 
 import { X, Megaphone } from "lucide-react";
@@ -36,11 +34,9 @@ export default function AnnouncementPopup() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    // Only show on mobile
     const isMobile = window.innerWidth < 768;
     if (!isMobile) return;
 
-    // Track login count - increment once per page session
     const sessionKey = "cognita_popup_session_counted";
     let loginCount = getLoginCount();
     if (!sessionStorage.getItem(sessionKey)) {
@@ -48,15 +44,12 @@ export default function AnnouncementPopup() {
       loginCount = incrementLoginCount();
     }
 
-    // Only show on 2nd login or later
     if (loginCount < 2) return;
 
-    // Fetch active banners and find one not yet shown
     db.entities.AnnouncementBanner.filter({ active: true }).then(banners => {
       const shown = getShownIds();
       const unseen = banners.filter(b => !shown.has(b.id));
       if (unseen.length > 0) {
-        // Show the most recent unseen banner
         const b = unseen.sort((a, b2) => new Date(b2.created_date) - new Date(a.created_date))[0];
         setBanner(b);
         setVisible(true);
@@ -83,7 +76,7 @@ export default function AnnouncementPopup() {
         className="w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl"
         style={{ background: "var(--app-surface)", border: `2px solid ${cfg.border}` }}
       >
-        {/* Colored top bar */}
+        
         <div className="h-2 w-full" style={{ background: cfg.border }} />
 
         <div className="p-6">

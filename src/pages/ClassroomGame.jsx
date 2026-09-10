@@ -7,7 +7,6 @@ function genGameCode() {
   return Math.random().toString(36).slice(2, 7).toUpperCase();
 }
 
-// Custom typography engine that translates raw LaTeX text sequences into readable symbols safely
 function renderTextWithLatex(text = "") {
   if (!text) return "";
   
@@ -33,7 +32,6 @@ function renderTextWithLatex(text = "") {
     cleanText = cleanText.replace(item.regex, item.value);
   });
 
-  // Handle fractional syntax transformations: \frac{a}{b} -> (a/b)
   cleanText = cleanText.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, "($1/$2)");
   cleanText = cleanText.replace(/\{([^}]+)\}/g, "$1");
   cleanText = cleanText.replace(/\$/g, "");
@@ -65,7 +63,6 @@ export default function ClassroomGame() {
   const [answers, setAnswers] = useState([]);
   const [myAnswer, setMyAnswer] = useState(null);
   
-  // Dynamic display state tracks if the active index timer expired locally
   const [localTimerQuestionFinished, setLocalTimerQuestionFinished] = useState(null);
   const [timeLeft, setTimeLeft] = useState(20);
   const [generating, setGenerating] = useState(false);
@@ -113,7 +110,6 @@ export default function ClassroomGame() {
     gameRef.current = game; 
   }, [game]);
 
-  // LIVE PIPELINE SUBSCRIPTION: Ensures real-time alignment across all player screens
   useEffect(() => {
     if (!game?.id) return;
     
@@ -131,7 +127,6 @@ export default function ClassroomGame() {
       
       setGame(updatedData);
       
-      // Auto-unlock client view interfaces instantly when the question index increments
       if (updatedData.status === "active") {
         if (!prev || prev.status !== "active" || updatedData.current_question !== prev.current_question) {
           setMyAnswer(null);
@@ -141,7 +136,6 @@ export default function ClassroomGame() {
       }
     });
 
-    // Populate live submission response instances instantly
     const unsubAnswers = db.entities.ClassroomGameAnswer.subscribe((event) => {
       if (event.data?.game_id === game.id) {
         setAnswers(prev => {
@@ -378,7 +372,6 @@ export default function ClassroomGame() {
     }
   };
 
-  // BROADCAST STATE PARSER: Resolves active route layouts explicitly using data metrics
   let derivedPhase = "lobby";
   if (game) {
     if (game.status === "waiting") derivedPhase = "lobby";
@@ -392,7 +385,6 @@ export default function ClassroomGame() {
     }
   }
 
-  // Calculate scores securely
   const scoreMap = {};
   answers.forEach(a => {
     if (!scoreMap[a.player_email]) scoreMap[a.player_email] = { name: a.player_name, score: 0 };
@@ -402,7 +394,6 @@ export default function ClassroomGame() {
 
   const isHost = user && game?.host_email === user.email;
   
-  // ROSTER RECONCILIATION FIX: Safely computes true participant volume across historical and real-time arrays
   const activePlayersCount = Math.max(
     (game?.player_names || []).filter(name => !name.includes(game?.host_name || "HOST_GUARD_BLOCK")).length,
     new Set(answers.map(a => a.player_email)).size,
@@ -417,7 +408,6 @@ export default function ClassroomGame() {
     </div>
   );
 
-  // --- HUB PRE-GAME SELECTION ---
   if (!game) return (
     <div className="min-h-screen pb-28 px-6 py-10" style={bgStyle}>
       <div className="max-w-xl mx-auto space-y-6">
@@ -479,7 +469,6 @@ export default function ClassroomGame() {
 
   const currentQ = game.questions?.[game.current_question];
 
-  // --- LOBBY WAITING SCREEN ---
   if (derivedPhase === "lobby") return (
     <div className="min-h-screen flex items-center justify-center px-6" style={bgStyle}>
       <div className="max-w-md w-full text-center space-y-4">
@@ -509,7 +498,6 @@ export default function ClassroomGame() {
     </div>
   );
 
-  // --- ACTIVE LIVE QUESTION INTERFACE ---
   if (derivedPhase === "question") {
     if (!currentQ) return null;
     const colors = [
@@ -557,7 +545,6 @@ export default function ClassroomGame() {
     );
   }
 
-  // --- TIME-UP ROUND REVIEW RESULTS SCREEN ---
   if (derivedPhase === "results" && currentQ) {
     const qAnswers = answers.filter(a => a.question_index === game.current_question);
     const correctCount = qAnswers.filter(a => a.is_correct).length;
@@ -606,7 +593,6 @@ export default function ClassroomGame() {
     );
   }
 
-  // --- FINAL SCORES SUMMARY VIEW ---
   if (derivedPhase === "end") return (
     <div className="min-h-screen flex items-center justify-center px-6" style={bgStyle}>
       <div className="max-w-md w-full text-center space-y-4">

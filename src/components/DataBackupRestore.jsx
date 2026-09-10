@@ -1,11 +1,9 @@
 import { db } from '@/lib/firebase';
 
-// Comprehensive backup & restore system for all app data
 import { useState, useRef } from "react";
 
 import { Download, Upload, Loader2 } from "lucide-react";
 
-// ─── Download helpers ─────────────────────────────────────────────────────────
 async function fetchAllPaginated(entity, sort = "-created_date", batchSize = 200, onProgress) {
   let all = [];
   let skip = 0;
@@ -32,7 +30,6 @@ function downloadJson(data, filename) {
   setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
 
-// ─── Flashcard backup — split by batches of 20 decks ─────────────────────────
 async function downloadFlashcardsInChunks(setStatus, CHUNK_SIZE = 20) {
   setStatus("Fetching deck list...");
   let allDecks = [];
@@ -66,7 +63,6 @@ async function downloadFlashcardsInChunks(setStatus, CHUNK_SIZE = 20) {
       cards = [...cards, ...cb];
       cardSkip += cb.length;
       if (cb.length < 500) break;
-      // Pause between card pages to avoid rate limit
       await new Promise(r => setTimeout(r, 300));
     }
     results.push({
@@ -74,11 +70,10 @@ async function downloadFlashcardsInChunks(setStatus, CHUNK_SIZE = 20) {
       color: deck.color, folder: deck.folder, is_public: deck.is_public,
       author_email: deck.author_email, author_name: deck.author_name,
       card_count: deck.card_count, created_by: deck.created_by, created_date: deck.created_date,
-      cover_image_url: deck.cover_image_url || "", // ✨ Added custom cover image
-      cover_sticker: deck.cover_sticker || "",         // ✨ Added custom cover sticker
+      cover_image_url: deck.cover_image_url || "",
+      cover_sticker: deck.cover_sticker || "",
       cards: cards.map(c => ({ id: c.id, front: c.front, back: c.back, difficulty: c.difficulty, author_email: c.author_email })),
     });
-    // Pause between each deck to stay under rate limit
     await new Promise(r => setTimeout(r, 400));
   }
   const date = new Date().toISOString().slice(0, 10);
@@ -89,7 +84,6 @@ async function downloadFlashcardsInChunks(setStatus, CHUNK_SIZE = 20) {
   setStatus(`✅ All done! ${numChunks} file(s) downloaded covering ${total} decks.`);
 }
 
-// ─── BACKUP_TYPES ─────────────────────────────────────────────────────────────
 const BACKUP_TYPES = [
   {
     id: "users",
@@ -107,7 +101,6 @@ const BACKUP_TYPES = [
       if (!Array.isArray(data)) throw new Error("Expected an array of users");
       setStatus(`Fetching current users to match by email...`);
       
-      // Fetch all existing users in this app and build an email→id map
       let existingUsers = [];
       let skip = 0;
       while (true) {
@@ -124,14 +117,13 @@ const BACKUP_TYPES = [
       }
       
       setStatus(`Found ${existingUsers.length} users in this app. Importing data...`);
-      let updated = 0, created = 0; // Changed 'skipped' to 'created'
+      let updated = 0, created = 0;
       
       for (let i = 0; i < data.length; i++) {
         const u = data[i];
         const targetId = emailToId[u.email];
         
         if (targetId) {
-          // 1. User exists: Update them
           await db.entities.User.update(targetId, {
             role: u.role,
             bio: u.bio,
@@ -140,10 +132,8 @@ const BACKUP_TYPES = [
           }).catch(() => {});
           updated++;
         } else {
-          // 2. User DOES NOT exist: Create them!
-          // Make sure you include the email and original ID so they can be matched later
           await db.entities.User.create({
-            id: u.id, // Crucial: preserve their original ID so relations don't break
+            id: u.id,
             email: u.email,
             role: u.role,
             bio: u.bio,
@@ -716,7 +706,6 @@ const BACKUP_TYPES = [
   },
 ];
 
-// ─── Individual backup card ───────────────────────────────────────────────────
 function BackupCard({ type, cardStyle, mutedStyle }) {
   const [dlStatus, setDlStatus] = useState("");
   const [dlLoading, setDlLoading] = useState(false);
@@ -784,7 +773,6 @@ function BackupCard({ type, cardStyle, mutedStyle }) {
   );
 }
 
-// ─── Flashcard-specific backup card ──────────────────────────────────────────
 function FlashcardBackupCard({ cardStyle, mutedStyle }) {
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
@@ -816,7 +804,6 @@ function FlashcardBackupCard({ cardStyle, mutedStyle }) {
       const d = backup[i];
       setRstStatus(`Deck ${i + 1}/${backup.length}: ${d.title}`);
       
-      // ✨ FIX: Added `cover_image_url` and `cover_sticker` to restore custom covers
       const deck = await db.entities.Deck.create({
         id: d.id, 
         title: d.title || "Untitled", subject: d.subject || "", description: d.description || "",
@@ -832,11 +819,10 @@ function FlashcardBackupCard({ cardStyle, mutedStyle }) {
         for (let j = 0; j < d.cards.length; j += 100) {
           const batch = d.cards.slice(j, j + 100);
           
-          // ✨ FIX: Added `id: c.id` to preserve original flashcard IDs
           await db.entities.Flashcard.bulkCreate(batch.map(c => ({
             id: c.id, 
             front: c.front, back: c.back, difficulty: c.difficulty || "medium",
-            deck_id: deck.id, // This now safely uses the preserved original ID!
+            deck_id: deck.id,
             author_email: c.author_email || d.author_email || "",
           })));
           totalCards += batch.length;
@@ -901,7 +887,6 @@ function FlashcardBackupCard({ cardStyle, mutedStyle }) {
   );
 }
 
-// ─── Main exported panel ─────────────────────────────────────────────────────
 export default function DataBackupRestore({ cardStyle, mutedStyle }) {
   return (
     <div className="space-y-4">

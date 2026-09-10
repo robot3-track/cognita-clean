@@ -37,7 +37,7 @@ export default function StudyCalendar({ roadmapDays = [], examDate = "" }) {
   const [viewYear, setViewYear] = useState(today.getFullYear());
   const [viewMonth, setViewMonth] = useState(today.getMonth());
   const [events, setEvents] = useState(loadEvents);
-  const [selectedDay, setSelectedDay] = useState(null); // { year, month, day }
+  const [selectedDay, setSelectedDay] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newTime, setNewTime] = useState("");
@@ -55,7 +55,6 @@ export default function StudyCalendar({ roadmapDays = [], examDate = "" }) {
     else setViewMonth(m => m + 1);
   };
 
-  // Build roadmap day lookup: date string -> day info
   const roadmapByDate = {};
   if (roadmapDays?.length) {
     const base = new Date();
@@ -105,7 +104,7 @@ export default function StudyCalendar({ roadmapDays = [], examDate = "" }) {
 
   return (
     <div className="space-y-4">
-      {/* Calendar Header */}
+      
       <div className="rounded-3xl overflow-hidden" style={cardStyle}>
         <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid var(--app-border)" }}>
           <button onClick={prevMonth} className="p-2 rounded-xl hover:bg-white/10 transition-all">
@@ -117,14 +116,14 @@ export default function StudyCalendar({ roadmapDays = [], examDate = "" }) {
           </button>
         </div>
 
-        {/* Weekday headers */}
+        
         <div className="grid grid-cols-7 text-center py-2">
           {WEEKDAYS.map(d => (
             <div key={d} className="text-[10px] font-bold uppercase py-1" style={mutedStyle}>{d}</div>
           ))}
         </div>
 
-        {/* Day grid */}
+        
         <div className="grid grid-cols-7 gap-px px-1 pb-2" style={{ background: "var(--app-border)" }}>
           {Array.from({ length: firstDay }).map((_, i) => (
             <div key={`empty-${i}`} className="min-h-[60px]" style={{ background: "var(--app-surface)" }} />
@@ -148,19 +147,19 @@ export default function StudyCalendar({ roadmapDays = [], examDate = "" }) {
                 `}
                 style={{ background: isSelected ? "rgba(139,92,246,0.1)" : exam ? undefined : "var(--app-surface)" }}
               >
-                {/* Day number */}
+                
                 <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold mb-1
                   ${todayFlag ? "bg-violet-500 text-white" : exam ? "bg-rose-500 text-white" : ""}
                 `}>
                   {day}
                 </div>
 
-                {/* Roadmap indicator */}
+                
                 {rmDay && (
                   <div className="w-full h-1 rounded-full bg-blue-500/60 mb-0.5" title={rmDay.theme} />
                 )}
 
-                {/* Event dots */}
+                
                 <div className="flex flex-wrap gap-0.5 mt-0.5">
                   {dayEvents.slice(0, 3).map((ev) => (
                     <div
@@ -174,7 +173,7 @@ export default function StudyCalendar({ roadmapDays = [], examDate = "" }) {
                   )}
                 </div>
 
-                {/* Exam badge */}
+                
                 {exam && (
                   <div className="absolute bottom-1 right-1 text-[8px] font-black text-rose-400">EXAM</div>
                 )}
@@ -183,7 +182,7 @@ export default function StudyCalendar({ roadmapDays = [], examDate = "" }) {
           })}
         </div>
 
-        {/* Legend */}
+        
         <div className="flex items-center gap-4 px-5 py-3 text-[10px] font-semibold" style={{ borderTop: "1px solid var(--app-border)", color: "var(--app-text-muted)" }}>
           <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-violet-500 inline-block" /> Today</span>
           <span className="flex items-center gap-1.5"><span className="w-4 h-1 rounded-full bg-blue-500/60 inline-block" /> Study plan</span>
@@ -191,7 +190,7 @@ export default function StudyCalendar({ roadmapDays = [], examDate = "" }) {
         </div>
       </div>
 
-      {/* Day Detail Panel */}
+      
       {selectedDay && (
         <div className="rounded-3xl p-5" style={cardStyle}>
           <div className="flex items-center justify-between mb-4">
@@ -218,7 +217,7 @@ export default function StudyCalendar({ roadmapDays = [], examDate = "" }) {
             </div>
           </div>
 
-          {/* Roadmap tasks for this day */}
+          
           {selectedRoadmap?.tasks?.length > 0 && (
             <div className="mb-4">
               <p className="text-xs font-bold mb-2 text-blue-400 uppercase tracking-widest">AI Study Tasks</p>
@@ -233,7 +232,7 @@ export default function StudyCalendar({ roadmapDays = [], examDate = "" }) {
             </div>
           )}
 
-          {/* Add event form */}
+          
           {showAddForm && (
             <div className="mb-4 p-4 rounded-2xl space-y-3" style={{ background: "var(--app-bg)", border: "1px solid var(--app-border)" }}>
               <p className="text-xs font-bold uppercase tracking-widest" style={mutedStyle}>New Event</p>
@@ -272,7 +271,7 @@ export default function StudyCalendar({ roadmapDays = [], examDate = "" }) {
             </div>
           )}
 
-          {/* Events list */}
+          
           {selectedEvents.length === 0 && !selectedRoadmap ? (
             <p className="text-sm text-center py-6" style={mutedStyle}>No events — add one!</p>
           ) : (

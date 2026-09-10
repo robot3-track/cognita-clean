@@ -37,7 +37,6 @@ function getShuffledSuggestions() {
   return arr.slice(0, 4);
 }
 
-// Helper to detect if prompt is asking for image generation
 const isImageGenerationRequest = (text) => {
   const prompt = text.toLowerCase().trim();
   const imageKeywords = [
@@ -53,7 +52,6 @@ const isImageGenerationRequest = (text) => {
   return imageKeywords.some((keyword) => prompt.includes(keyword));
 };
 
-// Extract number of flashcards requested from user message
 function extractCardCount(text) {
   const match = text.match(/\b(\d+)\s*(flash\s*cards?|cards?)\b/i) ||
     text.match(/\b(make|create|generate)\s+(\d+)\b/i);
@@ -61,13 +59,10 @@ function extractCardCount(text) {
     const n = parseInt(match[1] || match[2]);
     if (n >= 1 && n <= 200) return n;
   }
-  return 10; // default
+  return 10;
 }
 
-/**
- * Recursively cleans properties with undefined values from an object or array
- * to prevent Firestore from crashing during updates.
- */
+
 function sanitizeForFirestore(obj) {
   if (obj === undefined) return null;
   if (obj === null) return null;
@@ -89,7 +84,6 @@ function sanitizeForFirestore(obj) {
   return obj;
 }
 
-// ─── Image With Loading Spinner Component ──────────────────────────────────
 function ChatImageWithLoader({ src, alt }) {
   const [loaded, setLoaded] = useState(false);
 
@@ -119,7 +113,7 @@ function ChatImageWithLoader({ src, alt }) {
 export default function Chat() {
   const { t } = useTranslation();
   const [sessions, setSessions] = useState([]);
-  const [folders, setFolders] = useState({}); // { folderName: [sessionId] }
+  const [folders, setFolders] = useState({});
   const [activeSession, setActiveSession] = useState(null);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
@@ -131,9 +125,9 @@ export default function Chat() {
   const [smartActions, setSmartActions] = useState(null);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [suggestions] = useState(() => getShuffledSuggestions());
-  const [attachedFiles, setAttachedFiles] = useState([]); // [{name, url}]
+  const [attachedFiles, setAttachedFiles] = useState([]);
   const [uploadingFile, setUploadingFile] = useState(false);
-  const [attachedDecks, setAttachedDecks] = useState([]); // [{id, title, cards}]
+  const [attachedDecks, setAttachedDecks] = useState([]);
   const [userDecks, setUserDecks] = useState([]);
   const [showDeckPicker, setShowDeckPicker] = useState(false);
   const [renamingId, setRenamingId] = useState(null);
@@ -141,7 +135,7 @@ export default function Chat() {
   const [newFolderName, setNewFolderName] = useState("");
   const [showFolderInput, setShowFolderInput] = useState(false);
   const [expandedFolders, setExpandedFolders] = useState({});
-  const [mode, setMode] = useState("chat"); // "chat" | "voice"
+  const [mode, setMode] = useState("chat");
   const [isRecording, setIsRecording] = useState(false);
   const [isDictating, setIsDictating] = useState(false);
   const [voiceTranscript, setVoiceTranscript] = useState("");
@@ -156,7 +150,6 @@ export default function Chat() {
   const liveSpeechRef = useRef("");
   const navigate = useNavigate();
 
-  // Synchronous execution lock and AbortController to fix double answering & allow cancellation
   const isGeneratingRef = useRef(false);
   const abortControllerRef = useRef(null);
 
@@ -190,9 +183,7 @@ export default function Chat() {
       loadSessions(null);
     });
 
-    // Load user decks for attachment
     db.entities.Deck.list("-updated_date", 50).then(d => setUserDecks(d)).catch(() => {});
-    // Load folders from localStorage
     try {
       const saved = JSON.parse(localStorage.getItem("cognita_chat_folders") || "{}");
       setFolders(saved);
@@ -213,7 +204,6 @@ export default function Chat() {
     localStorage.setItem("cognita_chat_folders", JSON.stringify(newFolders));
   };
 
-  // Filter session history privately per user
   const loadSessions = async (currentUser) => {
     setLoadingSessions(true);
     const u = currentUser || user || await db.auth.me().catch(() => null);
@@ -308,7 +298,6 @@ export default function Chat() {
     setShowFolderInput(false);
   };
 
-  // File upload
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -321,7 +310,6 @@ export default function Chat() {
     e.target.value = "";
   };
 
-  // Attach deck
   const handleAttachDeck = async (deck) => {
     if (attachedDecks.find(d => d.id === deck.id)) { setShowDeckPicker(false); return; }
     const cards = await db.entities.Flashcard.filter({ deck_id: deck.id }, "-created_date", 50);
@@ -329,7 +317,6 @@ export default function Chat() {
     setShowDeckPicker(false);
   };
 
-  // Build context from attachments
   const buildAttachmentContext = () => {
     let ctx = "";
     if (attachedDecks.length > 0) {
@@ -341,7 +328,6 @@ export default function Chat() {
     return ctx;
   };
 
-  // Abruptly cancel AI request
   const stopGeneration = () => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -358,7 +344,6 @@ export default function Chat() {
       try { dictationRef.current.stop(); } catch {}
       setIsDictating(false);
     }
-    // Synchronous check prevents double answering race conditions
     if (isGeneratingRef.current || !input.trim() || loading) return;
     setLimitError(null);
     if (!canUseAi(user?.email)) { setLimitError("You've reached your AI uses for today. Come back tomorrow!"); return; }
@@ -397,7 +382,6 @@ export default function Chat() {
     try {
       incrementAiUsage(user?.email);
 
-      // --- Intercept image generation requests ---
       if (isImageGenerationRequest(userPrompt)) {
         const imageUrl = await generateImageWithMistralFallbacks({
           prompt: userPrompt,
@@ -423,7 +407,6 @@ export default function Chat() {
         return;
       }
 
-      // --- Standard Text / Chat Response ---
       const history = newMessages.map(m => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`).join("\n");
       const deckContext = buildAttachmentContext();
       const fileNote = currentFiles.length > 0 ? `\n\n[User attached ${currentFiles.length} file(s): ${currentFiles.map(f => f.name).join(", ")}]` : "";
@@ -534,7 +517,6 @@ export default function Chat() {
     }
   };
 
-  // Toggle voice dictation directly into text input box
   const toggleDictation = () => {
     if (isDictating) {
       if (dictationRef.current) {
@@ -584,7 +566,6 @@ export default function Chat() {
     }
   };
 
-  // Voice mode
   const startVoiceRecord = async () => {
     if (isRecording || isGeneratingRef.current) return;
     
@@ -848,7 +829,7 @@ export default function Chat() {
         )}
       </div>
 
-      {/* Mode Switcher */}
+      
       <div className="p-3 border-b" style={{ borderColor: "var(--app-border)" }}>
         <div className="flex bg-black/20 p-1 rounded-2xl border border-white/5">
           <button onClick={() => setMode("chat")} className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold transition-all ${mode === "chat" ? "bg-violet-600 text-white shadow-md" : "opacity-60 hover:opacity-100"}`}>
@@ -867,7 +848,7 @@ export default function Chat() {
           <div className="text-center py-8 text-xs opacity-40">No chat history yet</div>
         ) : (
           <>
-            {/* Folder list */}
+            
             {Object.keys(folders).map(folderName => {
               const folderSessionIds = folders[folderName] || [];
               const isExpanded = expandedFolders[folderName];
@@ -891,7 +872,7 @@ export default function Chat() {
               );
             })}
 
-            {/* Unassigned sessions */}
+            
             {sessions.filter(s => !Object.values(folders).flat().includes(s.id)).map(s => (
               <div key={s.id} className="relative group/item">
                 <div className="flex items-center gap-0.5">
@@ -916,16 +897,16 @@ export default function Chat() {
 
   return (
     <div className="flex" style={{ height: "calc(100dvh - 60px)", background: "var(--app-bg)", color: "var(--app-text)" }}>
-      {/* Sidebar desktop */}
+      
       <div className="w-64 hidden md:flex flex-col shrink-0 border-r" style={{ borderColor: "var(--app-border)", background: "var(--app-surface)" }}>
         {sidebarContent(false)}
       </div>
 
-      {/* Chat area */}
+      
       <div className="flex-1 flex flex-col min-w-0 relative overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] pointer-events-none opacity-20 blur-[100px]" style={{ background: "radial-gradient(circle, rgba(139,92,246,0.4) 0%, rgba(59,130,246,0.2) 50%, transparent 100%)" }} />
 
-        {/* Mobile header */}
+        
         <div className="md:hidden flex items-center justify-between px-4 py-3 border-b shrink-0 relative z-10" style={{ borderColor: "var(--app-border)", background: "var(--app-surface)" }}>
           <div className="flex items-center gap-2.5">
             <button onClick={() => setMobileDrawerOpen(true)} className="flex items-center justify-center rounded-xl p-2 bg-white/5 border border-white/10">
@@ -938,7 +919,7 @@ export default function Chat() {
           </button>
         </div>
 
-        {/* Mobile drawer */}
+        
         {mobileDrawerOpen && (
           <div className="fixed inset-0 z-50 flex md:hidden bg-black/60 backdrop-blur-sm">
             <div className="w-72 h-full flex flex-col border-r" style={{ background: "var(--app-surface)", borderColor: "var(--app-border)" }}>
@@ -952,7 +933,7 @@ export default function Chat() {
           </div>
         )}
 
-        {/* Limit error alert */}
+        
         {limitError && (
           <div className="mx-4 mt-3 p-3 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs flex items-center justify-between shrink-0 relative z-20">
             <span>{limitError}</span>
@@ -960,7 +941,7 @@ export default function Chat() {
           </div>
         )}
 
-        {/* VOICE MODE UI */}
+        
         {mode === "voice" ? (
           <div className="flex-1 flex flex-col overflow-hidden">
             <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4 relative z-10 max-w-3xl mx-auto w-full">
@@ -989,7 +970,7 @@ export default function Chat() {
               <div ref={bottomRef} />
             </div>
 
-            {/* Voice controls */}
+            
             <div className="p-6 border-t flex flex-col items-center justify-center gap-4 shrink-0 relative z-20" style={{ borderColor: "var(--app-border)", background: "var(--app-surface)" }}>
               {voiceStatus && <p className="text-xs font-semibold text-violet-300 text-center animate-fade-in">{voiceStatus}</p>}
               <div className="flex items-center gap-4">
@@ -1008,7 +989,7 @@ export default function Chat() {
             </div>
           </div>
         ) : (
-          /* CHAT TEXT MODE UI */
+          
           <>
             <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6 relative z-10 max-w-4xl mx-auto w-full">
               {messages.length === 0 && (
@@ -1042,7 +1023,7 @@ export default function Chat() {
 
                   <div className={`max-w-[85%] md:max-w-[80%] px-5 py-4 text-sm md:text-base leading-relaxed ${msg.role === "user" ? "bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 text-white rounded-3xl rounded-br-sm shadow-md" : "rounded-3xl rounded-bl-sm border shadow-sm"}`} style={msg.role !== "user" ? { background: "var(--app-surface)", borderColor: "var(--app-border)" } : {}}>
                     
-                    {/* User Attached Files */}
+                    
                     {msg.files && msg.files.length > 0 && (
                       <div className="flex flex-wrap gap-2 mb-3 pb-2 border-b border-white/20">
                         {msg.files.map((f, fi) => (
@@ -1053,7 +1034,7 @@ export default function Chat() {
                       </div>
                     )}
 
-                    {/* AI Generated Image rendering */}
+                    
                     {msg.imageUrl ? (
                       <div>
                         <p className="mb-2 font-medium">{msg.content}</p>
@@ -1082,9 +1063,9 @@ export default function Chat() {
               <div ref={bottomRef} />
             </div>
 
-            {/* Input bar section */}
+            
             <div className="p-4 border-t relative z-20 max-w-4xl mx-auto w-full" style={{ borderColor: "var(--app-border)" }}>
-              {/* Deck picker modal */}
+              
               {showDeckPicker && (
                 <div className="absolute bottom-full mb-2 left-4 right-4 p-3 rounded-2xl bg-black/90 border border-white/20 shadow-2xl backdrop-blur-xl max-h-48 overflow-y-auto space-y-1 z-30">
                   <div className="flex justify-between items-center mb-2 px-1 text-xs font-bold opacity-60">
@@ -1104,7 +1085,7 @@ export default function Chat() {
                 </div>
               )}
 
-              {/* Attachments pills */}
+              
               {(attachedFiles.length > 0 || attachedDecks.length > 0) && (
                 <div className="flex flex-wrap gap-2 mb-2 px-1">
                   {attachedFiles.map((f, i) => (
@@ -1122,7 +1103,7 @@ export default function Chat() {
                 </div>
               )}
 
-              {/* Smart action buttons */}
+              
               {messages.length > 0 && (
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5 px-1">
                   <div className="flex flex-wrap gap-1.5">
@@ -1136,7 +1117,7 @@ export default function Chat() {
                 </div>
               )}
 
-              {/* Main input card */}
+              
               <div
                 className={`rounded-3xl border p-2 flex items-end gap-2 transition-all ${isDictating ? "border-red-500/50 ring-2 ring-red-500/20" : "focus-within:border-violet-500/50 focus-within:ring-2 focus-within:ring-violet-500/10"}`}
                 style={{ background: "var(--app-surface)", borderColor: isDictating ? undefined : "var(--app-border)" }}

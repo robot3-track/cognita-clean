@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { X, RotateCcw } from "lucide-react";
 import { motion } from "framer-motion";
 
-const ROUND_TIME = 20; // seconds per question
+const ROUND_TIME = 20;
 
 export default function BlockBlasters({ cards, onExit }) {
   const [queue, setQueue] = useState([]);
@@ -11,7 +11,7 @@ export default function BlockBlasters({ cards, onExit }) {
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
   const [timeLeft, setTimeLeft] = useState(ROUND_TIME);
-  const [feedback, setFeedback] = useState(null); // { idx, correct }
+  const [feedback, setFeedback] = useState(null);
   const [gameOver, setGameOver] = useState(false);
   const [answered, setAnswered] = useState(false);
   const timerRef = useRef(null);
@@ -120,7 +120,7 @@ export default function BlockBlasters({ cards, onExit }) {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "linear-gradient(135deg, #1a0a00 0%, #2d1200 50%, #1a0a00 100%)", color: "white" }}>
-      {/* Header */}
+      
       <div className="flex items-center justify-between px-4 py-3" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }}>
         <button onClick={onExit} className="text-white/60 hover:text-white"><X className="w-5 h-5" /></button>
         <div className="text-center">
@@ -132,12 +132,12 @@ export default function BlockBlasters({ cards, onExit }) {
         </div>
       </div>
 
-      {/* Timer bar */}
+      
       <div className="w-full h-2 bg-white/10">
         <div className={`h-full transition-all duration-1000 ${timerColor}`} style={{ width: `${timePct * 100}%` }} />
       </div>
 
-      {/* Question */}
+      
       <div className="flex-1 flex flex-col items-center justify-center px-6 gap-8">
         <div className="text-center">
           <p className="text-xs text-white/50 mb-2 font-semibold uppercase tracking-widest">What does this mean?</p>
@@ -147,7 +147,7 @@ export default function BlockBlasters({ cards, onExit }) {
           <p className="text-sm text-white/40 mt-2">{timeLeft}s</p>
         </div>
 
-        {/* Answer blocks */}
+        
         <div className="grid grid-cols-2 gap-3 w-full max-w-md">
           {options.map((opt, i) => {
             const isFeedback = feedback !== null;
@@ -172,7 +172,7 @@ export default function BlockBlasters({ cards, onExit }) {
         </div>
       </div>
 
-      {/* Progress */}
+      
       <div className="px-4 py-3 text-center text-xs text-white/30">
         {cards.length - queue.length - 1} / {cards.length} cards
       </div>

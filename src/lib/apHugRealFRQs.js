@@ -1,10 +1,6 @@
-// ─── Real AP Human Geography FRQs from Official College Board Exams ──────────
-// Source: College Board Released FRQs (2023, 2024, 2025)
-// No year labels — questions are shuffled and presented without year attribution
 
 export const AP_HUG_REAL_FRQS = [
 
-  // ─── 2025 Set 1 — Q1: Supranational Organizations ────────────────────────
   {
     title: "AP Human Geography FRQ — Supranational Organizations and Sovereignty",
     prompt: "The European Union (EU) and Association of Southeast Asian Nations (ASEAN) are supranational organizations composed of independent member states.",
@@ -27,7 +23,6 @@ export const AP_HUG_REAL_FRQS = [
     ]
   },
 
-  // ─── 2025 Set 1 — Q2: Japan Population Pyramid ────────────────────────────
   {
     title: "AP Human Geography FRQ — Japan Population Pyramid",
     prompt: "A population pyramid shows changes in population over time. A population pyramid breaks down the population by male and female and divides the population into five-year age groupings called cohorts.",
@@ -51,7 +46,6 @@ export const AP_HUG_REAL_FRQS = [
     ]
   },
 
-  // ─── 2025 Set 1 — Q3: Milk and Pork Production Maps ──────────────────────
   {
     title: "AP Human Geography FRQ — Global Agricultural Production Patterns",
     prompt: "The global production of cow's milk and pork results in distinctive spatial patterns of contemporary agriculture and land use.",
@@ -75,7 +69,6 @@ export const AP_HUG_REAL_FRQS = [
     ]
   },
 
-  // ─── 2025 Set 2 — Q1: Migration and Urban Challenges ─────────────────────
   {
     title: "AP Human Geography FRQ — Migration and Urban Landscapes",
     prompt: "Migration contributes to significant population growth and change in urban landscapes. As populations increase, urban areas face economic, social, and environmental challenges.",
@@ -98,7 +91,6 @@ export const AP_HUG_REAL_FRQS = [
     ]
   },
 
-  // ─── 2025 Set 2 — Q2: Food Exports Between Countries X and Y ──────────────
   {
     title: "AP Human Geography FRQ — Agricultural Trade and Economic Development",
     prompt: "Country X and Country Y have a long-established trade relationship in agricultural products. Country X is a developed country, and Country Y is a developing country.",
@@ -121,7 +113,6 @@ export const AP_HUG_REAL_FRQS = [
     ]
   },
 
-  // ─── 2025 Set 2 — Q3: Saskatchewan and Finland Maps ──────────────────────
   {
     title: "AP Human Geography FRQ — Political Boundaries and Governance",
     prompt: "The two maps show political boundaries in Saskatchewan, Canada, and in Finland. Both Finland and Saskatchewan are home to populations of indigenous peoples with a significant amount of political autonomy. Finland is a member state of the European Union.",
@@ -145,7 +136,6 @@ export const AP_HUG_REAL_FRQS = [
     ]
   },
 
-  // ─── 2024 Set 1 — Q1: Food and Carrying Capacity ─────────────────────────
   {
     title: "AP Human Geography FRQ — Food Security, Population, and Agriculture",
     prompt: "The availability of food in the context of a growing world population is influenced by many social, environmental, and economic factors.",
@@ -168,7 +158,6 @@ export const AP_HUG_REAL_FRQS = [
     ]
   },
 
-  // ─── 2024 Set 1 — Q2: Asian Ethnic Neighborhoods in LA ───────────────────
   {
     title: "AP Human Geography FRQ — Ethnic Neighborhoods and Political Geography",
     prompt: "The map shows predominantly Asian ethnic neighborhoods in Los Angeles County, California. The names of the neighborhoods and the densities of the ethnic groups are identified on the map.",
@@ -192,7 +181,6 @@ export const AP_HUG_REAL_FRQS = [
     ]
   },
 
-  // ─── 2024 Set 1 — Q3: Metacities and World Cities ────────────────────────
   {
     title: "AP Human Geography FRQ — Metacities, World Cities, and Globalization",
     prompt: "The world cities and metacities shown on the map are features of contemporary globalization and urbanization. The data table shows gross domestic product (GDP) per capita at the city and country scale.",
@@ -215,7 +203,6 @@ export const AP_HUG_REAL_FRQS = [
     ]
   },
 
-  // ─── 2024 Set 2 — Q1: Cultural Diffusion ─────────────────────────────────
   {
     title: "AP Human Geography FRQ — Cultural Diffusion and Landscape",
     prompt: "The interaction of people contributes to the spread of cultural practices that change over time and vary between places. Interactions among cultures can lead to new forms of cultural expression.",
@@ -238,7 +225,6 @@ export const AP_HUG_REAL_FRQS = [
     ]
   },
 
-  // ─── 2024 Set 2 — Q2: Washington D.C. Metro Area ─────────────────────────
   {
     title: "AP Human Geography FRQ — Urban Transportation and Political Geography",
     prompt: "The map shows political jurisdictions and Metrorail, a subway system in the Washington, D.C., metropolitan area. The city and county jurisdictions shown on the map operate the Washington Metropolitan Area Transit Authority (WMATA), which runs Metrorail.",
@@ -262,7 +248,6 @@ export const AP_HUG_REAL_FRQS = [
     ]
   },
 
-  // ─── 2024 Set 2 — Q3: Demographic Transition Model ───────────────────────
   {
     title: "AP Human Geography FRQ — Demographic Transition and Population Policy",
     prompt: "The demographic transition model can be used to theorize the changes in a country's total population over time.",
@@ -285,7 +270,6 @@ export const AP_HUG_REAL_FRQS = [
     ]
   },
 
-  // ─── 2023 Set 2 — Q1: Territoriality and Sovereignty ─────────────────────
   {
     title: "AP Human Geography FRQ — Territoriality, Sovereignty, and Political Geography",
     prompt: "Political geographers analyze territoriality and sovereignty at a variety of scales, including regional, state, substate regional, and local.",
@@ -308,7 +292,6 @@ export const AP_HUG_REAL_FRQS = [
     ]
   },
 
-  // ─── 2023 Set 2 — Q2: Development Indicators ─────────────────────────────
   {
     title: "AP Human Geography FRQ — Human Development and Sustainability",
     prompt: "In 1990 the United Nations (UN) began using the Human Development Index (HDI) to measure levels of development. In 2015 the UN established the Sustainable Development Goals (SDGs) to set targets for environmental quality, economic development, and social programs.",
@@ -331,7 +314,6 @@ export const AP_HUG_REAL_FRQS = [
     ]
   },
 
-  // ─── 2023 Set 2 — Q3: Pastoral Nomadism in the Sahel ─────────────────────
   {
     title: "AP Human Geography FRQ — Pastoral Nomadism and the Sahel Region",
     prompt: "Pastoral nomadism is widely practiced in the Sahel region of Africa. The map and table provide information about spatial patterns and social tensions associated with this type of agriculture.",
@@ -355,7 +337,6 @@ export const AP_HUG_REAL_FRQS = [
     ]
   },
 
-  // ─── 2023 Set 1 — Q1: Rate of Natural Increase ───────────────────────────
   {
     title: "AP Human Geography FRQ — Rate of Natural Increase and Population Policy",
     prompt: "The rate of natural increase (RNI), also known as the natural increase rate, helps geographers assess annual population growth or decline.",
@@ -378,7 +359,6 @@ export const AP_HUG_REAL_FRQS = [
     ]
   },
 
-  // ─── 2023 Set 1 — Q2: Staple Food Crops ──────────────────────────────────
   {
     title: "AP Human Geography FRQ — Staple Food Crops and Agricultural Diffusion",
     prompt: "Staple food crops provide most of the carbohydrates in people's diets, and some staples are also used as animal feed or in the distillation of ethanol. Cassava is a root crop (tuber) that is the source of farinha, tapioca, and the pearls in bubble tea.",
@@ -401,7 +381,6 @@ export const AP_HUG_REAL_FRQS = [
     ]
   },
 
-  // ─── 2023 Set 1 — Q3: Boston/Providence Biotech Cluster ──────────────────
   {
     title: "AP Human Geography FRQ — High-Technology Industry and Urban Geography",
     prompt: "Since the 1980s, the northeastern United States has developed into a major global center of high-technology industry that specializes in the medical field.",
@@ -426,7 +405,6 @@ export const AP_HUG_REAL_FRQS = [
   },
 ];
 
-// ─── Helper: get shuffled pool of real FRQs ──────────────────────────────────
 export function getShuffledRealFRQs(count = 2) {
   const shuffled = [...AP_HUG_REAL_FRQS];
   for (let i = shuffled.length - 1; i > 0; i--) {

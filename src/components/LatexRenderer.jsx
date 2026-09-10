@@ -1,7 +1,6 @@
 import { InlineMath, BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 
-// Renders text that may contain LaTeX: $$block$$ or $inline$
 export default function LatexRenderer({ text, className = "" }) {
   if (!text) return null;
 

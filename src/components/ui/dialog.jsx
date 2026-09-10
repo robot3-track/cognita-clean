@@ -22,7 +22,6 @@ const DialogOverlay = React.forwardRef(({ className, ...props }, ref) => (
 ))
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
 
-// Mobile-aware DialogContent: slides up from bottom on mobile
 const DialogContent = React.forwardRef(({ className, children, ...props }, ref) => {
   const [isMobile, setIsMobile] = React.useState(false)
   React.useEffect(() => {

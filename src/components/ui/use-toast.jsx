@@ -1,4 +1,3 @@
-// Inspired by react-hot-toast library
 import { useState, useEffect } from "react";
 
 const TOAST_LIMIT = 20;
@@ -63,8 +62,6 @@ export const reducer = (state, action) => {
     case actionTypes.DISMISS_TOAST: {
       const { toastId } = action;
 
-      // ! Side effects ! - This could be extracted into a dismissToast() action,
-      // but I'll keep it here for simplicity
       if (toastId) {
         addToRemoveQueue(toastId);
       } else {

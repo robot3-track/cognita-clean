@@ -9,9 +9,7 @@ export default function UsageTab({ users, apSessions, sessions, cardStyle, muted
   const [aiLogs, setAiLogs] = useState([]);
 
   useEffect(() => {
-    // Load AIUsageLog for full coverage (includes unrestricted dev accounts + Gemini code helper)
     db.entities.AIUsageLog.list("-created_date", 2000).then(data => setAiLogs(data));
-    // Live updates
     const unsub = db.entities.AIUsageLog.subscribe((event) => {
       if (event.type === "create") setAiLogs(prev => [event.data, ...prev]);
       else if (event.type === "update") setAiLogs(prev => prev.map(l => l.id === event.id ? event.data : l));
@@ -27,7 +25,6 @@ export default function UsageTab({ users, apSessions, sessions, cardStyle, muted
     setRefreshing(false);
   };
 
-  // Auto-refresh every 30s when tab is visible
   useEffect(() => {
     const interval = setInterval(() => {
       onRefresh();
@@ -36,7 +33,6 @@ export default function UsageTab({ users, apSessions, sessions, cardStyle, muted
     return () => clearInterval(interval);
   }, [onRefresh]);
 
-  // Build AI events from AIUsageLog (source of truth — covers all users including unrestricted devs)
   const allAiEvents = aiLogs.map(log => ({
     date: log.created_date,
     user_email: log.user_email || "unknown",
@@ -47,7 +43,6 @@ export default function UsageTab({ users, apSessions, sessions, cardStyle, muted
     amount: 1,
   }));
 
-  // Also merge credit_history for users who have it (for backwards-compat display)
   const creditEvents = [];
   users.forEach(u => {
     if (!u.credit_history) return;
@@ -61,7 +56,6 @@ export default function UsageTab({ users, apSessions, sessions, cardStyle, muted
     } catch {}
   });
 
-  // Per-user AI totals — from AIUsageLog (most complete)
   const aiByUser = {};
   allAiEvents.forEach(e => {
     if (!aiByUser[e.user_email]) aiByUser[e.user_email] = { name: e.user_name, total: 0 };
@@ -69,7 +63,6 @@ export default function UsageTab({ users, apSessions, sessions, cardStyle, muted
   });
   const aiUserList = Object.entries(aiByUser).sort((a, b) => b[1].total - a[1].total);
 
-  // AP session breakdowns
   const apByType = { frq: 0, mcq: 0, exam: 0 };
   const apBySubject = {};
   apSessions.forEach(s => {
@@ -78,7 +71,6 @@ export default function UsageTab({ users, apSessions, sessions, cardStyle, muted
   });
   const apSubjectList = Object.entries(apBySubject).sort((a, b) => b[1] - a[1]);
 
-  // Study session type breakdown
   const sessionByType = {};
   sessions.forEach(s => {
     const type = s.session_type || "flashcards";
@@ -90,7 +82,6 @@ export default function UsageTab({ users, apSessions, sessions, cardStyle, muted
   const apToday = apSessions.filter(s => s.created_date?.slice(0, 10) === today).length;
   const sessionsToday = sessions.filter(s => s.created_date?.slice(0, 10) === today).length;
 
-  // Feature breakdown from AIUsageLog
   const byFeature = {};
   allAiEvents.forEach(e => {
     const k = e.feature || "unknown";
@@ -98,7 +89,6 @@ export default function UsageTab({ users, apSessions, sessions, cardStyle, muted
   });
   const featureList = Object.entries(byFeature).sort((a, b) => b[1] - a[1]);
 
-  // Provider breakdown
   const byProvider = {};
   allAiEvents.forEach(e => {
     const p = e.provider || "unknown";
@@ -114,19 +104,17 @@ export default function UsageTab({ users, apSessions, sessions, cardStyle, muted
     unknown: "#6b7280",
   };
 
-  // Flashcard/quiz/test feature grouping
   const flashcardFeatures = ["quiz_generation", "flashcard_generation", "test_generation", "chat_to_flashcards", "chat_to_quiz", "scan", "scan_flashcards"];
   const flashcardAiTotal = allAiEvents.filter(e => flashcardFeatures.some(f => (e.feature || "").includes(f))).length;
   const flashcardAiToday = allAiEvents.filter(e => e.date?.slice(0, 10) === today && flashcardFeatures.some(f => (e.feature || "").includes(f))).length;
 
-  // Exam-specific AI usage
   const examFeatures = ["ap_testing", "ap_frq", "ap_mcq", "ap_exam", "state_test", "iready", "exam_prep", "practice_test"];
   const examAiTotal = allAiEvents.filter(e => examFeatures.some(f => (e.feature || "").includes(f) || (e.feature || "").includes("test") || (e.feature || "").includes("exam"))).length;
   const examAiToday = allAiEvents.filter(e => e.date?.slice(0, 10) === today && examFeatures.some(f => (e.feature || "").includes(f) || (e.feature || "").includes("test") || (e.feature || "").includes("exam"))).length;
 
   return (
     <div className="space-y-5">
-      {/* Header with refresh */}
+      
       <div className="flex items-center justify-between">
         <p className="text-xs font-semibold" style={mutedStyle}>Auto-refreshes every 30s</p>
         <button
@@ -139,7 +127,7 @@ export default function UsageTab({ users, apSessions, sessions, cardStyle, muted
         </button>
       </div>
 
-      {/* Summary stats */}
+      
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { label: "AI Uses (total)", value: allAiEvents.length, icon: "⚡", color: "text-violet-400" },
@@ -163,7 +151,7 @@ export default function UsageTab({ users, apSessions, sessions, cardStyle, muted
         ))}
       </div>
 
-      {/* AI Usage Log */}
+      
       <div className="rounded-2xl p-5" style={cardStyle}>
         <h2 className="font-bold text-sm mb-3 flex items-center gap-2">
           <Zap className="w-4 h-4 text-violet-400" /> AI Usage Log — Live (most recent {Math.min(allAiEvents.length, 100)})
@@ -187,7 +175,7 @@ export default function UsageTab({ users, apSessions, sessions, cardStyle, muted
         )}
       </div>
 
-      {/* Feature usage breakdown */}
+      
       {featureList.length > 0 && (
         <div className="rounded-2xl p-5" style={cardStyle}>
           <h2 className="font-bold text-sm mb-3">🎯 AI Calls by Feature (all providers)</h2>
@@ -205,7 +193,7 @@ export default function UsageTab({ users, apSessions, sessions, cardStyle, muted
         </div>
       )}
 
-      {/* Provider breakdown */}
+      
       {providerList.length > 0 && (
         <div className="rounded-2xl p-5" style={cardStyle}>
           <h2 className="font-bold text-sm mb-3">🔌 AI Calls by Provider</h2>
@@ -226,7 +214,7 @@ export default function UsageTab({ users, apSessions, sessions, cardStyle, muted
         </div>
       )}
 
-      {/* Top AI users */}
+      
       <div className="rounded-2xl p-5" style={cardStyle}>
         <h2 className="font-bold text-sm mb-3">🏆 Top AI Users — all time (incl. unrestricted)</h2>
         <div className="space-y-2">
@@ -241,7 +229,7 @@ export default function UsageTab({ users, apSessions, sessions, cardStyle, muted
         </div>
       </div>
 
-      {/* AP + Study session breakdowns */}
+      
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="rounded-2xl p-5" style={cardStyle}>
           <h2 className="font-bold text-sm mb-3 flex items-center gap-2">
@@ -272,7 +260,7 @@ export default function UsageTab({ users, apSessions, sessions, cardStyle, muted
         </div>
       </div>
 
-      {/* AP by subject */}
+      
       <div className="rounded-2xl p-5" style={cardStyle}>
         <h2 className="font-bold text-sm mb-3">📚 AP Sessions by Subject</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -286,7 +274,7 @@ export default function UsageTab({ users, apSessions, sessions, cardStyle, muted
         </div>
       </div>
 
-      {/* Raw AP session log */}
+      
       <div className="rounded-2xl p-5" style={cardStyle}>
         <h2 className="font-bold text-sm mb-3">📋 Recent AP Sessions</h2>
         <div className="space-y-1.5 max-h-64 overflow-y-auto">

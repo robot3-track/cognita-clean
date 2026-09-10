@@ -14,7 +14,6 @@ import CourseCertificate from "@/components/CourseCertificate";
 const PASS_SCORE = 80;
 const RETAKE_COOLDOWN_MINUTES = 10;
 
-// ── YouTube IFrame API video player with completion detection ─────────────────
 let ytApiLoaded = false;
 let ytApiCallbacks = [];
 
@@ -35,7 +34,7 @@ function loadYTApi(cb) {
 function YoutubePlayer({ videoId, onCompleted, alreadyCompleted }) {
   const containerRef = useRef(null);
   const playerRef = useRef(null);
-  const [status, setStatus] = useState(alreadyCompleted ? "done" : "idle"); // idle | playing | done | error
+  const [status, setStatus] = useState(alreadyCompleted ? "done" : "idle");
   const timerRef = useRef(null);
 
   const destroyPlayer = useCallback(() => {
@@ -70,7 +69,6 @@ function YoutubePlayer({ videoId, onCompleted, alreadyCompleted }) {
         events: {
           onReady: () => { setStatus(alreadyCompleted ? "done" : "idle"); },
           onError: (e) => {
-            // Error codes: 2=invalid id, 5=html5 error, 100=not found, 101/150=embedding disabled
             console.warn("YouTube player error:", e.data);
             setStatus("error");
           },
@@ -78,13 +76,11 @@ function YoutubePlayer({ videoId, onCompleted, alreadyCompleted }) {
             const YT = window.YT;
             if (e.data === YT.PlayerState.PLAYING) {
               setStatus("playing");
-              // Poll: check if near the end every 3s
               clearInterval(timerRef.current);
               timerRef.current = setInterval(() => {
                 try {
                   const duration = playerRef.current.getDuration();
                   const current = playerRef.current.getCurrentTime();
-                  // Mark complete if within last 10 seconds OR > 90% watched
                   if (duration > 0 && (duration - current < 10 || current / duration > 0.9)) {
                     clearInterval(timerRef.current);
                     setStatus("done");
@@ -135,7 +131,6 @@ function YoutubePlayer({ videoId, onCompleted, alreadyCompleted }) {
   );
 }
 
-// ── Quiz Question ─────────────────────────────────────────────────────────────
 function QuizQuestion({ q, idx, onAnswer }) {
   const [selected, setSelected] = useState(null);
   const choose = (i) => {
@@ -167,9 +162,8 @@ function QuizQuestion({ q, idx, onAnswer }) {
   );
 }
 
-// ── Module Quiz Panel ─────────────────────────────────────────────────────────
 function ModuleQuizPanel({ mod, courseColor, onQuizPassed, quizScores }) {
-  const [state, setState] = useState("idle"); // idle | loading | active | submitted
+  const [state, setState] = useState("idle");
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState([]);
   const [score, setScore] = useState(null);
@@ -286,7 +280,6 @@ function ModuleQuizPanel({ mod, courseColor, onQuizPassed, quizScores }) {
   );
 }
 
-// ── Main CourseView (full-screen standalone) ──────────────────────────────────
 export default function CourseView() {
   const params = new URLSearchParams(window.location.search);
   const courseId = params.get("id");
@@ -372,7 +365,7 @@ export default function CourseView() {
   return (
     <div className="fixed inset-0 z-[9999] flex overflow-hidden" style={{ background: "var(--app-bg)", color: "var(--app-text)", fontFamily: "system-ui, sans-serif" }}>
 
-      {/* ── SIDEBAR ─────────────────────────────────────────────────────── */}
+      
       <aside
         className={`${sidebarOpen ? "w-60" : "w-0 overflow-hidden"} shrink-0 flex flex-col transition-all duration-300 border-r overflow-y-auto`}
         style={{ borderColor: "var(--app-border)", background: "var(--app-nav-bg)" }}
@@ -393,7 +386,7 @@ export default function CourseView() {
           </button>
         </div>
 
-        {/* Course header in sidebar */}
+        
         <div className="px-4 mt-4 pb-3 border-b shrink-0" style={{ borderColor: "var(--app-border)" }}>
           <div className="flex items-center gap-2.5 mb-2">
             <span className="text-2xl">{course.emoji}</span>
@@ -407,7 +400,7 @@ export default function CourseView() {
           </div>
         </div>
 
-        {/* Module list */}
+        
         <div className="px-3 mt-3 flex-1 overflow-y-auto">
           <p className="text-[10px] font-bold uppercase tracking-widest px-2 mb-2" style={{ color: "var(--app-muted)" }}>Modules</p>
           <div className="space-y-1">
@@ -447,9 +440,9 @@ export default function CourseView() {
         )}
       </aside>
 
-      {/* ── MAIN CONTENT ──────────────────────────────────────────────────── */}
+      
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top bar */}
+        
         <div className="flex items-center gap-3 px-5 py-3 border-b shrink-0" style={{ borderColor: "var(--app-border)", background: "var(--app-nav-bg)" }}>
           <button onClick={() => setSidebarOpen(o => !o)} className="p-1.5 rounded-lg transition-all opacity-60 hover:opacity-100" style={{ color: "var(--app-text)" }}>
             <Menu className="w-4 h-4" />
@@ -472,7 +465,7 @@ export default function CourseView() {
 
           {activeModuleData ? (
             <div className="flex flex-col">
-              {/* Video player */}
+              
               <YoutubePlayer
                 key={activeModuleData.videoId}
                 videoId={activeModuleData.videoId}

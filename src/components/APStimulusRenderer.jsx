@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
-// ── Population Pyramid SVG — fully static, no Math.random() ──────────────────
 function PopulationPyramid({ desc, country }) {
   const ageGroups = ["0-4","5-9","10-14","15-19","20-24","25-29","30-34","35-39","40-44","45-49","50-54","55-59","60-64","65-69","70-74","75-79","80-84","85+"];
   const d = ((desc || "") + " " + (country || "")).toLowerCase();
@@ -9,7 +8,6 @@ function PopulationPyramid({ desc, country }) {
   const isStage2 = d.includes("stage 2") || d.includes("expanding") || d.includes("niger") || d.includes("mali") || d.includes("chad") || d.includes("high birth");
   const isStage4 = d.includes("stage 4") || d.includes("stage 5") || d.includes("aging") || d.includes("germany") || d.includes("italy") || d.includes("constrictive");
 
-  // Japan 2021 actual data (narrow base, bulging 45-74, female-heavy 80+)
   const maleData = isJapan
     ? [2.0,2.1,2.3,2.6,3.0,3.3,3.5,3.8,4.2,4.4,4.0,3.9,3.6,3.0,2.5,1.8,1.0,0.4]
     : isStage2
@@ -68,7 +66,6 @@ function PopulationPyramid({ desc, country }) {
   );
 }
 
-// ── Image with fallback text ───────────────────────────────────────────────────
 function MapImage({ src, alt, caption, source, descriptionFallback }) {
   const [failed, setFailed] = useState(false);
   if (failed) {
@@ -91,7 +88,6 @@ function MapImage({ src, alt, caption, source, descriptionFallback }) {
   );
 }
 
-// ── Von Thünen Model SVG ──────────────────────────────────────────────────────
 function VonThunenModel() {
   const cx = 140, cy = 140;
   const rings = [
@@ -127,7 +123,6 @@ function VonThunenModel() {
   );
 }
 
-// ── Burgess Concentric Zone Model ─────────────────────────────────────────────
 function BurgessModel() {
   const cx = 120, cy = 130;
   const zones = [
@@ -154,7 +149,6 @@ function BurgessModel() {
   );
 }
 
-// ── DTM Diagram ───────────────────────────────────────────────────────────────
 function DTMDiagram() {
   return (
     <div>
@@ -186,7 +180,6 @@ function DTMDiagram() {
   );
 }
 
-// ── Core-Periphery Diagram ────────────────────────────────────────────────────
 function CorePeripheryDiagram() {
   return (
     <div>
@@ -206,7 +199,6 @@ function CorePeripheryDiagram() {
   );
 }
 
-// ── Christaller Diagram ───────────────────────────────────────────────────────
 function CentralPlaceDiagram() {
   return (
     <div>
@@ -224,13 +216,9 @@ function CentralPlaceDiagram() {
   );
 }
 
-// ── Real map selector for MCQ questions with map_description ──────────────────
-// These URLs are direct image files (jpg/png) from Wikimedia — NOT SVG-as-PNG thumbnails
-// All tested to be actual binary image files
 function selectRealMapForMCQ(desc) {
   const d = (desc || "").toLowerCase();
 
-  // Africa CDR / death rate choropleth
   if ((d.includes("africa") || d.includes("african")) && (d.includes("crude death rate") || d.includes("cdr") || d.includes("death rate"))) {
     return {
       src: "https://upload.wikimedia.org/wikipedia/commons/8/8e/Sahel_Map-Africa_rough.png",
@@ -240,7 +228,6 @@ function selectRealMapForMCQ(desc) {
     };
   }
 
-  // Sahel desertification / Sub-Saharan Africa
   if (d.includes("sahel") || (d.includes("desertification") && d.includes("africa"))) {
     return {
       src: "https://upload.wikimedia.org/wikipedia/commons/8/8e/Sahel_Map-Africa_rough.png",
@@ -250,7 +237,6 @@ function selectRealMapForMCQ(desc) {
     };
   }
 
-  // Rust Belt / manufacturing job loss / deindustrialization
   if (d.includes("rust belt") || d.includes("deindustrialization") || (d.includes("manufacturing") && (d.includes("sun belt") || d.includes("maquiladora") || d.includes("job loss") || d.includes("job flow")))) {
     return {
       src: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Total_mfctrg_jobs_change_54-02.png/640px-Total_mfctrg_jobs_change_54-02.png",
@@ -260,7 +246,6 @@ function selectRealMapForMCQ(desc) {
     };
   }
 
-  // Medieval trade routes / Silk Road
   if (d.includes("silk road") || d.includes("trade route") || (d.includes("medieval") && d.includes("trade"))) {
     return {
       src: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Silk_Road_Trade_%28c.1200_CE%29.jpg/1280px-Silk_Road_Trade_%28c.1200_CE%29.jpg",
@@ -270,7 +255,6 @@ function selectRealMapForMCQ(desc) {
     };
   }
 
-  // LA / Los Angeles ethnic neighborhoods
   if (d.includes("los angeles") || d.includes("asian ethnic") || d.includes("koreatown") || d.includes("chinatown")) {
     return {
       src: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Los_Angeles_County_location_map.svg/800px-Los_Angeles_County_location_map.svg.png",
@@ -280,7 +264,6 @@ function selectRealMapForMCQ(desc) {
     };
   }
 
-  // Washington DC / Metrorail
   if (d.includes("washington") || d.includes("metrorail") || d.includes("metro") && d.includes("d.c.")) {
     return {
       src: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Washington_Metro_Map.svg/800px-Washington_Metro_Map.svg.png",
@@ -290,12 +273,10 @@ function selectRealMapForMCQ(desc) {
     };
   }
 
-  // Saskatchewan / Finland political maps
   if (d.includes("saskatchewan") || d.includes("finland") || (d.includes("political division") && (d.includes("canada") || d.includes("nordic")))) {
-    return null; // handled by two-map display below
+    return null;
   }
 
-  // Milk / Pork global production
   if ((d.includes("milk") || d.includes("pork")) && (d.includes("production") || d.includes("map"))) {
     return {
       src: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Cow_milk_production_by_country.png/1200px-Cow_milk_production_by_country.png",
@@ -305,7 +286,6 @@ function selectRealMapForMCQ(desc) {
     };
   }
 
-  // Metacities / world cities
   if (d.includes("metacity") || d.includes("metacities") || d.includes("world cities") || d.includes("global cities")) {
     return {
       src: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/World_cities_by_size.svg/1200px-World_cities_by_size.svg.png",
@@ -315,7 +295,6 @@ function selectRealMapForMCQ(desc) {
     };
   }
 
-  // Boston biotech
   if (d.includes("boston") || d.includes("biotech") || d.includes("cambridge") && d.includes("medical")) {
     return {
       src: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Boston_metro_area_map.png/800px-Boston_metro_area_map.png",
@@ -325,21 +304,18 @@ function selectRealMapForMCQ(desc) {
     };
   }
 
-  return null; // no known map for this description
+  return null;
 }
 
-// ── Smart diagram/map renderer ────────────────────────────────────────────────
 function DiagramRenderer({ q, muted, text }) {
   const combined = [q.map_description, q.diagram_type, q.stimulus, q.question, q.stimulus_header, q.stimulus_image_description]
     .filter(Boolean).join(" ").toLowerCase();
 
-  // Explicit diagram_type shortcuts
   if (q.diagram_type === "population_pyramid") {
     return <PopulationPyramid desc={q.stimulus_image_description || ""} country={combined.includes("japan") ? "japan" : ""} />;
   }
   if (q.diagram_type === "dtm") return <DTMDiagram />;
 
-  // Population pyramid
   if (combined.includes("population pyramid") || combined.includes("age-sex") || combined.includes("age structure") ||
       combined.includes("wide base") || (combined.includes("stage") && combined.includes("pyramid")) ||
       combined.includes("age distribution") || combined.includes("cohort")) {
@@ -349,14 +325,12 @@ function DiagramRenderer({ q, muted, text }) {
     />;
   }
 
-  // Named theoretical models — render as SVG diagrams
   if (combined.includes("von thünen") || combined.includes("thunen")) return <VonThunenModel />;
   if ((combined.includes("burgess") || combined.includes("concentric zone")) && !combined.includes("population")) return <BurgessModel />;
   if (combined.includes("demographic transition") && (combined.includes("diagram") || combined.includes("model"))) return <DTMDiagram />;
   if (combined.includes("core") && combined.includes("periphery") && combined.includes("diagram")) return <CorePeripheryDiagram />;
   if (combined.includes("central place") && combined.includes("diagram")) return <CentralPlaceDiagram />;
 
-  // Try to find a real map image
   const mapConfig = selectRealMapForMCQ(q.map_description);
   if (mapConfig) {
     return <MapImage
@@ -368,7 +342,6 @@ function DiagramRenderer({ q, muted, text }) {
     />;
   }
 
-  // Last resort: show the map description as a styled text box
   return (
     <div className="rounded-lg p-3" style={{ background: "#e8f0fe", border: "1px solid #c7d7f9" }}>
       <p className="text-xs font-bold mb-1" style={{ color: "#1a56db" }}>📍 Map Description</p>
@@ -377,14 +350,12 @@ function DiagramRenderer({ q, muted, text }) {
   );
 }
 
-// ── FRQ stimulus image resolver ───────────────────────────────────────────────
-// Maps FRQ question titles to real image URLs (College Board released exam images)
 function getFRQImage(frqTitle, stimulus) {
   const t = (frqTitle || "").toLowerCase();
   const s = (stimulus || "").toLowerCase();
 
   if (t.includes("japan population pyramid") || s.includes("japan population pyramid")) {
-    return null; // use SVG PopulationPyramid component instead
+    return null;
   }
   if (t.includes("milk") && t.includes("pork") || s.includes("cow's milk") && s.includes("pork")) {
     return {
@@ -453,12 +424,10 @@ function getFRQImage(frqTitle, stimulus) {
   return null;
 }
 
-// ── Detect visual type from any text field ────────────────────────────────────
 function detectVisualFromText(q) {
   const combined = [q.stimulus, q.stimulus_header, q.map_description, q.stimulus_image_description, q.title, q.prompt, q.question, q.diagram_type]
     .filter(Boolean).join(" ").toLowerCase();
 
-  // Population pyramid
   if (combined.includes("population pyramid") || combined.includes("age-sex") ||
       combined.includes("wide base") || (combined.includes("stage") && combined.includes("pyramid")) ||
       combined.includes("age structure") || (combined.includes("cohort") && combined.includes("age"))) {
@@ -472,7 +441,6 @@ function detectVisualFromText(q) {
   if (combined.includes("core") && combined.includes("periphery") && (combined.includes("wallerstein") || combined.includes("world system") || combined.includes("diagram"))) return { type: "corePeriphery" };
   if (combined.includes("central place") && combined.includes("christaller")) return { type: "centralPlace" };
 
-  // Real map images — check for Sahel
   if (combined.includes("sahel") || (combined.includes("pastoral") && combined.includes("nomad"))) {
     return { type: "mapImage", src: "https://upload.wikimedia.org/wikipedia/commons/8/8e/Sahel_Map-Africa_rough.png", alt: "Sahel Region of Africa", caption: "Sahel belt: Mauritania, Senegal, Mali, Burkina Faso, Niger, Chad, Sudan — semiarid transition zone between Sahara and savanna." };
   }
@@ -507,7 +475,6 @@ function detectVisualFromText(q) {
   return null;
 }
 
-// ── Parse a pipe-delimited table string into { headers, rows } ────────────────
 function parsePipeTable(str) {
   if (!str || !str.includes("|")) return null;
   const lines = str.split("\n").map(l => l.trim()).filter(l => l.includes("|") && l.replace(/[\|\s\-]/g, "").length > 0);
@@ -522,7 +489,6 @@ function parsePipeTable(str) {
   return { headers, rows };
 }
 
-// ── Render a structured HTML table ────────────────────────────────────────────
 function DataTable({ headers, rows, isDark, text, muted }) {
   return (
     <div className="overflow-x-auto rounded-lg" style={{ border: `1px solid ${isDark ? "#3a3f50" : "#c0c4d0"}` }}>
@@ -548,10 +514,8 @@ function DataTable({ headers, rows, isDark, text, muted }) {
   );
 }
 
-// ── Main Stimulus Renderer ────────────────────────────────────────────────────
 export default function StimulusRenderer({ q, isDark, muted, text, isHuG = false }) {
 
-  // ── Table stimulus — always takes priority ──
   if (q.table_data) {
     const { headers, rows } = q.table_data;
     return (
@@ -564,7 +528,6 @@ export default function StimulusRenderer({ q, isDark, muted, text, isHuG = false
     );
   }
 
-  // ── Chart stimulus — takes priority over map/diagram detection ──
   if (q.chart_data) {
     const chartObj = q.chart_data;
     const chartType = chartObj.type || "line";
@@ -574,7 +537,6 @@ export default function StimulusRenderer({ q, isDark, muted, text, isHuG = false
     const yKeys = (chartObj.y_keys?.length > 0) ? chartObj.y_keys.filter(k => allKeys.includes(k)) : allKeys.filter(k => k !== xKey);
     const colors = ["#1a56db", "#16a34a", "#dc2626", "#d97706", "#7c3aed"];
 
-    // Coerce string numbers to actual numbers for recharts
     const numericData = chartData.map(row => {
       const newRow = { ...row };
       Object.keys(newRow).forEach(k => {
@@ -584,7 +546,6 @@ export default function StimulusRenderer({ q, isDark, muted, text, isHuG = false
     });
 
     if (!chartData.length || !yKeys.length) {
-      // Fallback: show as styled description box, never blank
       return (
         <div className="rounded-lg p-3" style={{ background: isDark ? "#1e2433" : "#eff6ff", border: `1px solid ${isDark ? "#3a3f50" : "#bfdbfe"}` }}>
           {q.stimulus_header && <p className="text-sm font-bold mb-2" style={{ color: text }}>{q.stimulus_header}</p>}
@@ -622,14 +583,11 @@ export default function StimulusRenderer({ q, isDark, muted, text, isHuG = false
     );
   }
 
-  // ── Map / diagram stimulus ──
-  // Only use explicit visual fields OR detect from dedicated visual fields (NOT q.question text)
   const hasExplicitVisual = q.map_description || q.diagram_type || q.stimulus_image_description;
   
-  // For detection, only scan visual-specific fields, NOT q.question (to avoid false positives)
   const visualQ = hasExplicitVisual
     ? q
-    : { ...q, question: null }; // suppress question text for detection
+    : { ...q, question: null };
   const detected = detectVisualFromText(visualQ);
 
   if (hasExplicitVisual || detected) {
@@ -658,10 +616,8 @@ export default function StimulusRenderer({ q, isDark, muted, text, isHuG = false
     );
   }
 
-  // ── Plain text / passage — try to parse pipe tables out of stimulus ──
   const stimulusText = q.stimulus || q.question || "";
   
-  // Split stimulus into paragraphs and detect pipe-table sections
   const paragraphs = stimulusText.split(/\n\n+/);
   const hasAnyPipe = paragraphs.some(p => p.includes("|") && p.split("\n").filter(l => l.includes("|")).length >= 2);
 
@@ -695,5 +651,4 @@ export default function StimulusRenderer({ q, isDark, muted, text, isHuG = false
   );
 }
 
-// Re-export getFRQImage for backwards compatibility
 export { getFRQImage };

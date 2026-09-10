@@ -21,7 +21,6 @@ import { computeStats, getEarnedBadges } from "@/components/StreakBadges";
 const BADGES_KEY = "cognita_badges";
 const BADGES_SEEN_KEY = "cognita_badges_seen";
 
-// Rich badge definitions with categories, custom icons, and progress calculators
 const BADGE_DEFS = [
   { 
     id: "first_session", 
@@ -179,7 +178,7 @@ export default function Badges() {
     <div className="min-h-screen px-4 py-8 sm:px-8" style={{ background: "var(--app-bg)", color: "var(--app-text)" }}>
       <div className="max-w-4xl mx-auto space-y-8">
         
-        {/* Header Section */}
+        
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/10">
           <div>
             <div className="flex items-center gap-2.5">
@@ -193,7 +192,7 @@ export default function Badges() {
             </div>
           </div>
 
-          {/* Progress Pill & Bar */}
+          
           <div className="flex flex-col gap-1.5 min-w-[200px]">
             <div className="flex items-center justify-between text-xs font-medium">
               <span className="text-neutral-400">Completion</span>
@@ -208,7 +207,7 @@ export default function Badges() {
           </div>
         </div>
 
-        {/* Filter Navigation */}
+        
         <div className="flex items-center gap-2">
           {[
             { id: "all", label: "All Badges" },
@@ -229,7 +228,7 @@ export default function Badges() {
           ))}
         </div>
 
-        {/* Responsive Badge Grid */}
+        
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredBadges.map(badge => {
             const isEarned = earnedIds.has(badge.id);
@@ -247,7 +246,7 @@ export default function Badges() {
                 }`}
               >
                 <div className="flex items-start gap-3.5">
-                  {/* Custom Styled Badge Icon */}
+                  
                   <div
                     className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105 shadow-md ${
                       isEarned
@@ -271,7 +270,7 @@ export default function Badges() {
                   </div>
                 </div>
 
-                {/* Progress Bar for Locked Badges */}
+                
                 {!isEarned && (
                   <div className="mt-4 pt-3 border-t border-white/5">
                     <div className="flex justify-between items-center text-[10px] text-neutral-400 mb-1">

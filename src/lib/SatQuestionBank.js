@@ -1,15 +1,6 @@
-// ─── SAT Question Bank (Digital SAT Standard) ──────────────────────────────────
-// Schema:
-// R&W: { id, domain, skill, difficulty, stimulus, question, options[4], correct (0-3), explanation }
-// Math (MCQ): { id, domain, skill, difficulty, stimulus, question, chart_data, table_data, image_url, options[4], correct (0-3), explanation }
-// Math (Grid-In): { id, domain, skill, difficulty, stimulus, question, isGridIn: true, correctAnswers: ["4", "4.0", "12/3"], explanation }
 
-// ─── READING & WRITING QUESTION POOL ──────────────────────────────────────────
 
 export const SAT_RW_QUESTIONS = [
-  // ---------------------------------------------------------------------------
-  // CRAFT AND STRUCTURE
-  // ---------------------------------------------------------------------------
   {
     id: "rw_cs_01",
     domain: "Craft and Structure",
@@ -65,9 +56,6 @@ export const SAT_RW_QUESTIONS = [
     explanation: "Choice A is correct. 'Feasible' means possible to do easily or conveniently. The context contrasts 'impossibly complex' with the builder's reassurance that it can be constructed on time."
   },
 
-  // ---------------------------------------------------------------------------
-  // INFORMATION AND IDEAS
-  // ---------------------------------------------------------------------------
   {
     id: "rw_ii_01",
     domain: "Information and Ideas",
@@ -126,9 +114,6 @@ export const SAT_RW_QUESTIONS = [
     explanation: "Choice B is correct. Since local workshops lacked the high-temperature technology to produce the glass locally, the presence of Roman glass indicates it must have been imported via trade networks."
   },
 
-  // ---------------------------------------------------------------------------
-  // EXPRESSION OF IDEAS
-  // ---------------------------------------------------------------------------
   {
     id: "rw_ei_01",
     domain: "Expression of Ideas",
@@ -168,9 +153,6 @@ export const SAT_RW_QUESTIONS = [
     explanation: "Choice A is correct. 'Similarly' is appropriate here as it compares two artistic projects by the same architect where natural elements (earthworks, water) are integrated into stone memorials."
   },
 
-  // ---------------------------------------------------------------------------
-  // STANDARD ENGLISH CONVENTIONS
-  // ---------------------------------------------------------------------------
   {
     id: "rw_sec_01",
     domain: "Standard English Conventions",
@@ -211,12 +193,8 @@ export const SAT_RW_QUESTIONS = [
   }
 ];
 
-// ─── MATH QUESTION POOL ────────────────────────────────────────────────────────
 
 export const SAT_MATH_QUESTIONS = [
-  // ---------------------------------------------------------------------------
-  // ALGEBRA
-  // ---------------------------------------------------------------------------
   {
     id: "m_alg_01",
     domain: "Algebra",
@@ -251,9 +229,6 @@ export const SAT_MATH_QUESTIONS = [
     explanation: "Choice D is correct. Add 7: 4x > 28. Divide by 4: x > 7. Among the options, only 8 is strictly greater than 7."
   },
 
-  // ---------------------------------------------------------------------------
-  // ADVANCED MATH
-  // ---------------------------------------------------------------------------
   {
     id: "m_adv_01",
     domain: "Advanced Math",
@@ -293,9 +268,6 @@ export const SAT_MATH_QUESTIONS = [
     explanation: "Raise both sides to the power of 4/3: x = (27)^(4/3). Cube root of 27 is 3. 3^4 = 81."
   },
 
-  // ---------------------------------------------------------------------------
-  // PROBLEM-SOLVING AND DATA ANALYSIS
-  // ---------------------------------------------------------------------------
   {
     id: "m_psda_01",
     domain: "Problem-Solving and Data Analysis",
@@ -339,9 +311,6 @@ export const SAT_MATH_QUESTIONS = [
     explanation: "Choice C is correct. Condition: 'a student who passed the test' (total = 72). Favorable outcome: 'in Study Group A' (42). Probability = 42/72."
   },
 
-  // ---------------------------------------------------------------------------
-  // GEOMETRY AND TRIGONOMETRY
-  // ---------------------------------------------------------------------------
   {
     id: "m_geo_01",
     domain: "Geometry and Trigonometry",
@@ -377,31 +346,22 @@ export const SAT_MATH_QUESTIONS = [
   }
 ];
 
-// ─── HELPER FUNCTIONS FOR MODULE & ADAPTIVE GENERATION ─────────────────────────
 
-/**
- * Returns a set of questions for a specified SAT section (RW or Math)
- * @param {string} section - 'rw' | 'math'
- * @param {number} count - number of questions requested (default 27 for RW, 22 for Math)
- * @param {string} difficulty - 'easy' | 'medium' | 'hard' | 'all'
- */
 export function getSatQuestions(section = "rw", count = 20, difficulty = "all") {
   const pool = section === "math" ? [...SAT_MATH_QUESTIONS] : [...SAT_RW_QUESTIONS];
   
   let filtered = pool;
   if (difficulty !== "all") {
     filtered = pool.filter(q => q.difficulty === difficulty);
-    if (filtered.length === 0) filtered = pool; // Fallback if pool is empty
+    if (filtered.length === 0) filtered = pool;
   }
 
-  // Shuffle pool
   const shuffled = [...filtered];
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
 
-  // Pad if requested count exceeds available pool
   const result = [];
   let idx = 0;
   while (result.length < count) {
@@ -413,11 +373,7 @@ export function getSatQuestions(section = "rw", count = 20, difficulty = "all") 
   return result;
 }
 
-/**
- * Validates a student grid-in response against accepted correct answer formats
- * @param {string} userString 
- * @param {Array<string>} correctAnswers 
- */
+
 export function checkGridInAnswer(userString, correctAnswers = []) {
   if (!userString || typeof userString !== "string") return false;
   const cleanUser = userString.trim().toLowerCase();
@@ -426,7 +382,6 @@ export function checkGridInAnswer(userString, correctAnswers = []) {
     const cleanAns = ans.trim().toLowerCase();
     if (cleanUser === cleanAns) return true;
 
-    // Numerical evaluation (e.g. 3/5 vs 0.6)
     try {
       const evalUser = evalFraction(cleanUser);
       const evalAns = evalFraction(cleanAns);
@@ -434,7 +389,6 @@ export function checkGridInAnswer(userString, correctAnswers = []) {
         return true;
       }
     } catch {
-      // Ignore parse errors
     }
     return false;
   });

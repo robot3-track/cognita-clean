@@ -3,7 +3,6 @@ import { InlineMath, BlockMath } from "react-katex";
 import "katex/dist/katex.min.css";
 import ReactMarkdown from "react-markdown";
 
-// Recursively walk react children, applying LaTeX rendering to string leaves
 function walkChildren(children) {
   if (children === null || children === undefined) return null;
   if (typeof children === "string") return <LatexInline text={children} />;
@@ -11,7 +10,6 @@ function walkChildren(children) {
   return children;
 }
 
-// Pre-process AI output: convert \[...\] → $$...$$ and \(...\) → $...$
 function normalizeLatex(text) {
   if (!text || typeof text !== "string") return text;
   return text
@@ -19,11 +17,9 @@ function normalizeLatex(text) {
     .replace(/\\\(([\s\S]+?)\\\)/g, (_, m) => `$${m}$`);
 }
 
-// Renders a single string that may have $...$ or $$...$$ LaTeX
 function LatexInline({ text }) {
   if (!text || typeof text !== "string") return <>{text}</>;
   const normalized = normalizeLatex(text);
-  // Quick check to avoid expensive split when no math present
   if (!normalized.includes("$")) return <>{normalized}</>;
 
   const parts = [];

@@ -7,11 +7,10 @@ import { Loader2, Clock, XCircle } from "lucide-react";
 const DEV_EMAILS = ["yychang100@student.hbuhsd.edu", "yohanyinyuchang@gmail.com", "yohanchang@outlook.com"];
 
 export default function UserApprovalGate({ user, children }) {
-  const [status, setStatus] = useState("loading"); // loading | approved | pending | rejected
+  const [status, setStatus] = useState("loading");
 
   useEffect(() => {
     if (!user?.email) return;
-    // Dev accounts bypass approval
     if (DEV_EMAILS.includes(user.email) || user.role === "admin") {
       setStatus("approved");
       return;
@@ -20,13 +19,12 @@ export default function UserApprovalGate({ user, children }) {
       .then(records => {
         const record = records[0];
         if (!record) {
-          // No record = existing user before this system, let them through
           setStatus("approved");
         } else {
           setStatus(record.status || "pending");
         }
       })
-      .catch(() => setStatus("approved")); // On error, don't block
+      .catch(() => setStatus("approved"));
   }, [user?.email]);
 
   if (status === "loading") {

@@ -20,7 +20,6 @@ export default function ForgotPassword() {
     try {
       await db.auth.resetPasswordRequest(email);
     } catch {
-      // Always show success regardless
     } finally {
       setLoading(false);
       setSent(true);

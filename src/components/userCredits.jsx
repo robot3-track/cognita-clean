@@ -1,6 +1,5 @@
 import { db } from '@/lib/firebase';
 
-// Cross-device AI credits & history stored on the User entity
 
 export async function getServerCredits() {
   try {
@@ -18,7 +17,6 @@ export async function addSurveyBonusServer(amount = 5, note = "Survey reward") {
     const current = me.survey_bonus || 0;
     const history = me.credit_history ? JSON.parse(me.credit_history) : [];
     history.push({ type: "survey_reward", amount: +amount, note, date: new Date().toISOString() });
-    // Keep last 500 entries
     if (history.length > 500) history.splice(0, history.length - 500);
     await db.auth.updateMe({
       survey_bonus: Math.round((current + amount) * 100) / 100,

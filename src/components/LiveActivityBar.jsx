@@ -19,25 +19,21 @@ export default function LiveActivityBar() {
 
       const built = [];
 
-      // How many people studied today
       const todayUsers = new Set(sessions.filter(s => s.created_date?.slice(0,10) === today && s.user_email).map(s => s.user_email));
       if (todayUsers.size >= 1) {
         built.push({ icon: Users, color: "text-violet-400", text: `${todayUsers.size} student${todayUsers.size !== 1 ? "s" : ""} studying today` });
       }
 
-      // Total hours — fetch all sessions (not capped at 200)
       const allSessions = await db.entities.StudySession.list("-created_date", 2000);
       const totalHours = Math.round(allSessions.reduce((s, r) => s + (r.duration_minutes || 0), 0) / 60);
       if (totalHours >= 1) {
         built.push({ icon: Clock, color: "text-blue-400", text: `${totalHours.toLocaleString()} hours studied by the community` });
       }
 
-      // Who's focusing right now (Pomodoro)
       if (pomodoro.length >= 1) {
         built.push({ icon: Users, color: "text-emerald-400", text: `${pomodoro.length} user${pomodoro.length !== 1 ? "s" : ""} in focus mode right now 🔥` });
       }
 
-      // Leaderboard leader — most time studied today
       const byUserTime = {};
       allSessions.filter(s => s.created_date?.slice(0,10) === today).forEach(s => {
         if (s.user_email) byUserTime[s.user_email] = (byUserTime[s.user_email] || 0) + (s.duration_minutes || 0);
@@ -56,7 +52,6 @@ export default function LiveActivityBar() {
     load().catch(() => {});
   }, []);
 
-  // Cycle through items every 4s
   useEffect(() => {
     if (items.length < 2) return;
     timerRef.current = setInterval(() => setIdx(i => (i + 1) % items.length), 4000);

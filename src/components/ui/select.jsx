@@ -46,7 +46,6 @@ const SelectScrollDownButton = React.forwardRef(({ className, ...props }, ref) =
 ))
 SelectScrollDownButton.displayName = SelectPrimitive.ScrollDownButton.displayName
 
-// Mobile-aware SelectContent: uses Drawer on small screens
 const SelectContent = React.forwardRef(({ className, children, position = "popper", ...props }, ref) => {
   const [isMobile, setIsMobile] = React.useState(false)
   React.useEffect(() => {
@@ -56,7 +55,6 @@ const SelectContent = React.forwardRef(({ className, children, position = "poppe
     return () => window.removeEventListener("resize", check)
   }, [])
 
-  // Extract items for drawer rendering
   if (isMobile) {
     return (
       <SelectPrimitive.Portal>

@@ -1,12 +1,5 @@
-// ─── AP Premade Question Bank ─────────────────────────────────────────────────
-// Based on official AP Classroom style questions, publicly released exams,
-// and College Board curriculum frameworks. Multiple versions per subject.
 
-// Each question: { question, stimulus, stimulus_source, stimulus_header,
-//   options[4], correct(0-3), explanation, skill, difficulty,
-//   table_data|chart_data|map_description (optional) }
 
-// ─── AP Human Geography ───────────────────────────────────────────────────────
 const AP_HUMAN_GEO_V1 = {
   mcq: [
     {
@@ -416,7 +409,6 @@ const AP_HUMAN_GEO_V2 = {
   ]
 };
 
-// ─── AP US History ────────────────────────────────────────────────────────────
 const AP_US_HISTORY_V1 = {
   mcq: [
     {
@@ -631,7 +623,6 @@ const AP_US_HISTORY_V1 = {
   ]
 };
 
-// ─── AP Biology ───────────────────────────────────────────────────────────────
 const AP_BIOLOGY_V1 = {
   mcq: [
     {
@@ -841,7 +832,6 @@ const AP_BIOLOGY_V1 = {
   ]
 };
 
-// ─── AP Psychology ────────────────────────────────────────────────────────────
 const AP_PSYCHOLOGY_V1 = {
   mcq: [
     {
@@ -1036,7 +1026,6 @@ const AP_PSYCHOLOGY_V1 = {
   ]
 };
 
-// ─── AP Calculus AB ───────────────────────────────────────────────────────────
 const AP_CALCULUS_AB_V1 = {
   mcq: [
     {
@@ -1230,7 +1219,6 @@ const AP_CALCULUS_AB_V1 = {
   ]
 };
 
-// ─── AP Macroeconomics ────────────────────────────────────────────────────────
 const AP_MACROECONOMICS_V1 = {
   mcq: [
     {
@@ -1485,7 +1473,6 @@ import {
 
 import { AP_HUG_REAL_FRQS } from "./apHugRealFRQs.js";
 
-// ─── Master Question Bank ─────────────────────────────────────────────────────
 export const PREMADE_QUESTION_BANK = {
   "AP Human Geography": [AP_HUMAN_GEO_V1, AP_HUMAN_GEO_V2, AP_HUMAN_GEO_V3, AP_HUMAN_GEO_V4, AP_HUMAN_GEO_V5],
   "AP US History": [AP_US_HISTORY_V1, AP_US_HISTORY_V2],
@@ -1502,19 +1489,16 @@ export const PREMADE_QUESTION_BANK = {
   "AP Japanese Language": [AP_JAPANESE_V1],
 };
 
-// ─── Helper: get a random version for a subject ───────────────────────────────
 export function getPremadeVersion(subject) {
   const versions = PREMADE_QUESTION_BANK[subject];
   if (!versions || versions.length === 0) return null;
   return versions[Math.floor(Math.random() * versions.length)];
 }
 
-// ─── Helper: check if premade questions exist for a subject ───────────────────
 export function hasPremade(subject) {
   return !!(PREMADE_QUESTION_BANK[subject]?.length > 0);
 }
 
-// ─── Helper: get ALL MCQs for a subject pooled from all versions ──────────────
 function getAllMCQsForSubject(subject) {
   const versions = PREMADE_QUESTION_BANK[subject];
   if (!versions || versions.length === 0) return [];
@@ -1525,26 +1509,22 @@ function getAllMCQsForSubject(subject) {
   return pool;
 }
 
-// ─── Helper: get N random questions from a subject (MCQ) — pools all versions ─
 export function getPremadeMCQ(subject, count) {
   const pool = getAllMCQsForSubject(subject);
   if (!pool.length) return null;
   
   const requested = count || 20;
   
-  // Shuffle base pool
   const shuffled = [...pool];
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
   
-  // If we have enough questions, slice to exact count
   if (shuffled.length >= requested) {
     return shuffled.slice(0, requested);
   }
   
-  // Otherwise pad by cycling through shuffled pool again
   const result = [...shuffled];
   let idx = 0;
   while (result.length < requested) {
@@ -1554,9 +1534,7 @@ export function getPremadeMCQ(subject, count) {
   return result.slice(0, requested);
 }
 
-// ─── Helper: get a random FRQ from pooled FRQs for a subject ─────────────────
 export function getPremadeFRQ(subject) {
-  // For AP Human Geography, use the real College Board FRQs (shuffled)
   if (subject === "AP Human Geography") {
     const shuffled = [...AP_HUG_REAL_FRQS];
     for (let i = shuffled.length - 1; i > 0; i--) {
@@ -1568,13 +1546,11 @@ export function getPremadeFRQ(subject) {
 
   const versions = PREMADE_QUESTION_BANK[subject];
   if (!versions || versions.length === 0) return null;
-  // Pool all FRQs across all versions
   const pool = [];
   for (const v of versions) {
     if (v.frq) pool.push(...v.frq);
   }
   if (!pool.length) return null;
-  // Return 2 random FRQs (shuffle and pick first 2)
   const shuffled = [...pool];
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -1583,7 +1559,6 @@ export function getPremadeFRQ(subject) {
   return shuffled.slice(0, 2);
 }
 
-// ─── Helper: get total premade MCQ count for a subject ───────────────────────
 export function getPremadeMCQCount(subject) {
   return getAllMCQsForSubject(subject).length;
 }

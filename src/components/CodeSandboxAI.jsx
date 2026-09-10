@@ -23,7 +23,6 @@ function incrementSandboxUses() {
   } catch {}
 }
 
-// System prompt is now defined in lynxApi.js (COGNITA_CODE_SYSTEM_PROMPT) — Gemini is primary for coding.
 
 export default function CodeSandboxAI({ lang, code, user }) {
   const [open, setOpen] = useState(false);
@@ -49,12 +48,10 @@ export default function CodeSandboxAI({ lang, code, user }) {
     if (!input.trim() || loading) return;
     setError(null);
 
-    // Check sandbox daily limit
     if (sandboxUses >= MAX_DAILY) {
       setError(`You've used all ${MAX_DAILY} Code AI chats for today. Come back tomorrow!`);
       return;
     }
-    // Check global AI credits
     if (!canUseAi(user?.email)) {
       setError("You've reached your daily AI credit limit. Come back tomorrow!");
       return;
@@ -71,7 +68,6 @@ export default function CodeSandboxAI({ lang, code, user }) {
     const history = newMessages.map(m => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`).join("\n");
     const contextPrompt = `The user is coding in ${lang.toUpperCase()}. Here is their current code:\n\`\`\`${lang}\n${code}\n\`\`\`\n\nConversation:\n${history}\n\nProvide a helpful, concise response.`;
 
-    // Gemini 3.5 Flash is primary for coding; fallback to general callAI
     let response;
     try {
       response = await callGeminiDirect({ prompt: contextPrompt });
@@ -87,7 +83,7 @@ export default function CodeSandboxAI({ lang, code, user }) {
 
   return (
     <div className="flex flex-col" style={{ borderTop: "1px solid var(--app-border)" }}>
-      {/* Toggle bar */}
+      
       <button
         onClick={() => setOpen(o => !o)}
         className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold transition-all hover:opacity-90 shrink-0"
@@ -106,7 +102,7 @@ export default function CodeSandboxAI({ lang, code, user }) {
 
       {open && (
         <div className="flex flex-col" style={{ height: 280, background: "var(--app-bg)" }}>
-          {/* Messages */}
+          
           <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full text-center opacity-40">
@@ -148,7 +144,7 @@ export default function CodeSandboxAI({ lang, code, user }) {
             <div ref={bottomRef} />
           </div>
 
-          {/* Input */}
+          
           <div className="px-3 py-2.5 shrink-0" style={{ borderTop: "1px solid var(--app-border)" }}>
             {error && <p className="text-[10px] text-red-400 mb-1.5 font-medium">{error}</p>}
             <div className="flex gap-2 items-center">

@@ -101,7 +101,7 @@ function DirectBanPanel({ users, suspensions, onBanAdded, cardStyle, mutedStyle 
 
   return (
     <div className="space-y-6">
-      {/* Quick ban by email */}
+      
       <div className="rounded-2xl p-6" style={cardStyle}>
         <h2 className="font-black text-lg mb-1 flex items-center gap-2">
           <UserX className="w-5 h-5 text-red-400" /> Direct Ban by Email
@@ -128,7 +128,7 @@ function DirectBanPanel({ users, suspensions, onBanAdded, cardStyle, mutedStyle 
         </div>
       </div>
 
-      {/* Ban from user list */}
+      
       <div className="rounded-2xl p-5" style={cardStyle}>
         <h3 className="font-bold text-sm mb-3">Ban from User List</h3>
         <div className="space-y-2">
@@ -147,7 +147,7 @@ function DirectBanPanel({ users, suspensions, onBanAdded, cardStyle, mutedStyle 
                       if (!s) return;
                       setBanning(u.email);
                       await db.entities.SuspendedUser.update(s.id, { status: "cleared", reviewed_by: "admin" });
-                      onBanAdded({ ...s, status: "cleared" }); // reuse callback to trigger parent refresh
+                      onBanAdded({ ...s, status: "cleared" });
                       setBanning(null);
                     }}
                     disabled={!!banning}
@@ -262,14 +262,12 @@ function UserSyncButton({ cardStyle, mutedStyle }) {
       const sessions = await db.entities.StudySession.list("-created_date", 30000).catch(() => []);
       const loginEvents = await db.entities.UserLoginEvent.list("-created_date", 30000).catch(() => []);
 
-      // Gather ALL unique emails: from User table AND activity logs
       const allEmails = new Set([
         ...existingProfiles.map(u => u.email),
         ...sessions.map(s => s.user_email || s.email),
         ...loginEvents.map(e => e.user_email || e.email || e.userEmail)
       ].filter(Boolean));
 
-      // Create a map grouping existing profiles by normalized email
       const profilesByEmail = new Map();
       existingProfiles.forEach(u => {
         if (!u.email) return;
@@ -293,7 +291,6 @@ function UserSyncButton({ cardStyle, mutedStyle }) {
         const matchingProfiles = profilesByEmail.get(cleanEmail) || [];
 
         if (matchingProfiles.length > 0) {
-          // --- PROFILE EXISTS: UPDATE & MERGE ---
           const primaryProfile = matchingProfiles[0];
           const mergePayload = {};
 
@@ -304,7 +301,6 @@ function UserSyncButton({ cardStyle, mutedStyle }) {
             mergePayload.created_date = matchedSession?.created_date || matchedEvent?.created_date;
           }
 
-          // Only perform DB update if missing fields need filling
           if (Object.keys(mergePayload).length > 0) {
             setSyncStatus(`Merging data for user: ${cleanEmail}...`);
             await db.entities.User.update(primaryProfile.id, {
@@ -314,14 +310,12 @@ function UserSyncButton({ cardStyle, mutedStyle }) {
             mergedCount++;
           }
 
-          // Clean up duplicate accounts with identical email
           if (matchingProfiles.length > 1) {
             for (let i = 1; i < matchingProfiles.length; i++) {
               await db.entities.User.delete(matchingProfiles[i].id).catch(() => {});
             }
           }
         } else {
-          // --- MISSING PROFILE IN USER TABLE: RECOVER FROM LOGS ---
           setSyncStatus(`Creating missing profile: ${cleanEmail}...`);
 
           const newProfilePayload = {
@@ -336,7 +330,6 @@ function UserSyncButton({ cardStyle, mutedStyle }) {
           };
 
           try {
-            // Note: Do not manually supply `id` to avoid DB rejection
             const createdUser = await db.entities.User.create(newProfilePayload);
             profilesByEmail.set(cleanEmail, [createdUser]);
             healedCount++;
@@ -701,16 +694,14 @@ function PartnersPanel({ cardStyle, mutedStyle }) {
     setUploading(true);
 
     try {
-      // 🛡️ Read the file locally into a Base64 string to completely bypass storage bucket CORS
       const reader = new FileReader();
       
       reader.onloadend = async () => {
         try {
           const base64ImageUrl = reader.result;
 
-          // Save the raw data URL directly into your database document entity
           const record = await db.entities.PartnerImage.create({
-            image_url: base64ImageUrl, // Stored safely as local data text string
+            image_url: base64ImageUrl,
             name: nameInput.trim() || file.name,
             link_url: linkInput.trim() || "",
             order: partners.length,
@@ -820,7 +811,6 @@ function AIUsagePanel({ cardStyle, mutedStyle }) {
       setLogs(data);
       setLoading(false);
     });
-    // Live updates
     const unsub = db.entities.AIUsageLog.subscribe((event) => {
       if (event.type === "create") {
         setLogs(prev => [event.data, ...prev]);
@@ -835,7 +825,6 @@ function AIUsagePanel({ cardStyle, mutedStyle }) {
 
   if (loading) return <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-violet-400" /></div>;
 
-  // Helper for matching provider names reliably
   const isProvider = (p, name) => {
     const norm = String(p || "").toLowerCase();
     if (name === "mistral") return norm.includes("mistral");
@@ -866,7 +855,6 @@ function AIUsagePanel({ cardStyle, mutedStyle }) {
   const groqSuccess = logs.filter(l => isProvider(l.provider, "groq") && l.success !== false).length;
   const mistralSuccess = logs.filter(l => isProvider(l.provider, "mistral") && l.success !== false).length;
 
-  // Feature breakdown mapping keys
   const featureCounts = {};
   logs.forEach(l => {
     const k = l.feature || "unknown";
@@ -893,12 +881,11 @@ function AIUsagePanel({ cardStyle, mutedStyle }) {
 
   const features = Object.entries(featureCounts).sort((a, b) => getFeatureTotal(b[1]) - getFeatureTotal(a[1]));
 
-  // Recent 50 logs
   const recent = logs.slice(0, 50);
 
   return (
     <div className="space-y-5">
-      {/* Totals Grid */}
+      
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
         {[
           { label: "Total AI Calls", value: total, color: "text-white", success: null },
@@ -923,7 +910,7 @@ function AIUsagePanel({ cardStyle, mutedStyle }) {
         ))}
       </div>
 
-      {/* Provider split chart */}
+      
       {total > 0 && (
         <div className="rounded-2xl p-5" style={cardStyle}>
           <h3 className="font-bold text-sm mb-3">Provider Split</h3>
@@ -954,7 +941,7 @@ function AIUsagePanel({ cardStyle, mutedStyle }) {
         </div>
       )}
 
-      {/* Feature breakdown list */}
+      
       {features.length > 0 && (
         <div className="rounded-2xl p-5" style={cardStyle}>
           <h3 className="font-bold text-sm mb-3">Usage by Feature</h3>
@@ -985,7 +972,7 @@ function AIUsagePanel({ cardStyle, mutedStyle }) {
         </div>
       )}
 
-      {/* Recent logs data row elements */}
+      
       <div className="rounded-2xl overflow-hidden" style={cardStyle}>
         <div className="px-5 py-3 border-b font-bold text-sm" style={{ borderColor: "var(--app-border)" }}>
           Recent AI Calls (last 50)
@@ -1117,7 +1104,7 @@ function PinGate({ onUnlock }) {
 function ClassroomPanel({ cardStyle, mutedStyle }) {
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState(null); // class id being edited
+  const [editing, setEditing] = useState(null);
   const [editData, setEditData] = useState({});
   const [saving, setSaving] = useState(false);
 
@@ -1312,7 +1299,6 @@ export default function DevDashboard() {
   const cardStyle = { background: "var(--app-surface)", border: "1px solid var(--app-border)" };
   const mutedStyle = { color: "var(--app-text-muted)" };
 
-  // Browser notification for pending actions
   const notifCheckRef = useRef(false);
   const requestAndNotify = async (pendingApps, pendingSuspensions) => {
     if (!("Notification" in window)) return;
@@ -1333,7 +1319,6 @@ export default function DevDashboard() {
   };
 
   useEffect(() => {
-    // 1. StrictMode / Fast-refresh structural guard to prevent double-firing queries
     if (initialLoadRef.current) return;
     initialLoadRef.current = true;
 
@@ -1343,13 +1328,11 @@ export default function DevDashboard() {
       if (!isMounted) return;
       setUser(me);
       
-      // Authorization Check: Bails out early if the logged-in email is not allowed
       if (!me || !DEV_EMAILS.includes(me.email)) { 
         setLoading(false); 
         return; 
       }
 
-      // 🛡️ SELF-HEALING GUARD: Verify the logged-in admin's own profile document exists
       try {
         const myProfile = await db.entities.User.get(me.id || me.uid);
         if (!myProfile) {
@@ -1373,16 +1356,14 @@ export default function DevDashboard() {
       }
 
       try {
-        // Parallel Batch Fetch 1
         const [feedback, sessions, decks, users, ratings] = await Promise.all([
           db.entities.Feedback.list("-created_date", 2000).catch(() => []),
           db.entities.StudySession.list("-created_date", 20000).catch(() => []),
           db.entities.Deck.list("-updated_date", 20000).catch(() => []),
-          db.entities.User.list("-created_date", 20000).catch(() => []), // <-- Safely reads the user directory
+          db.entities.User.list("-created_date", 20000).catch(() => []),
           db.entities.DeckRating.list("-created_date", 20000).catch(() => []),
         ]);
 
-        // Parallel Batch Fetch 2
         const [suspensions, apps, friendships, apSessions, loginEvents, verifyRequests] = await Promise.all([
           db.entities.SuspendedUser.list("-created_date", 2000).catch(() => []),
           db.entities.CourseApplication.list("-created_date", 20000).catch(() => []),
@@ -1392,12 +1373,10 @@ export default function DevDashboard() {
           db.entities.PendingApproval.list("-created_date", 20000).catch(() => []),
         ]);
 
-        // Only apply state updates if the user hasn't already closed or switched tabs
         if (isMounted) {
           setData({ feedback, sessions, decks, users, ratings, suspensions, apps, friendships, apSessions, loginEvents, verifyRequests });
           setLoading(false);
 
-          // Send browser system notifications for pending actions (runs once per session)
           if (!notifCheckRef.current) {
             notifCheckRef.current = true;
             const pendingApps = (apps || []).filter(a => a.status === "pending").length;
@@ -1411,11 +1390,10 @@ export default function DevDashboard() {
       }
     });
 
-    // Cleanup block handles unmounting instances gracefully
     return () => {
       isMounted = false;
     };
-  }, []); // Keep explicitly tied to mount lifecycle
+  }, []);
 
   if (loading) return <div className="min-h-screen flex items-center justify-center" style={bgStyle}><Loader2 className="w-8 h-8 text-violet-500 animate-spin" /></div>;
 
@@ -1491,7 +1469,6 @@ export default function DevDashboard() {
         </div>
 
         {tab === "overview" && (() => {
-          // Build daily activity data for last 14 days
           const today = new Date();
           const dailyData = Array.from({ length: 14 }, (_, i) => {
             const d = new Date(today);
@@ -1528,7 +1505,7 @@ export default function DevDashboard() {
                 ))}
               </div>
 
-              {/* Activity Graph */}
+              
               <div className="rounded-2xl p-5 mb-5" style={cardStyle}>
                 <div className="flex items-center gap-2 mb-4">
                   <TrendingUp className="w-4 h-4 text-violet-400" />
@@ -1589,7 +1566,6 @@ export default function DevDashboard() {
             };
           });
 
-          // Session type breakdown
           const sessionTypeCounts = {};
           sessions.forEach(s => {
             const t2 = s.session_type || "flashcards";
@@ -1598,7 +1574,6 @@ export default function DevDashboard() {
           const sessionTypePie = Object.entries(sessionTypeCounts).map(([name, value]) => ({ name, value }));
           const PIE_COLORS = ["#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#ef4444"];
 
-          // Login platform breakdown
           const platformCounts = {};
           loginEvents.forEach(e => {
             const p = e.platform || "desktop";
@@ -1606,12 +1581,10 @@ export default function DevDashboard() {
           });
           const platformPie = Object.entries(platformCounts).map(([name, value]) => ({ name, value }));
 
-          // Top users by login count
           const loginsByUser = {};
           loginEvents.forEach(e => { loginsByUser[e.user_email] = (loginsByUser[e.user_email] || 0) + 1; });
           const topLoginUsers = Object.entries(loginsByUser).sort((a, b) => b[1] - a[1]).slice(0, 10);
 
-          // Top users by study time
           const minutesByUser = {};
           sessions.filter(s => s.session_type !== "browsing").forEach(s => {
             const email = s.user_email || s.created_by || "unknown";
@@ -1620,12 +1593,11 @@ export default function DevDashboard() {
           const topStudyUsers = Object.entries(minutesByUser).sort((a, b) => b[1] - a[1]).slice(0, 10)
             .map(([email, minutes]) => ({ email: email.split("@")[0], minutes }));
 
-          // Cards reviewed per day (last 14 days)
           const last14 = last30.slice(16);
 
           return (
             <div className="space-y-6">
-              {/* Summary stats row */}
+              
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {[
                   { label: "Total Logins", value: loginEvents.length.toLocaleString(), icon: "🔑", color: "text-violet-400" },
@@ -1641,7 +1613,7 @@ export default function DevDashboard() {
                 ))}
               </div>
 
-              {/* Daily Logins — 30 days */}
+              
               <div className="rounded-2xl p-5" style={cardStyle}>
                 <h2 className="font-bold text-sm mb-4 flex items-center gap-2">🔑 Daily Logins (Last 30 Days)</h2>
                 <ResponsiveContainer width="100%" height={180}>
@@ -1655,7 +1627,7 @@ export default function DevDashboard() {
                 </ResponsiveContainer>
               </div>
 
-              {/* Daily Cards Reviewed — 14 days */}
+              
               <div className="rounded-2xl p-5" style={cardStyle}>
                 <h2 className="font-bold text-sm mb-4 flex items-center gap-2">🃏 Daily Cards Reviewed (Last 14 Days)</h2>
                 <ResponsiveContainer width="100%" height={180}>
@@ -1674,7 +1646,7 @@ export default function DevDashboard() {
                 </div>
               </div>
 
-              {/* Pie charts row */}
+              
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="rounded-2xl p-5" style={cardStyle}>
                   <h2 className="font-bold text-sm mb-4">📚 Session Types</h2>
@@ -1702,7 +1674,7 @@ export default function DevDashboard() {
                 </div>
               </div>
 
-              {/* Top users by study time */}
+              
               <div className="rounded-2xl p-5" style={cardStyle}>
                 <h2 className="font-bold text-sm mb-3">⏱️ Top 10 Users by Study Time</h2>
                 <ResponsiveContainer width="100%" height={220}>
@@ -1716,7 +1688,7 @@ export default function DevDashboard() {
                 </ResponsiveContainer>
               </div>
 
-              {/* Top users by login count */}
+              
               <div className="rounded-2xl p-5" style={cardStyle}>
                 <h2 className="font-bold text-sm mb-3">🔑 Top 10 Users by Login Count</h2>
                 <div className="space-y-2">
@@ -1805,48 +1777,45 @@ export default function DevDashboard() {
 
         {tab === "users" && (
           <div className="space-y-2">
-            {/* FIXED: Reading from the dynamic state tracker variable if 'users' comes from 'data.users' */}
             {(users || []).map(u => {
-              // Safe fallback computation for the text avatar letter icon
               const userString = u.full_name || u.email || "U";
               const initialLetter = userString[0]?.toUpperCase() || "U";
               
               return (
                 <div key={u.id || u.email || Math.random()} className="rounded-2xl px-4 py-3 flex items-center gap-3" style={cardStyle}>
                   
-                  {/* Profile Picture Frame */}
+                  
                   <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-600/30 to-blue-600/30 flex items-center justify-center text-sm font-bold shrink-0 overflow-hidden">
                     {u.profile_picture_url
                       ? <img src={u.profile_picture_url} alt="" className="w-full h-full object-cover" />
                       : initialLetter}
                   </div>
 
-                  {/* User Account Info Segment */}
+                  
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold truncate">{u.display_name || u.full_name || u.email?.split('@')[0] || "—"}</p>
                     <p className="text-xs truncate" style={mutedStyle}>{u.email || "No email uploaded"}</p>
                     {u.bio && <p className="text-xs truncate opacity-40">{u.bio}</p>}
                   </div>
 
-                  {/* Action Controls Column */}
+                  
                   <div className="flex items-center gap-2 shrink-0">
-                    {/* Public / Private Badge */}
+                    
                     <span className={`px-2 py-0.5 rounded-lg text-xs font-medium ${u.is_public ? "bg-emerald-500/15 text-emerald-400" : "bg-white/[0.04] text-slate-400"}`}>
                       {u.is_public ? "public" : "private"}
                     </span>
                     
-                    {/* Account Role Badge */}
+                    
                     <span className={`px-2 py-0.5 rounded-lg text-xs font-medium ${u.role === "admin" ? "bg-violet-500/20 text-violet-400" : "bg-blue-500/10 text-blue-400"}`}>
                       {u.role || "user"}
                     </span>
 
-                    {/* Moderate Profile Picture Action Button */}
+                    
                     {u.profile_picture_url && (
                       <button
                         onClick={async () => {
                           if (window.confirm(`Remove profile picture for ${u.email || 'this user'}?`)) {
                             await db.entities.User.update(u.id, { profile_picture_url: null });
-                            // Assures your state container handles the collection updates cleanly
                             if (typeof setData === "function") {
                               setData(d => {
                                 const baseList = d.users || (Array.isArray(d) ? d : []);
@@ -1863,7 +1832,7 @@ export default function DevDashboard() {
                       </button>
                     )}
 
-                    {/* Toggle Public / Private Overrides (Shows lock control option for all visibility modes) */}
+                    
                     <button
                       onClick={async () => {
                         const targetPublicState = !u.is_public;
@@ -1961,7 +1930,7 @@ export default function DevDashboard() {
                   <p className="text-xs font-bold truncate">{f.requester_email} → {f.recipient_email}</p>
                   <p className="text-[10px] mt-0.5" style={mutedStyle}>{new Date(f.created_date).toLocaleDateString()}</p>
                 </div>
-                {/* Status selector */}
+                
                 <select
                   value={f.status}
                   onChange={async (e) => {
@@ -2073,7 +2042,6 @@ export default function DevDashboard() {
                         await db.entities.PendingApproval.update(req.id, { status: "approved" });
                         if (req.deck_id) {
                           await db.entities.Deck.update(req.deck_id, { is_verified: true, verified_by: user.email });
-                          // notify owner
                           db.entities.AppNotification.create({ recipient_email: req.requester_email, title: "✅ Deck Verified!", message: `Your deck "${req.deck_title}" has been granted a verified badge!`, icon: "badge", read: false }).catch(() => {});
                         }
                         setData(d => ({ ...d, verifyRequests: d.verifyRequests.map(r => r.id === req.id ? { ...r, status: "approved" } : r), decks: d.decks.map(dk => dk.id === req.deck_id ? { ...dk, is_verified: true } : dk) }));
@@ -2108,7 +2076,6 @@ export default function DevDashboard() {
         {tab === "export" && <GitExportPanel cardStyle={cardStyle} mutedStyle={mutedStyle} />}
 
         {tab === "timespent" && (() => {
-          // Aggregate total time (browsing + studying) per user
           const timeByUser = {};
           sessions.forEach(s => {
             const email = s.user_email || s.created_by || "unknown";

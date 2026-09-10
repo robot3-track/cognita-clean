@@ -163,7 +163,6 @@ const SECTION_CONFIG = [
   { key: "week_before", label: "Final Week Checklist", Icon: Calendar, color: "#dc2626", bg: "#fef2f2" },
 ];
 
-// AP Classroom-style sidebar nav item
 function NavItem({ icon: Icon, label, active, onClick }) {
   return (
     <button
@@ -177,7 +176,6 @@ function NavItem({ icon: Icon, label, active, onClick }) {
   );
 }
 
-// Circular progress ring
 function ProgressRing({ value, max, color, label, size = 100 }) {
   const r = 38;
   const circumference = 2 * Math.PI * r;
@@ -236,7 +234,6 @@ export default function APTips() {
       const user = await db.auth.me();
       incrementAiUsage(user?.email, false, 1);
       
-      // Fixed: Updated to use standard callAI layout
       const resp = await callAI({
         feature: "ap_tips_generation",
         prompt: `You are an expert AP exam tutor. Provide comprehensive exam tips for ${subject}. Return JSON with: exam_format, key_topics (array), study_tips (array), common_mistakes (array), frq_tips (array), week_before (array), scoring (string).`,
@@ -269,7 +266,6 @@ export default function APTips() {
       const user = await db.auth.me();
       incrementAiUsage(user?.email, false, 0.5);
       
-      // Fixed: Updated to use standard callAI layout
       const resp = await callAI({
         feature: "ap_tips_custom_ask",
         prompt: `You are an AP exam expert for ${selectedSubject}. Answer this student question concisely: "${customQ.trim()}". Keep to 3-5 sentences focused on exam success.`,
@@ -285,7 +281,6 @@ export default function APTips() {
 
   const filtered = AP_SUBJECTS.filter(s => s.toLowerCase().includes(searchQ.toLowerCase()));
 
-  // Mock stats for the dashboard view
   const topicCount = tips?.key_topics?.length || 0;
   const tipCount = tips?.study_tips?.length || 0;
   const mistakeCount = tips?.common_mistakes?.length || 0;
@@ -293,13 +288,13 @@ export default function APTips() {
 
   return (
     <div className="min-h-screen flex" style={{ background: "#ffffff", fontFamily: "system-ui, -apple-system, sans-serif", color: "#1a1a2e" }}>
-      {/* ── Left sidebar — AP Classroom style ── */}
+      
       <div className="flex flex-col shrink-0" style={{ width: 64, background: "#1a56db", paddingTop: 12 }}>
-        {/* Logo */}
+        
         <div className="flex flex-col items-center pb-4 mb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.2)" }}>
           <div className="w-10 h-10 rounded-lg flex items-center justify-center font-black text-white text-sm" style={{ background: "rgba(255,255,255,0.2)" }}>AP</div>
         </div>
-        {/* Nav items */}
+        
         {[
           { id: "dashboard", icon: Home, label: "Dashboard" },
           { id: "assignments", icon: ClipboardList, label: "Tips" },
@@ -318,9 +313,9 @@ export default function APTips() {
         ))}
       </div>
 
-      {/* ── Secondary sidebar — subject list ── */}
+      
       <div className="flex flex-col shrink-0" style={{ width: 200, borderRight: "1px solid #e5e7eb", background: "#f9fafb" }}>
-        {/* Header */}
+        
         <div className="px-4 py-4 border-b border-gray-200">
           <p className="font-black text-xs uppercase tracking-wider text-gray-500 mb-3">AP Exam Tips</p>
           <div className="relative">
@@ -333,7 +328,7 @@ export default function APTips() {
             />
           </div>
         </div>
-        {/* Subject list */}
+        
         <div className="flex-1 overflow-y-auto py-2">
           {filtered.map(subj => (
             <button
@@ -353,9 +348,9 @@ export default function APTips() {
         </div>
       </div>
 
-      {/* ── Main content ── */}
+      
       <div className="flex-1 overflow-y-auto">
-        {/* Top bar */}
+        
         <div className="flex items-center justify-between px-8 py-4 border-b border-gray-200" style={{ background: "white" }}>
           <h1 className="font-black text-lg">{selectedSubject || "AP Exam Tips"}</h1>
           <div className="flex items-center gap-2">
@@ -373,7 +368,7 @@ export default function APTips() {
 
         {tips && !loading && (
           <div className="px-8 py-6">
-            {/* Exam info banner */}
+            
             {(tips.exam_format || tips.scoring) && (
               <div className="rounded-xl p-4 mb-6 flex flex-wrap gap-6" style={{ background: "#eff6ff", border: "1px solid #bfdbfe" }}>
                 {tips.exam_format && (
@@ -391,7 +386,7 @@ export default function APTips() {
               </div>
             )}
 
-            {/* Progress rings row — like AP Classroom dashboard */}
+            
             <div className="flex flex-wrap gap-8 mb-8 px-4 py-6 rounded-2xl" style={{ background: "#f9fafb", border: "1px solid #e5e7eb" }}>
               <ProgressRing value={topicCount} max={8} color="#1a56db" label="Key Topics" />
               <ProgressRing value={tipCount} max={8} color="#f59e0b" label="Study Tips" />
@@ -399,13 +394,13 @@ export default function APTips() {
               <ProgressRing value={frqCount} max={5} color="#059669" label="FRQ Tips" />
             </div>
 
-            {/* My To-Do List style tip sections */}
+            
             <div className="mb-4">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="font-black text-sm text-gray-500 uppercase tracking-wider">Study Checklist</h2>
               </div>
 
-              {/* Section header row */}
+              
               <div className="rounded-t-xl overflow-hidden border border-gray-200">
                 <div className="px-4 py-2 text-xs font-bold text-gray-500 uppercase" style={{ background: "#f3f4f6" }}>
                   No Due Date
@@ -420,13 +415,13 @@ export default function APTips() {
                         onClick={() => setExpandedSection(expandedSection === sec.key ? null : sec.key)}
                         className="w-full flex items-center gap-3 px-4 py-3 transition-all hover:bg-gray-50 text-left"
                       >
-                        {/* Icon badge */}
+                        
                         <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: sec.bg }}>
                           <sec.Icon className="w-4 h-4" style={{ color: sec.color }} />
                         </div>
                         <span className="flex-1 text-sm font-semibold text-gray-700">{sec.label}</span>
                         <span className="text-xs text-gray-400 mr-2">{items.length} items</span>
-                        {/* Begin-style button */}
+                        
                         <span className="px-3 py-1 rounded-full text-xs font-semibold border transition-all hover:opacity-80"
                           style={{ borderColor: sec.color, color: sec.color }}>
                           {expandedSection === sec.key ? "Close" : "View"}
@@ -451,7 +446,7 @@ export default function APTips() {
               </div>
             </div>
 
-            {/* Ask a question panel — "Review Recent Results" style */}
+            
             <div className="mt-6 rounded-2xl overflow-hidden border border-gray-200">
               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200" style={{ background: "#f9fafb" }}>
                 <span className="font-black text-xs uppercase tracking-wider text-gray-500 flex items-center gap-2">

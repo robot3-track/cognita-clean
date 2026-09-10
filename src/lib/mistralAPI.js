@@ -1,5 +1,4 @@
 // @ts-nocheck
-// src/lib/mistralApi.js
 
 import { db } from "@/lib/firebase";
 
@@ -7,9 +6,7 @@ export const MISTRAL_API_KEY = import.meta.env.VITE_MISTRAL_API_KEY || "";
 export const MISTRAL_BASE_URL = "https://api.mistral.ai/v1";
 export const MISTRAL_MODEL = "mistral-small-latest";
 
-/**
- * Helper to record usage logs in Firebase (Matching lynxApi user resolution)
- */
+
 async function logAIUsage(provider, feature, promptLength = 0, success = true, error = null) {
   try {
     let userEmail = "";
@@ -30,9 +27,7 @@ async function logAIUsage(provider, feature, promptLength = 0, success = true, e
   }
 }
 
-/**
- * Text Completion Call (Used by LynxApiPanel text tests & chat)
- */
+
 export async function callMistralDirect({ prompt, signal, feature = "mistral_direct" }) {
   const promptLength = prompt?.length || 0;
 
@@ -65,20 +60,16 @@ export async function callMistralDirect({ prompt, signal, feature = "mistral_dir
     const content = data?.choices?.[0]?.message?.content;
     if (!content) throw new Error("No text returned from Mistral.");
 
-    // Log Successful Call
     await logAIUsage("mistral", feature, promptLength, true);
 
     return content;
   } catch (err) {
-    // Log Failed Call
     await logAIUsage("mistral", feature, promptLength, false, err?.message || err);
     throw err;
   }
 }
 
-/**
- * Primary Generator: Attempts to call Mistral Agent API (requires a custom agentId).
- */
+
 async function generateWithMistralAgent({ prompt, agentId = null, signal }) {
   if (!MISTRAL_API_KEY) {
     throw new Error("VITE_MISTRAL_API_KEY is missing.");
@@ -110,7 +101,6 @@ async function generateWithMistralAgent({ prompt, agentId = null, signal }) {
 
   const data = await response.json();
 
-  // Extract file_id from response outputs
   let fileId = null;
   const outputs = data?.outputs || [];
 
@@ -129,7 +119,6 @@ async function generateWithMistralAgent({ prompt, agentId = null, signal }) {
     throw new Error("Mistral did not return an image file_id.");
   }
 
-  // Fetch the actual image binary
   const fileResponse = await fetch(`${MISTRAL_BASE_URL}/files/${fileId}/content`, {
     method: "GET",
     headers: { Authorization: `Bearer ${MISTRAL_API_KEY}` },
@@ -144,9 +133,7 @@ async function generateWithMistralAgent({ prompt, agentId = null, signal }) {
   return URL.createObjectURL(blob);
 }
 
-/**
- * Backup Generator: Pollinations AI Failsafe
- */
+
 async function generateWithPublicFallback({ prompt, signal }) {
   const encoded = encodeURIComponent(prompt);
   const randomSeed = Math.floor(Math.random() * 10000000);
@@ -155,9 +142,7 @@ async function generateWithPublicFallback({ prompt, signal }) {
   return `https://image.pollinations.ai/prompt/${encoded}?width=1024&height=1024&nologo=true&seed=${randomSeed}&nocache=${timestamp}`;
 }
 
-/**
- * Main Exported Function for Image Generation with Fallbacks
- */
+
 export async function generateImageWithMistralFallbacks({
   prompt,
   customAgentId = null,
@@ -167,7 +152,6 @@ export async function generateImageWithMistralFallbacks({
   const promptLength = prompt?.length || 0;
   const providers = [];
 
-  // Only attempt Mistral Agent call if an explicit Agent ID is provided
   if (customAgentId) {
     providers.push({
       name: "Mistral Agent",
@@ -175,7 +159,6 @@ export async function generateImageWithMistralFallbacks({
     });
   }
 
-  // Fallback Public Generator
   providers.push({
     name: "Pollinations Public Generator",
     fn: () => generateWithPublicFallback({ prompt, signal }),
@@ -192,7 +175,6 @@ export async function generateImageWithMistralFallbacks({
       if (resultUrl) {
         console.log(`[Image Generation] Success with: ${provider.name}`);
 
-        // Log successful call using current logged-in user
         await logAIUsage("mistral", feature, promptLength, true);
 
         return resultUrl;
@@ -204,7 +186,6 @@ export async function generateImageWithMistralFallbacks({
     }
   }
 
-  // Record failed call
   const failureMsg = `All image generation options failed.\nDetails:\n${errors.join("\n")}`;
   await logAIUsage("mistral", feature, promptLength, false, failureMsg);
 

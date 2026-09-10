@@ -14,24 +14,20 @@ export default function DeckCoverPicker({ deck, isAuthor, onUpdate }) {
   const uploadImage = async (file) => {
     setUploading(true);
     try {
-      // 1. Convert the file to a base64 Data URL right inside the client browser
       const reader = new FileReader();
       
       const localBase64Url = await new Promise((resolve, reject) => {
         reader.onload = () => resolve(reader.result);
         reader.onerror = () => reject(new Error('Failed to read local file asset'));
         
-        // Use a balanced data string structure
         reader.readAsDataURL(file);
       });
 
-      // 2. Persist the string safely back to the database entity record
       await db.entities.Deck.update(deck.id, { 
         cover_image_url: localBase64Url, 
         cover_sticker: null 
       });
       
-      // 3. Update the component state view instantly
       onUpdate({ 
         cover_image_url: localBase64Url, 
         cover_sticker: null 

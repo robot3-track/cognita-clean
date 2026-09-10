@@ -3,7 +3,6 @@ import { db } from '@/lib/firebase';
 import { useState } from "react";
 import { Download, Loader2, Github, FileCode, Database, CheckCircle2 } from "lucide-react";
 
-// Entities to export
 const ENTITY_NAMES = [
   "Deck", "Flashcard", "ChatSession", "StudySession", "Quiz",
   "GeneratedMedia", "Friendship", "StudyGroup", "GroupMessage",
@@ -29,8 +28,6 @@ async function fetchAllPages(entityName) {
 }
 
 function createZipBlob(files) {
-  // Simple ZIP implementation using browser APIs
-  // We'll use a JSON bundle instead since we can't import JSZip
   const bundle = {};
   for (const [name, content] of Object.entries(files)) {
     bundle[name] = content;
@@ -50,7 +47,6 @@ export default function GitExportPanel({ cardStyle, mutedStyle }) {
     setDone(null);
 
     try {
-      // Collect all source files we know about
       const sourceFiles = {
         "README.md": `# Cognita App Export\n\nGenerated: ${new Date().toISOString()}\n\nThis is a source code export of the Cognita learning platform.\n`,
         "export_info.json": JSON.stringify({
@@ -60,7 +56,6 @@ export default function GitExportPanel({ cardStyle, mutedStyle }) {
         }, null, 2),
       };
 
-      // Known source file paths to export
       const knownPaths = [
         "App.jsx", "index.css", "tailwind.config.js", "main.jsx",
         "pages.config.js", "globals.css",
@@ -127,7 +122,6 @@ export default function GitExportPanel({ cardStyle, mutedStyle }) {
 
       setProgress(`Building export bundle (${knownPaths.length} files)...`);
 
-      // We can't actually read file contents client-side, so we create a manifest
       sourceFiles["file_manifest.json"] = JSON.stringify({
         total_files: knownPaths.length,
         files: knownPaths,
@@ -202,7 +196,7 @@ export default function GitExportPanel({ cardStyle, mutedStyle }) {
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Source Files Export */}
+          
           <div className="rounded-2xl p-5" style={{ background: "var(--app-bg)", border: "1px solid var(--app-border)" }}>
             <div className="flex items-center gap-2 mb-2">
               <FileCode className="w-5 h-5 text-blue-400" />
@@ -226,7 +220,7 @@ export default function GitExportPanel({ cardStyle, mutedStyle }) {
             )}
           </div>
 
-          {/* Data Export */}
+          
           <div className="rounded-2xl p-5" style={{ background: "var(--app-bg)", border: "1px solid var(--app-border)" }}>
             <div className="flex items-center gap-2 mb-2">
               <Database className="w-5 h-5 text-emerald-400" />

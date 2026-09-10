@@ -1,7 +1,4 @@
-// ─── AP Premade Questions — Extra Banks (V2 sets + AP Japanese) ───────────────
-// Each subject gets ~10 more MCQs and 1+ FRQ, giving 20+ MCQs per subject total.
 
-// ─── AP Human Geography V3 ───────────────────────────────────────────────────
 export const AP_HUMAN_GEO_V3 = {
   mcq: [
     {
@@ -190,7 +187,6 @@ export const AP_HUMAN_GEO_V3 = {
   ]
 };
 
-// ─── AP Biology V2 ───────────────────────────────────────────────────────────
 export const AP_BIOLOGY_V2 = {
   mcq: [
     { question: "A bacterium has a mutation in the lac operon that prevents the repressor protein from binding to the operator. The MOST likely consequence is:", options: ["The lac operon is permanently off, producing no β-galactosidase", "The lac genes are constitutively expressed regardless of lactose presence", "The genes are expressed only when glucose is absent", "The mutation has no effect because the promoter still controls transcription"], correct: 1, explanation: "The lac repressor normally binds the operator to block transcription when lactose is absent. A mutation preventing repressor binding = operator always accessible = RNA polymerase always transcribes = constitutive (constant) expression of β-galactosidase, permease, and transacetylase regardless of environmental conditions.", skill: "Unit 6: Gene Expression and Regulation", difficulty: "hard" },
@@ -218,7 +214,6 @@ export const AP_BIOLOGY_V2 = {
   ]
 };
 
-// ─── AP Psychology V2 ────────────────────────────────────────────────────────
 export const AP_PSYCHOLOGY_V2 = {
   mcq: [
     { question: "According to Piaget's theory, a child who pours water from a tall thin glass into a short wide glass and insists there is 'less water now' is demonstrating a lack of:", options: ["Object permanence", "Conservation", "Theory of mind", "Formal operational thinking"], correct: 1, explanation: "Conservation is the understanding that quantity remains the same despite changes in appearance (volume, shape). A child lacking conservation (preoperational stage, ~2-7 years) focuses on the perceptual feature (water level) rather than the logical invariance of volume. This is one of Piaget's most famous findings.", skill: "Unit 6: Developmental Psychology", difficulty: "easy" },
@@ -246,7 +241,6 @@ export const AP_PSYCHOLOGY_V2 = {
   ]
 };
 
-// ─── AP Calculus AB V2 ──────────────────────────────────────────────────────
 export const AP_CALCULUS_AB_V2 = {
   mcq: [
     { question: "What is the derivative of f(x) = eˣ · cos(x)?", options: ["eˣ · cos(x) − eˣ · sin(x)", "eˣ · cos(x) + eˣ · sin(x)", "−eˣ · sin(x)", "eˣ · sin(x)"], correct: 0, explanation: "Product rule: d/dx[uv] = u'v + uv'. u = eˣ, u' = eˣ; v = cos(x), v' = −sin(x). f'(x) = eˣ·cos(x) + eˣ·(−sin(x)) = eˣcos(x) − eˣsin(x) = eˣ(cos x − sin x).", skill: "Unit 3: Differentiation — Product Rule", difficulty: "medium" },
@@ -274,7 +268,6 @@ export const AP_CALCULUS_AB_V2 = {
   ]
 };
 
-// ─── AP Macroeconomics V2 ────────────────────────────────────────────────────
 export const AP_MACROECONOMICS_V2 = {
   mcq: [
     { question: "When the government decreases taxes by $100B and the MPC is 0.75, what is the total change in GDP via the tax multiplier?", options: ["$100B", "$300B", "$400B", "$75B"], correct: 1, explanation: "Tax multiplier = −MPC/(1−MPC) = −0.75/0.25 = −3. Change in GDP = −3 × (−$100B) = +$300B. Note: the tax multiplier is smaller than the spending multiplier (1/(1−MPC) = 4) because the first-round effect of a tax cut is saving (MPS = 0.25), not direct spending.", skill: "Unit 3: Fiscal Policy — Tax Multiplier", difficulty: "hard" },
@@ -302,7 +295,6 @@ export const AP_MACROECONOMICS_V2 = {
   ]
 };
 
-// ─── AP US History V2 ────────────────────────────────────────────────────────
 export const AP_US_HISTORY_V2 = {
   mcq: [
     { question: "The excerpt from President Truman's 1947 address to Congress MOST directly represents which foreign policy doctrine?", stimulus: "I believe that it must be the policy of the United States to support free peoples who are resisting attempted subjugation by armed minorities or by outside pressures. I believe that we must assist free peoples to work out their own destinies in their own way... The free peoples of the world look to us for support in maintaining their freedoms.", stimulus_source: "President Harry Truman, Address to Congress, March 12, 1947", stimulus_header: "Question 1 refers to the following excerpt.", options: ["Monroe Doctrine extending US control over Latin American nations", "Truman Doctrine committing the US to containing communist expansion globally", "Marshall Plan providing economic assistance to rebuild European economies", "NSC-68 calling for massive military rearmament to confront Soviet power"], correct: 1, explanation: "The Truman Doctrine (1947) committed the US to supporting 'free peoples' resisting communist subversion or external pressure — initially Greece and Turkey. This marked the beginning of containment strategy, extending US commitments globally beyond the Western Hemisphere. It represented a fundamental departure from pre-WWII isolationism.", skill: "Period 8: Cold War Origins", difficulty: "medium" },
@@ -330,7 +322,6 @@ export const AP_US_HISTORY_V2 = {
   ]
 };
 
-// ─── AP World History V2 ─────────────────────────────────────────────────────
 export const AP_WORLD_HISTORY_V2 = {
   mcq: [
     { question: "The map shows the spread of the Black Death in Europe from 1347–1353. Which conclusion is MOST directly supported?", map_description: "A map of Europe showing the spread of plague from 1347–1353 using concentric shading. The darkest shading (1347) covers Sicily, southern Italy, and southern France. By 1348: all of France, Iberia, Italy, most of the Holy Roman Empire. By 1349: England, Scandinavia begins. By 1351: reaches Poland and Lithuania. The map shows arrows from trade routes (Mediterranean ports, Silk Road terminus). Areas labeled: Venice, Genoa, Paris, London. A small area in Poland shows minimal impact (lighter shading). Note: arrows show disease following major trade routes.", stimulus_source: "Adapted from David Herlihy, The Black Death and the Transformation of the West, 1997", options: ["The plague spread from north to south, originating in Scandinavia", "The plague followed trade routes from the Mediterranean northward, consistent with the role of merchant shipping in spreading the disease", "Poland and Lithuania were unaffected due to geographic isolation from trade routes", "The Black Death spread at a uniform rate across all of Europe simultaneously"], correct: 1, explanation: "The map shows the plague moving along Mediterranean trade routes — Sicily (1347) → Italian city-states → French ports → inland. This reflects the historical record: infected rats on Genoese merchant ships brought plague from Black Sea ports (where Mongol trade brought it from Central Asia). Trade connectivity = disease vulnerability.", skill: "Unit 3: Transoceanic Interconnections", difficulty: "medium" },
@@ -358,7 +349,6 @@ export const AP_WORLD_HISTORY_V2 = {
   ]
 };
 
-// ─── AP Chemistry V2 ─────────────────────────────────────────────────────────
 export const AP_CHEMISTRY_V2 = {
   mcq: [
     { question: "Which electron configuration represents a violation of Hund's Rule?", table_data: { headers: ["Species", "Electron Configuration (last subshell)"], rows: [["Option A", "2px↑↓, 2py empty, 2pz empty"], ["Option B", "2px↑, 2py↑, 2pz↑"], ["Option C", "2px↑, 2py↑, 2pz empty"], ["Option D", "2px↑↓, 2py↑↓, 2pz↑↓"]] }, options: ["Option A — paired electrons in one orbital before others are singly occupied", "Option B — each orbital has one electron", "Option C — two singly occupied orbitals", "Option D — all orbitals filled"], correct: 0, explanation: "Hund's Rule states that electrons fill degenerate orbitals singly before pairing. Option A violates this: pairing electrons in 2px before singly occupying 2py and 2pz. The correct filling for 3 electrons would be: 2px↑, 2py↑, 2pz↑ (Option B).", skill: "Unit 1: Atomic Structure and Electron Configuration", difficulty: "medium" },
@@ -386,7 +376,6 @@ export const AP_CHEMISTRY_V2 = {
   ]
 };
 
-// ─── AP Statistics V2 ────────────────────────────────────────────────────────
 export const AP_STATISTICS_V2 = {
   mcq: [
     { question: "A survey of 500 adults asks: 'Don't you agree that taxes are too high?' This is an example of:", options: ["A double-barreled question", "A leading question that may produce biased responses", "A stratified sampling design", "An appropriate voluntary response survey"], correct: 1, explanation: "This is a leading question — the phrasing 'Don't you agree...' suggests the expected answer, biasing responses toward agreement. Question wording is a major source of response bias in surveys. A neutral version would be: 'Do you believe taxes are too high, about right, or too low?'", skill: "Unit 3: Collecting Data", difficulty: "easy" },
@@ -414,7 +403,6 @@ export const AP_STATISTICS_V2 = {
   ]
 };
 
-// ─── AP US Government V2 ─────────────────────────────────────────────────────
 export const AP_US_GOV_V2 = {
   mcq: [
     { question: "The War Powers Resolution (1973) MOST directly attempted to:", options: ["Grant the President unlimited authority to deploy troops for 90 days without congressional approval", "Require the President to notify Congress within 48 hours of deploying troops and limit unauthorized combat to 60 days", "Transfer all military command authority to Congress", "Establish the Joint Chiefs of Staff as the primary decision-making body for military operations"], correct: 1, explanation: "The War Powers Resolution was passed over Nixon's veto to reassert congressional war-making authority after Vietnam. It requires: notification within 48 hours of troop deployment; withdrawal of troops within 60 days (plus 30-day withdrawal) unless Congress authorizes; and consultation. Presidents have generally disputed its constitutionality, complying minimally.", skill: "Separation of Powers — War Powers", difficulty: "medium" },
@@ -442,7 +430,6 @@ export const AP_US_GOV_V2 = {
   ]
 };
 
-// ─── AP Calculus BC V2 ───────────────────────────────────────────────────────
 export const AP_CALCULUS_BC_V2 = {
   mcq: [
     { question: "What is the Maclaurin series for sin(x)?", options: ["1 − x²/2! + x⁴/4! − ...", "x − x³/3! + x⁵/5! − ...", "x + x³/3! + x⁵/5! + ...", "1 + x + x²/2! + ..."], correct: 1, explanation: "sin(x) = Σ (−1)ⁿ x^(2n+1)/(2n+1)! = x − x³/6 + x⁵/120 − ... The even-powered Maclaurin is cos(x). eˣ uses all powers with positive terms.", skill: "Unit 10: Taylor/Maclaurin Series", difficulty: "easy" },
@@ -470,7 +457,6 @@ export const AP_CALCULUS_BC_V2 = {
   ]
 };
 
-// ─── AP Microeconomics V2 ────────────────────────────────────────────────────
 export const AP_MICROECONOMICS_V2 = {
   mcq: [
     { question: "A firm in a perfectly competitive market is producing at output where P = $20, ATC = $25, and MC = $20. In the short run, the firm should:", options: ["Shut down immediately since it is losing money", "Continue producing if P ≥ AVC (it covers variable costs and part of fixed costs)", "Increase price to $25 to cover ATC", "Expand output until MC exceeds ATC"], correct: 1, explanation: "Short-run shutdown rule: produce if P ≥ AVC (price covers variable costs — fixed costs are sunk). Even though P ($20) < ATC ($25), if P ≥ AVC, losses are smaller than shutting down (which would still incur fixed costs). Firm should produce if AVC ≤ $20.", skill: "Unit 3: Perfect Competition — Short Run", difficulty: "hard" },
@@ -498,7 +484,6 @@ export const AP_MICROECONOMICS_V2 = {
   ]
 };
 
-// ─── AP Japanese Language ────────────────────────────────────────────────────
 export const AP_JAPANESE_V1 = {
   mcq: [
     {

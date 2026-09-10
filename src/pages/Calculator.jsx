@@ -1,10 +1,8 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { RotateCcw } from "lucide-react";
 
-// ── Modes ──────────────────────────────────────────────────────────────────
 const TABS = ["CALC", "GRAPH", "TABLE"];
 
-// ── Expression evaluator ───────────────────────────────────────────────────
 function evalExpr(expr, angleMode = "RAD", x = null) {
   try {
     let e = expr
@@ -13,20 +11,15 @@ function evalExpr(expr, angleMode = "RAD", x = null) {
       .replace(/%/g, "/100")
       .replace(/\^/g, "**");
 
-    // Substitute x before adding implicit multiplication so we don't mangle function names
     if (x !== null) {
-      // Replace standalone x (not inside function names like "exp", "max")
       e = e.replace(/(?<![a-zA-Z])x(?![a-zA-Z])/g, `(${x})`);
     }
 
-    // Substitute constants
     e = e.replace(/π/g, `(${Math.PI})`);
-    // Replace bare 'e' not followed by ** or digits (avoid replacing "e" in "exp" etc.)
     e = e.replace(/(?<![a-zA-Z])e(?!\*\*|[a-zA-Z0-9])/g, `(${Math.E})`);
 
     const toRad = angleMode === "DEG" ? `(Math.PI/180)*` : "";
 
-    // Replace trig/math functions
     e = e
       .replace(/asin\(/g, angleMode === "DEG" ? `(180/Math.PI)*Math.asin(` : `Math.asin(`)
       .replace(/acos\(/g, angleMode === "DEG" ? `(180/Math.PI)*Math.acos(` : `Math.acos(`)
@@ -40,17 +33,10 @@ function evalExpr(expr, angleMode = "RAD", x = null) {
       .replace(/abs\(/g, "Math.abs(")
       .replace(/sqrt\(/g, "Math.sqrt(");
 
-    // Implicit multiplication:
-    // 2x(already replaced) → 2*(...)  e.g. "2(3.14)" → "2*(3.14)"
-    // number followed by ( → number*(
     e = e.replace(/(\d)\s*\(/g, "$1*(");
-    // ) followed by number → )*number
     e = e.replace(/\)\s*(\d)/g, ")*$1");
-    // ) followed by ( → )*(
     e = e.replace(/\)\s*\(/g, ")*(");
-    // number followed by Math. → number*Math.
     e = e.replace(/(\d)\s*(Math\.)/g, "$1*$2");
-    // ) followed by Math. → )*Math.
     e = e.replace(/\)\s*(Math\.)/g, ")*$1");
 
      
@@ -69,7 +55,6 @@ function formatResult(val) {
   return s;
 }
 
-// ── Button grid (normal + 2nd) ─────────────────────────────────────────────
 const BTN_ROWS = [
   [
     { n: "2nd",  s: null,    c: "second" },
@@ -135,7 +120,6 @@ const BTN_COLORS = {
   mode_btn: "bg-slate-600 text-white",
 };
 
-// ── Graph component ─────────────────────────────────────────────────────────
 const GRAPH_COLORS = ["#60a5fa", "#f472b6", "#34d399", "#fb923c", "#a78bfa"];
 
 function GraphView({ exprs, angleMode }) {
@@ -162,7 +146,6 @@ function GraphView({ exprs, angleMode }) {
     ctx.fillStyle = "#0a0a1a";
     ctx.fillRect(0, 0, W, H);
 
-    // Grid lines
     ctx.strokeStyle = "rgba(255,255,255,0.08)";
     ctx.lineWidth = 1;
     const stepX = Math.pow(10, Math.floor(Math.log10(xMax - xMin)) - 1);
@@ -176,7 +159,6 @@ function GraphView({ exprs, angleMode }) {
       ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(W, cy); ctx.stroke();
     }
 
-    // Axes
     ctx.strokeStyle = "rgba(255,255,255,0.35)";
     ctx.lineWidth = 1.5;
     const ax = toCanvasX(0);
@@ -184,7 +166,6 @@ function GraphView({ exprs, angleMode }) {
     ctx.beginPath(); ctx.moveTo(ax, 0); ctx.lineTo(ax, H); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(0, ay); ctx.lineTo(W, ay); ctx.stroke();
 
-    // Axis labels
     ctx.fillStyle = "rgba(255,255,255,0.4)";
     ctx.font = "10px monospace";
     [xMin, Math.round((xMin + xMax) / 2), xMax].forEach(v => {
@@ -194,7 +175,6 @@ function GraphView({ exprs, angleMode }) {
       if (v !== 0) ctx.fillText(v, ax + 4, toCanvasY(v) + 3);
     });
 
-    // Plot each function
     exprs.forEach((expr, idx) => {
       if (!expr.trim()) return;
       ctx.strokeStyle = GRAPH_COLORS[idx % GRAPH_COLORS.length];
@@ -212,7 +192,6 @@ function GraphView({ exprs, angleMode }) {
       ctx.stroke();
     });
 
-    // Trace cursor (for first non-empty expr)
     if (traceX !== null) {
       exprs.forEach((expr, idx) => {
         if (!expr.trim()) return;
@@ -306,7 +285,6 @@ function GraphView({ exprs, angleMode }) {
   );
 }
 
-// ── Table component ─────────────────────────────────────────────────────────
 function TableView({ expr, angleMode }) {
   const [start, setStart] = useState(-5);
   const [step, setStep]   = useState(1);
@@ -349,13 +327,12 @@ function TableView({ expr, angleMode }) {
   );
 }
 
-// ── Main Calculator ─────────────────────────────────────────────────────────
 export default function Calculator() {
   const [display, setDisplay]           = useState("0");
   const [ans, setAns]                   = useState("0");
   const [justEvaluated, setJustEvaluated] = useState(false);
   const [secondMode, setSecondMode]     = useState(false);
-  const [angleMode, setAngleMode]       = useState("DEG"); // DEG or RAD
+  const [angleMode, setAngleMode]       = useState("DEG");
   const [activeTab, setActiveTab]       = useState("CALC");
   const [graphExpr, setGraphExpr]       = useState("sin(x)");
   const [graphExprs, setGraphExprs]     = useState(["sin(x)", "", ""]);
@@ -366,7 +343,6 @@ export default function Calculator() {
       ? BTN_ROWS.flat().find(b => b.n === raw).s
       : raw;
 
-    // Handle 2nd toggle
     if (raw === "2nd") { setSecondMode(p => !p); return; }
     setSecondMode(false);
 
@@ -401,7 +377,6 @@ export default function Calculator() {
     const isOperator = ["+", "-", "×", "÷", "^", "%"].includes(val);
     const appendsOpen = val.endsWith("(") || val === "(";
 
-    // After evaluation: operator continues, anything else starts fresh
     if (justEvaluated && !isOperator) {
       setDisplay(val === "." ? "0." : val === "(-)" ? "-" : val);
       setJustEvaluated(false);
@@ -413,32 +388,27 @@ export default function Calculator() {
       return;
     }
 
-    // Smart 0 replacement
     if (val === "(-)" ) {
       setDisplay(prev => prev === "0" ? "-" : prev + "(-");
       return;
     }
 
     setDisplay(prev => {
-      // If display shows Error, start fresh
       const base = prev === "Error" ? "0" : prev;
-      // If display is just "0" and input is not an operator/dot/paren/function
       if (base === "0" && !isOperator && val !== "." && val !== ")" && !appendsOpen) {
         return val;
       }
-      // Shorthand: x² → append ^2
       if (val === "x²") return base + "^2";
       if (val === "x⁻¹") return base + "^(-1)";
       if (val === "x³") return base + "^3";
       if (val === "10^") return base + "10^(";
       if (val === "e^(") return base + "e^(";
-      if (val === "STAT") return base; // placeholder
+      if (val === "STAT") return base;
       return base + val;
     });
     setJustEvaluated(false);
   }, [display, ans, justEvaluated, secondMode, angleMode]);
 
-  // Keyboard support — with multi-char shortcut buffering
   const keyBuffer = useRef("");
   const keyBufferTimer = useRef(null);
 
@@ -462,12 +432,10 @@ export default function Calculator() {
     ];
 
     const flushBuffer = (buf) => {
-      // Try to match a shortcut from the buffer
       const match = SHORTCUTS.find(sc => buf.endsWith(sc.seq));
       if (match) {
-        // Remove the typed shortcut chars from display and insert the function
         setDisplay(prev => {
-          const trimmed = prev.slice(0, prev.length - (match.seq.length - 1)); // keep all but the shortcut letters (last char already not appended)
+          const trimmed = prev.slice(0, prev.length - (match.seq.length - 1));
           return trimmed === "" ? match.out : trimmed + match.out;
         });
       }
@@ -478,7 +446,6 @@ export default function Calculator() {
       if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
       const key = e.key;
 
-      // Numeric / operator keys — clear buffer and handle directly
       if (key >= "0" && key <= "9") { keyBuffer.current = ""; press(key); return; }
       if (key === ".") { keyBuffer.current = ""; press("."); return; }
       if (key === "+") { keyBuffer.current = ""; press("+"); return; }
@@ -494,20 +461,16 @@ export default function Calculator() {
       if (key === "Backspace") { keyBuffer.current = ""; press("DEL"); return; }
       if (key === "Escape") { keyBuffer.current = ""; setDisplay("0"); setJustEvaluated(false); return; }
 
-      // Single-letter shortcuts that don't need buffering
       if (key === "e") { keyBuffer.current = ""; setDisplay(prev => (prev === "0" || prev === "Error" || justEvaluated) ? "e" : prev + "e"); setJustEvaluated(false); return; }
       if (key === "x") { keyBuffer.current = ""; setDisplay(prev => (prev === "0" || prev === "Error" || justEvaluated) ? "x" : prev + "x"); setJustEvaluated(false); return; }
 
-      // Multi-char shortcut buffering for letter keys
       if (/^[a-zA-Z]$/.test(key)) {
         clearTimeout(keyBufferTimer.current);
         keyBuffer.current += key;
         const buf = keyBuffer.current;
 
-        // Check for exact match
         const exact = SHORTCUTS.find(sc => sc.seq === buf);
         if (exact) {
-          // Remove the buffered chars from display (they weren't appended yet) and insert function
           setDisplay(prev => {
             const base = (prev === "0" || prev === "Error") ? "" : prev;
             return base + exact.out;
@@ -517,18 +480,14 @@ export default function Calculator() {
           return;
         }
 
-        // Check if any shortcut still starts with the buffer (partial match — wait)
         const partial = SHORTCUTS.some(sc => sc.seq.startsWith(buf));
         if (partial) {
-          // Flush after 600ms if no more keys come
           keyBufferTimer.current = setTimeout(() => {
-            // No match found — just type the letters literally
             const letters = keyBuffer.current;
             keyBuffer.current = "";
             setDisplay(prev => (prev === "0" ? letters : prev + letters));
           }, 600);
         } else {
-          // No match at all — flush as literal text
           setDisplay(prev => (prev === "0" ? buf : prev + buf));
           keyBuffer.current = "";
         }
@@ -546,11 +505,11 @@ export default function Calculator() {
     <div className="min-h-screen flex flex-col items-center py-6 px-3"
       style={{ background: "#111827", color: "white", fontFamily: "monospace" }}>
 
-      {/* TI-84 shell */}
+      
       <div className="w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl border-4 border-slate-700"
         style={{ background: "#1a1f2e" }}>
 
-        {/* Brand bar */}
+        
         <div className="flex items-center justify-between px-4 py-2 bg-slate-900">
           <span className="text-xs font-black text-blue-400 tracking-widest">TI-84 PLUS</span>
           <div className="flex gap-2">
@@ -566,13 +525,13 @@ export default function Calculator() {
           </span>
         </div>
 
-        {/* Screen */}
+        
         <div className="mx-3 mt-2 mb-3 rounded-xl overflow-hidden border-2 border-slate-600"
           style={{ background: "#0a1628", minHeight: 180 }}>
 
           {activeTab === "CALC" && (
             <div className="p-3">
-              {/* History */}
+              
               <div className="space-y-0.5 mb-2">
                 {history.slice(0, 3).map((h, i) => (
                   <div key={i} className="flex justify-between text-[10px] text-slate-500">
@@ -581,14 +540,14 @@ export default function Calculator() {
                   </div>
                 ))}
               </div>
-              {/* Current display */}
+              
               <div className="text-right">
                 <p className="text-[10px] text-slate-400 mb-0.5">Ans={ans}</p>
                 <p className="text-2xl font-black text-white break-all leading-tight min-h-[2rem]">
                   {display}
                 </p>
               </div>
-              {/* Second mode indicator */}
+              
               {secondMode && (
                 <div className="mt-1 text-[10px] text-yellow-400 font-bold text-right">2nd ▲</div>
               )}
@@ -626,7 +585,7 @@ export default function Calculator() {
           )}
         </div>
 
-        {/* Button grid */}
+        
         <div className="px-3 pb-4 space-y-1.5">
           {BTN_ROWS.map((row, ri) => (
             <div key={ri} className="grid grid-cols-5 gap-1.5">

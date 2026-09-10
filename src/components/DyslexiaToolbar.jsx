@@ -16,11 +16,7 @@ const SIZES = [
   { label: "X-Large", value: "1.3rem" },
 ];
 
-/**
- * DyslexiaToolbar — lets users pick a reading-friendly font, size, and TTS audio.
- * Pass `text` to enable "Read Aloud" button.
- * Pass `onFontChange(fontFamily, fontSize)` to apply font to parent.
- */
+
 export default function DyslexiaToolbar({ text, onFontChange }) {
   const [open, setOpen] = useState(false);
   const [font, setFont] = useState(FONTS[0]);
@@ -28,7 +24,6 @@ export default function DyslexiaToolbar({ text, onFontChange }) {
   const [speaking, setSpeaking] = useState(false);
 
   const apply = (newFont, newSize) => {
-    // Apply directly to document root so it affects all text
     document.documentElement.style.setProperty("--dyslexia-font", newFont.value);
     document.documentElement.style.setProperty("--dyslexia-size", newSize.value);
     if (onFontChange) onFontChange(newFont.value, newSize.value);
@@ -53,7 +48,7 @@ export default function DyslexiaToolbar({ text, onFontChange }) {
 
   return (
     <div className="relative inline-flex items-center gap-1">
-      {/* Font/Accessibility menu */}
+      
       <button
         onClick={() => setOpen(o => !o)}
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all hover:bg-white/10"
@@ -65,7 +60,7 @@ export default function DyslexiaToolbar({ text, onFontChange }) {
         <ChevronDown className={`w-3 h-3 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
 
-      {/* Read Aloud */}
+      
       {text && (
         <button
           onClick={readAloud}
@@ -78,7 +73,7 @@ export default function DyslexiaToolbar({ text, onFontChange }) {
         </button>
       )}
 
-      {/* Dropdown */}
+      
       {open && (
         <div className="absolute top-full left-0 mt-1 z-50 rounded-2xl shadow-2xl p-4 min-w-52"
           style={{ background: "var(--app-surface-solid, var(--app-surface))", border: "1px solid var(--app-border)" }}>

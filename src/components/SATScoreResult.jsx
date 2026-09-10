@@ -3,9 +3,8 @@ import { checkGridInAnswer } from '@/lib/SatQuestionBank';
 
 export default function SATScoreResult({ testData, onRetake, onHome }) {
   const { userAnswers = {}, timeSpentSeconds = 0, questions = [] } = testData || {};
-  const [reviewFilter, setReviewFilter] = useState("all"); // "all" | "incorrect" | "correct"
+  const [reviewFilter, setReviewFilter] = useState("all");
 
-  // ─── 1. REALISTIC DIGITAL SAT ADAPTIVE SCORING ENGINE ───────────────────────
   const totalQuestions = questions.length;
   let correctCount = 0;
   const domainBreakdown = {};
@@ -22,7 +21,6 @@ export default function SATScoreResult({ testData, onRetake, onHome }) {
 
     if (isCorrect) correctCount++;
 
-    // Aggregate by Skill Domain
     const domain = q.domain || "General Practice";
     if (!domainBreakdown[domain]) {
       domainBreakdown[domain] = { correct: 0, total: 0 };
@@ -33,10 +31,7 @@ export default function SATScoreResult({ testData, onRetake, onHome }) {
 
   const accuracyRatio = totalQuestions > 0 ? correctCount / totalQuestions : 0;
 
-  /**
-   * Official Digital SAT Scaled Curve Simulation (200-800 per section)
-   * Real dSAT uses Item Response Theory (IRT). This models module weighting & difficulty penalization.
-   */
+  
   const computeOfficialScaledScore = (correct, total) => {
     if (total === 0) return 200;
     if (correct === total) return 800;
@@ -44,30 +39,23 @@ export default function SATScoreResult({ testData, onRetake, onHome }) {
 
     const ratio = correct / total;
     
-    // Non-linear scaled curve (steeper penalties for high-accuracy errors)
     let scaled;
     if (ratio >= 0.90) {
-      // 90-100% Accuracy: High range (710 - 800)
       scaled = 800 - (total - correct) * 25;
     } else if (ratio >= 0.70) {
-      // 70-89% Accuracy: Mid-High range (600 - 700)
       scaled = 700 - (total * 0.9 - correct) * 20;
     } else if (ratio >= 0.40) {
-      // 40-69% Accuracy: Mid-Range (450 - 590)
       scaled = 590 - (total * 0.7 - correct) * 15;
     } else {
-      // Below 40% Accuracy: (200 - 440)
       scaled = 200 + ratio * 600;
     }
 
-    // Clamp to valid SAT range [200, 800] & round to nearest 10
     const clamped = Math.min(800, Math.max(200, scaled));
     return Math.round(clamped / 10) * 10;
   };
 
   const estimatedSectionScore = computeOfficialScaledScore(correctCount, totalQuestions);
 
-  // Estimate Percentile Rank
   const getPercentile = (score) => {
     if (score >= 750) return "99th";
     if (score >= 700) return "94th";
@@ -83,7 +71,6 @@ export default function SATScoreResult({ testData, onRetake, onHome }) {
   const secondsSpent = timeSpentSeconds % 60;
   const letters = ["A", "B", "C", "D"];
 
-  // Filtered Questions list for Diagnostic Review
   const filteredQuestions = questions.map((q, idx) => {
     const userAns = userAnswers[idx];
     const isCorrect = q.isGridIn
@@ -100,7 +87,7 @@ export default function SATScoreResult({ testData, onRetake, onHome }) {
     <div className="min-h-screen bg-slate-100 text-slate-900 font-sans p-4 sm:p-8">
       <div className="max-w-5xl mx-auto space-y-6">
 
-        {/* ─── OFFICIAL BLUEBOOK-STYLE HEADER BAR ───────────────────────────── */}
+        
         <div className="bg-[#003366] text-white rounded-2xl p-6 sm:p-8 shadow-xl border border-blue-900">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 border-b border-white/10 pb-6">
             <div>
@@ -118,7 +105,7 @@ export default function SATScoreResult({ testData, onRetake, onHome }) {
               </p>
             </div>
 
-            {/* Score Display Container */}
+            
             <div className="flex items-center gap-6 bg-slate-900/60 p-4 sm:p-6 rounded-2xl border border-white/10 w-full md:w-auto justify-around">
               <div className="text-center">
                 <span className="text-4xl sm:text-5xl font-black text-amber-400 font-mono tracking-tight">
@@ -142,7 +129,7 @@ export default function SATScoreResult({ testData, onRetake, onHome }) {
             </div>
           </div>
 
-          {/* Quick Metrics */}
+          
           <div className="pt-4 flex flex-wrap items-center justify-between text-xs text-slate-300 gap-4">
             <div>
               Raw Accuracy: <strong className="text-white">{correctCount} of {totalQuestions}</strong> ({Math.round(accuracyRatio * 100)}%)
@@ -153,7 +140,7 @@ export default function SATScoreResult({ testData, onRetake, onHome }) {
           </div>
         </div>
 
-        {/* ─── DOMAIN MASTERY CARD ──────────────────────────────────────────── */}
+        
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4">
           <div className="flex justify-between items-center">
             <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
@@ -174,7 +161,7 @@ export default function SATScoreResult({ testData, onRetake, onHome }) {
                     </span>
                   </div>
 
-                  {/* Progress Bar */}
+                  
                   <div className="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
                     <div
                       className={`h-full transition-all duration-500 ${
@@ -189,7 +176,7 @@ export default function SATScoreResult({ testData, onRetake, onHome }) {
           </div>
         </div>
 
-        {/* ─── DETAILED QUESTION DIAGNOSTICS ─────────────────────────────────── */}
+        
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
             <div>
@@ -199,7 +186,7 @@ export default function SATScoreResult({ testData, onRetake, onHome }) {
               <p className="text-xs text-slate-500">Analyze correct answers, choices, and official explanations.</p>
             </div>
 
-            {/* Review Filter Controls */}
+            
             <div className="flex bg-slate-100 p-1 rounded-xl text-xs font-semibold self-start sm:self-auto">
               <button
                 onClick={() => setReviewFilter("all")}
@@ -222,7 +209,7 @@ export default function SATScoreResult({ testData, onRetake, onHome }) {
             </div>
           </div>
 
-          {/* Questions Render List */}
+          
           <div className="space-y-6">
             {filteredQuestions.map((q) => (
               <div
@@ -250,7 +237,7 @@ export default function SATScoreResult({ testData, onRetake, onHome }) {
                   </span>
                 </div>
 
-                {/* Optional Passage/Stimulus Box */}
+                
                 {q.stimulus && (
                   <div className="text-xs text-slate-700 bg-white p-3 rounded-lg border border-slate-200 mb-3 italic font-serif leading-relaxed">
                     "{q.stimulus}"
@@ -261,7 +248,7 @@ export default function SATScoreResult({ testData, onRetake, onHome }) {
                   {q.question}
                 </p>
 
-                {/* Multiple Choice Review Grid */}
+                
                 {!q.isGridIn && q.options && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs mb-3">
                     {q.options.map((opt, optIdx) => {
@@ -289,7 +276,7 @@ export default function SATScoreResult({ testData, onRetake, onHome }) {
                   </div>
                 )}
 
-                {/* Grid-In Response Review */}
+                
                 {q.isGridIn && (
                   <div className="text-xs bg-white p-3 rounded-lg border border-slate-200 mb-3 space-y-1 font-mono">
                     <div>
@@ -305,7 +292,7 @@ export default function SATScoreResult({ testData, onRetake, onHome }) {
                   </div>
                 )}
 
-                {/* Official Explanation Box */}
+                
                 {q.explanation && (
                   <div className="text-xs text-slate-700 bg-white p-3.5 rounded-lg border border-slate-200 leading-relaxed space-y-1">
                     <strong className="text-[#003366] block font-bold">Official Rationale:</strong>
@@ -317,7 +304,7 @@ export default function SATScoreResult({ testData, onRetake, onHome }) {
           </div>
         </div>
 
-        {/* ─── ACTION BUTTONS ──────────────────────────────────────────────── */}
+        
         <div className="flex justify-end gap-3 pb-8">
           {onRetake && (
             <button

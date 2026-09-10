@@ -47,7 +47,6 @@ function isVideoUrl(url) {
 
 function isImageUrl(url) {
   if (!url) return false;
-  // Accept data URLs, common extensions, AND Base44/CDN URLs (which may not have extensions)
   return url.startsWith("data:image/") || url.includes(".png") || url.includes(".jpg") || url.includes(".jpeg") || url.includes(".webp") || url.startsWith("https://");
 }
 
@@ -86,7 +85,6 @@ function drawOverlays(ctx, sceneNumber, totalScenes, onScreenText, narText, prog
 
 function drawTransition(ctx, fromImg, toImg, progress, W, H, fromColor, toColor) {
   ctx.clearRect(0, 0, W, H);
-  // Blend background colors
   ctx.globalAlpha = 1;
   ctx.fillStyle = toColor || fromColor || "#0a0a1a";
   ctx.fillRect(0, 0, W, H);
@@ -95,14 +93,12 @@ function drawTransition(ctx, fromImg, toImg, progress, W, H, fromColor, toColor)
   ctx.globalAlpha = 1;
 }
 
-// For Veo video / Imagen image scenes — scene-by-scene player with narration
 function VeoScenePlayer({ scenes, narrations, getSceneOnScreen }) {
   const [sceneIdx, setSceneIdx] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const videoRef = useRef(null);
   const autoAdvanceRef = useRef(null);
   const scene = scenes[sceneIdx];
-  // Prefer video_url, fall back to image_url (Imagen base64 or URL)
   const videoUrl = scene?.video_url && isVideoUrl(scene.video_url) ? scene.video_url : null;
   const imageUrl = scene?.image_url || null;
   const mediaUrl = videoUrl || imageUrl;
@@ -133,7 +129,6 @@ function VeoScenePlayer({ scenes, narrations, getSceneOnScreen }) {
       setTimeout(() => {
         videoRef.current?.play();
         speakNarration(idx);
-        // Auto-advance for image scenes after ~12s
         const sceneIsVideo = !!(scenes[idx]?.video_url && isVideoUrl(scenes[idx].video_url));
         if (!sceneIsVideo) {
           autoAdvanceRef.current = setTimeout(() => {
@@ -204,7 +199,7 @@ function VeoScenePlayer({ scenes, narrations, getSceneOnScreen }) {
           </div>
         )}
 
-        {/* Overlay: scene number + media type badge */}
+        
         <div className="absolute top-3 left-3 flex items-center gap-2">
           <div className="bg-indigo-500/80 text-white text-xs font-bold px-3 py-1 rounded-lg">
             Scene {sceneIdx + 1} / {scenes.length}
@@ -214,7 +209,7 @@ function VeoScenePlayer({ scenes, narrations, getSceneOnScreen }) {
           </div>
         </div>
 
-        {/* Play/pause overlay button */}
+        
         <button
           onClick={togglePlay}
           className="absolute inset-0 flex items-center justify-center group"
@@ -234,7 +229,7 @@ function VeoScenePlayer({ scenes, narrations, getSceneOnScreen }) {
             <p className="text-white/90 text-sm line-clamp-2">{narrations[sceneIdx]}</p>
           </div>
         )}
-        {/* Progress bar */}
+        
         <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/10">
           <div className="h-full bg-violet-500 transition-all" style={{ width: `${((sceneIdx + 1) / scenes.length) * 100}%` }} />
         </div>
@@ -279,14 +274,12 @@ export default function VideoPlayer({ item }) {
     return m ? m[1].trim() : "";
   };
 
-  // Use scene player if scenes exist (even without images — VeoScenePlayer handles missing gracefully)
   const hasGeneratedMedia = scenes.length > 0;
 
   if (hasGeneratedMedia) {
     return <VeoScenePlayer scenes={scenes} narrations={narrations} getSceneOnScreen={getSceneOnScreen} />;
   }
 
-  // Fallback: canvas-based player for scenes without generated media
   return <CanvasVideoPlayer item={item} scenes={scenes} narrations={narrations} getSceneOnScreen={getSceneOnScreen} />;
 }
 
@@ -307,11 +300,9 @@ function CanvasVideoPlayer({ item, scenes, narrations, getSceneOnScreen }) {
   const cardStyle = { background: "var(--app-surface)", border: "1px solid var(--app-border)" };
 
   useEffect(() => {
-    // Draw first scene after first paint
     const raf = requestAnimationFrame(() => {
       requestAnimationFrame(() => drawStaticScene(0, 1));
     });
-    // Load any scene images then redraw
     Promise.all(scenes.map(s => s.image_url ? loadImage(s.image_url) : Promise.resolve(null)))
       .then(imgs => { sceneImagesRef.current = imgs; drawStaticScene(currentSceneRef.current, 1); });
     return () => cancelAnimationFrame(raf);
@@ -322,12 +313,10 @@ function CanvasVideoPlayer({ item, scenes, narrations, getSceneOnScreen }) {
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, W, H);
-    // Use scene bg_color if available, otherwise gradient
     const bgColor = scenes[idx]?.bg_color || null;
     if (bgColor) {
       ctx.fillStyle = bgColor;
       ctx.fillRect(0, 0, W, H);
-      // Subtle radial glow
       const grd = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, W * 0.7);
       grd.addColorStop(0, "rgba(124,58,237,0.15)");
       grd.addColorStop(1, "rgba(0,0,0,0)");

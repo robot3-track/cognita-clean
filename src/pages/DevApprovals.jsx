@@ -75,7 +75,6 @@ export default function DevApprovals() {
     }).catch(() => setLoading(false));
   }, []);
 
-  // Subscribe to real-time updates
   useEffect(() => {
     const unsub = db.entities.PendingApproval.subscribe(event => {
       if (event.type === "create") setApprovals(prev => [event.data, ...prev]);

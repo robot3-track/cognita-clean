@@ -7,7 +7,7 @@ import {
   Mic, Loader2, Play, Pause, Square, Trash2, Sparkles,
   Download, Search, Globe, Lock, Upload, Type, Layers,
   ChevronDown, ChevronUp, BookOpen, Wand2, X, CheckCircle2,
-  AudioLines, Clapperboard, Info, MessageSquare, GraduationCap, Image as ImageIcon
+  AudioLines, Clapperboard, Info, MessageSquare, Image as ImageIcon
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { canUseAi, incrementAiUsage } from "../components/aiUsageLimit";
@@ -584,7 +584,7 @@ export default function Media() {
               <Sparkles className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-black text-white tracking-tight">AI Studio</h1>
+              <h1 className="text-3xl font-black text-white tracking-tight">Media Studio</h1>
               <p className="text-sm text-white/60">Turn your notes into audio, video, & image lessons</p>
             </div>
           </div>

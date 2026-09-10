@@ -10,7 +10,6 @@ function loadAdScript() {
   if (scriptLoadPromise) return scriptLoadPromise;
   scriptLoadPromise = new Promise((resolve) => {
     if (document.getElementById(AD_SCRIPT_ID)) {
-      // Script tag exists — wait for it or resolve immediately if already loaded
       const existing = document.getElementById(AD_SCRIPT_ID);
       if (window.adsbygoogle) { resolve(); return; }
       existing.addEventListener("load", resolve);
@@ -29,7 +28,6 @@ function loadAdScript() {
   return scriptLoadPromise;
 }
 
-// ─── Interstitial (unchanged logic) ──────────────────────────────────────────
 let interstitialShownAt = 0;
 const INTERSTITIAL_COOLDOWN = 60_000;
 
@@ -98,13 +96,9 @@ export function showInterstitialAd() {
   setTimeout(close, 30_000);
 }
 
-// ─── Banner Component ─────────────────────────────────────────────────────────
-// Only renders visibly if Google actually fills the ad slot.
-// Uses MutationObserver to detect when adsbygoogle inserts an iframe.
 const SMART_LINK = "https://decidesqueak.com/h668trbaz?key=ca59d73aacdfe35327eaeddee08edbca";
 
 export default function AdMobBanner() {
-  // Ads are currently disabled
   return null;
 
    

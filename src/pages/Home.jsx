@@ -5,7 +5,7 @@ import {
   Sparkles, BookOpen, Layers, ArrowRight, Search, Globe, 
   ChevronDown, Camera, Trophy, 
   Calculator, BookMarked, FolderOpen, FileText, 
-  ClipboardList, CheckCircle2, Play, X, FlaskConical, NotebookPen, Code2, Heart, Compass, User,
+  ClipboardList, Play, X, FlaskConical, NotebookPen, Code2, Heart, Compass, User,
   PenLine, Flag, Gamepad2, Type, CalendarDays, Brain, Users, BarChart3, Timer, FlaskRound
 } from "lucide-react";
 import HomeLayoutCustomizer, { getHomeLayout } from "@/components/HomeLayoutCustomizer";
@@ -20,12 +20,12 @@ import TutorialModal from "@/components/TutorialModal";
 import LiveActivityBar from "@/components/LiveActivityBar";
 import { addSurveyBonusServer } from "@/components/userCredits";
 
-import flashcardsImg from "../../flashcards.png";
-import medialabImg from "../../medialab.png";
-import studychatImg from "../../studychat.png";
-import scanandimportImg from "../../scanandimport.png";
-import examprepImg from "../../examprep.png";
-import studygamesImg from "../../studygames.png";
+import flashcardsImg from "../../2.png";
+import medialabImg from "../../3.png";
+import studychatImg from "../../4.png";
+import scanandimportImg from "../../5.png";
+import examprepImg from "../../2.png";
+import studygamesImg from "../../3.png";
 
 const TOP_STUDIER_KEY = "cognita_top_studier_rewarded";
 

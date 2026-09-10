@@ -19,14 +19,12 @@ const COLORS = ["#4F46E5", "#7C3AED", "#2563EB", "#0891B2", "#059669", "#D97706"
 export default function Decks() {
   const { t } = useTranslation();
   
-  // Core Operational States
   const [decks, setDecks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [editingDeck, setEditingDeck] = useState(null);
   
-  // New / Edit Deck Form Fields
   const [newTitle, setNewTitle] = useState("");
   const [newSubject, setNewSubject] = useState("");
   const [newDescription, setNewDescription] = useState("");
@@ -35,18 +33,15 @@ export default function Decks() {
   const [sourceText, setSourceText] = useState("");
   const [cardCount, setCardCount] = useState(10);
   
-  // Advanced Navigation, Filter & Search States
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSubjectFilter, setSelectedSubjectFilter] = useState("all");
   const [sortBy, setSortBy] = useState("updated_date"); 
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   
-  // Folder Management Modal/Control States
   const [showFolderModal, setShowFolderModal] = useState(false);
   const [targetDeckForFolder, setTargetDeckForFolder] = useState(null);
   const [folderManagementInput, setFolderManagementInput] = useState("");
   
-  // Functional Operations States
   const [generating, setGenerating] = useState(false);
   const [userEmail, setUserEmail] = useState(null);
   const [limitError, setLimitError] = useState(null);
@@ -55,13 +50,11 @@ export default function Decks() {
   const [merging, setMerging] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
   
-  // Image Upload Parameters
   const [coverImageUrl, setCoverImageUrl] = useState(null);
   const [uploadingCover, setUploadingCover] = useState(false);
   
   const jsonImportRef = useRef(null);
 
-  // ─── ID RESOLVER HELPERS (Guarantees fallback protection) ──────────────────
   const safelyExtractId = (obj) => {
     if (!obj) return null;
     return obj._id || obj.id || (obj.id?.toString()) || null;
@@ -77,7 +70,6 @@ export default function Decks() {
     };
   };
 
-  // ─── COVER IMAGE UPLOADER ──────────────────────────────────────────────────
   const handleCoverUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -92,12 +84,10 @@ export default function Decks() {
         reader.readAsDataURL(file);
       });
 
-      // Assign the verified base64 layout string state natively
       setCoverImageUrl(localBase64Url);
     } catch (err) {
       console.error("Image loading execution failed:", err);
       
-      // Resilient inline structural fallback wrapper block
       try {
         const fallbackReader = new FileReader();
         fallbackReader.onloadend = () => {
@@ -114,7 +104,6 @@ export default function Decks() {
     }
   };
 
-  // ─── LOAD DECKS (Uses dual filtering array collection matches) ──────────────
   const loadDecks = useCallback(async () => {
     try {
       setLoading(true);
@@ -152,7 +141,6 @@ export default function Decks() {
     loadDecks(); 
   }, [loadDecks]);
 
-  // ─── SAVE / EDIT DECK MUTATIONS ───────────────────────────────────────────
   const saveDeck = async () => {
     if (!newTitle.trim()) return;
     if (sourceText.trim() && !canUseAi(userEmail)) {
@@ -318,7 +306,6 @@ export default function Decks() {
     }
   };
 
-  // ─── JSON EXPORT / IMPORT PIPELINES ────────────────────────────────────────
   const exportDeckJson = async (deck, e) => {
     e.preventDefault(); 
     e.stopPropagation();
@@ -393,7 +380,6 @@ export default function Decks() {
     }
   };
 
-  // ─── CLONE / DUPLICATE OPERATIONS ──────────────────────────────────────────
   const duplicateDeck = async (deck, e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -438,7 +424,6 @@ export default function Decks() {
     }
   };
 
-  // ─── MERGE MULTIPLE COLLECTIONS ────────────────────────────────────────────
   const mergeDecks = async () => {
     if (mergeSelected.length < 2) return;
     setMerging(true);
@@ -495,7 +480,6 @@ export default function Decks() {
     }
   };
 
-  // ─── FOLDER SORTING MIGRATION FUNCTIONS ─────────────────────────────────────
   const applyFolderAssignment = async () => {
     if (!targetDeckForFolder) return;
     const targetId = safelyExtractId(targetDeckForFolder);
@@ -514,7 +498,6 @@ export default function Decks() {
     }
   };
 
-  // ─── SEARCH / FILTERS ARCHITECTURE ──────────────────────────────────────────
   const allSubjects = Array.from(new Set(decks.map(d => d.subject).filter(Boolean)));
 
   const filteredAndSortedDecks = decks
@@ -540,7 +523,7 @@ export default function Decks() {
       <div className="min-h-screen pb-32 px-4 sm:px-6 py-6 sm:py-10" style={bgStyle}>
         <div className="max-w-4xl mx-auto">
           
-          {/* Main Top Header Block Banner */}
+          
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
             <div>
               <h1 className="text-3xl sm:text-4xl font-black tracking-tight mb-1">{t('myDecks')}</h1>
@@ -582,7 +565,7 @@ export default function Decks() {
             </div>
           </div>
 
-          {/* Search Engine Control Panel */}
+          
           <div className="rounded-2xl p-3 mb-6 space-y-3" style={cardStyle}>
             <div className="flex items-center gap-2 bg-black/20 rounded-xl px-3 py-2 border border-white/5">
               <Search className="w-4 h-4 opacity-40 shrink-0" />
@@ -639,7 +622,7 @@ export default function Decks() {
             )}
           </div>
 
-          {/* Form Drawer: Create/Edit Multi-functional Form Container */}
+          
           {showNew && (
             <div className="rounded-3xl p-5 sm:p-6 mb-6 relative overflow-hidden shadow-2xl transition-all animate-in fade-in zoom-in-95 duration-200 border-2" style={{...cardStyle, borderColor: newColor + "40"}}>
               <div className="absolute top-0 left-0 w-full h-1" style={{ backgroundColor: newColor }} />
@@ -784,7 +767,7 @@ export default function Decks() {
             </div>
           )}
 
-          {/* Merge Action Banner */}
+          
           {mergeMode && (
             <div className="rounded-2xl p-4 mb-6 flex items-center justify-between gap-3 border animate-pulse" style={{ background: "rgba(245,158,11,0.05)", borderColor: "rgba(245,158,11,0.3)" }}>
               <div className="flex items-center gap-2">
@@ -803,7 +786,7 @@ export default function Decks() {
             </div>
           )}
 
-          {/* Core Collection Presentation Grid Container */}
+          
           {loading ? (
             <div className="flex flex-col items-center justify-center py-24 gap-2">
               <Loader2 className="w-8 h-8 text-violet-500 animate-spin" />
@@ -859,7 +842,6 @@ export default function Decks() {
 
               return (
                 <div className="rounded-2xl overflow-hidden group border border-white/5 hover:border-white/10 transition-all duration-200 flex flex-col justify-between" style={cardStyle}>
-                  {/* FIXED: The target routing string is strictly passed through the verified ID resolver to avoid hitting "undefined" router values */}
                   <Link to={createPageUrl(`Study?deck_id=${currentDeckId}`)} className="block p-4 flex-1">
                     <div className="flex items-start gap-3">
                       <div className="w-11 h-11 rounded-xl shrink-0 flex items-center justify-center overflow-hidden border border-black/40 relative" style={{ background: deck.color || "#4F46E5" }}>
@@ -890,7 +872,7 @@ export default function Decks() {
                     </div>
                   </Link>
 
-                  {/* Quick Controls Row */}
+                  
                   <div className="flex items-center gap-1 px-3 pb-3 pt-1 border-t border-white/5 bg-black/10">
                     <button
                       onClick={(e) => exportDeckJson(deck, e)}
@@ -983,7 +965,7 @@ export default function Decks() {
             );
           })()}
 
-          {/* Interactive Modal Viewport Layer: Folder Designation Editor */}
+          
           {showFolderModal && (
             <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
               <div className="w-full max-w-sm rounded-2xl p-5 border border-white/15" style={cardStyle}>
@@ -1020,7 +1002,7 @@ export default function Decks() {
             </div>
           )}
 
-          {/* Downstream Drop Safety Dialog Confirmation Interface */}
+          
           <ConfirmDialog
             open={!!confirmDelete}
             title="Delete Deck Forever?"

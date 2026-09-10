@@ -11,7 +11,7 @@ const QUESTION_TYPES = [
 export default function TestSetup({ cards, onStart, onCancel }) {
   const maxCards = cards.length;
   const [questionCount, setQuestionCount] = useState(Math.min(20, maxCards));
-  const [answerWith, setAnswerWith] = useState("answer"); // "answer" | "question" | "both"
+  const [answerWith, setAnswerWith] = useState("answer");
   const [selectedTypes, setSelectedTypes] = useState(["multiple_choice"]);
 
   const toggleType = (id) => {
@@ -35,7 +35,7 @@ export default function TestSetup({ cards, onStart, onCancel }) {
         </div>
 
         <div className="space-y-5">
-          {/* Question Count */}
+          
           <div className="rounded-2xl p-4" style={cardStyle}>
             <div className="flex items-center gap-2 mb-3">
               <Hash className="w-4 h-4 text-violet-400" />
@@ -70,7 +70,7 @@ export default function TestSetup({ cards, onStart, onCancel }) {
             </div>
           </div>
 
-          {/* Answer With */}
+          
           <div className="rounded-2xl p-4" style={cardStyle}>
             <div className="flex items-center gap-2 mb-3">
               <ArrowLeftRight className="w-4 h-4 text-blue-400" />
@@ -99,7 +99,7 @@ export default function TestSetup({ cards, onStart, onCancel }) {
             </p>
           </div>
 
-          {/* Question Types */}
+          
           <div className="rounded-2xl p-4" style={cardStyle}>
             <p className="font-semibold text-sm mb-3">Question Types</p>
             <div className="grid grid-cols-2 gap-2">

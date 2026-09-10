@@ -23,17 +23,6 @@ import { useAppTimeTracker } from "./hooks/useAppTimeTracker";
 import QuestionnairePopup from "./components/QuestionnairePopup";
 import AnnouncementPopup from "./components/AnnouncementPopup";
 
-// Ads currently disabled
-// (function preloadAdSense() {
-//   if (document.getElementById("adsense-script")) return;
-//   const script = document.createElement("script");
-//   script.id = "adsense-script";
-//   script.async = true;
-//   script.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3207455851065433";
-//   script.crossOrigin = "anonymous";
-//   document.head.appendChild(script);
-//   window.adsbygoogle = window.adsbygoogle || [];
-// })();
 
 const navItems = [
   { label: "Home", icon: Home, page: "Home" },
@@ -59,12 +48,10 @@ function AdSenseMeta() {
 }
 
 function EffectiveGateAd() {
-  // Ads currently disabled
   return null;
 }
 
 function InjectBodyScript() {
-  // Ads currently disabled
   return null;
 }
 
@@ -145,7 +132,7 @@ const buildNavGroups = (t, userEmail) => [
         ],
       },
     ],
-    pages: [], // flat pages list (kept for active detection)
+    pages: [],
   },
   {
     label: t('examPrep') || "Exam Prep",
@@ -193,7 +180,6 @@ const buildNavGroups = (t, userEmail) => [
   },
 ];
 
-// Flyout sub-subgroup item (appears to the right of the parent dropdown)
 function SubGroupFlyout({ sg, currentPageName, onNavigate, parentOpenTimer }) {
   const [flyoutOpen, setFlyoutOpen] = useState(false);
   const flyoutTimer = useRef(null);
@@ -303,7 +289,7 @@ function DropdownNav({ currentPageName, userEmail }) {
                 className="rounded-2xl shadow-2xl py-2 relative z-[999]"
                 style={{ background: "var(--app-surface-solid)", border: "1px solid var(--app-border)" }}
               >
-                {/* Render subGroups flyouts if present */}
+                
                 {group.subGroups && group.subGroups.map(sg => (
                   <SubGroupFlyout
                     key={sg.label}
@@ -313,7 +299,7 @@ function DropdownNav({ currentPageName, userEmail }) {
                     parentOpenTimer={closeTimer}
                   />
                 ))}
-                {/* Always render flat pages too */}
+                
                 {(group.pages || []).length > 0 && group.subGroups && (
                   <div className="my-1 mx-3 border-t" style={{ borderColor: "var(--app-border)" }} />
                 )}
@@ -376,7 +362,6 @@ export default function Layout({ children, currentPageName }) {
     db.auth.me().then(me => {
       setDevEmail(me?.email || "");
       setLayoutUser(me);
-      // Track login event once per browser session
       if (me?.email) {
       const sessionKey = `login_tracked_${me.email}`;
       if (!sessionStorage.getItem(sessionKey)) {
@@ -399,16 +384,15 @@ export default function Layout({ children, currentPageName }) {
     const url = createPageUrl(page);
     const currentPath = location.pathname + location.search;
     if (currentPageName === page) {
-      // Force re-navigation to root of tab
       navigate(url, { replace: true });
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
       navigate(url);
     }
   };
-  const showTopNav = true; // always show nav
+  const showTopNav = true;
 
-  if (layoutUser && !layoutUser.email) return null; // still loading
+  if (layoutUser && !layoutUser.email) return null;
 
   return (
     <SuspensionGate user={layoutUser}>
@@ -435,10 +419,10 @@ export default function Layout({ children, currentPageName }) {
         body { overscroll-behavior: none; }
       `}</style>
 
-      {/* AdMob Banner (removed after I didn't want to use ads anymore) - top */}
+      
       <AdMobBanner />
 
-      {/* Top nav */}
+      
       {showTopNav && (
         <nav
           className="sticky top-0 z-[999] flex items-center px-4 backdrop-blur-xl gap-4"
@@ -463,7 +447,7 @@ export default function Layout({ children, currentPageName }) {
             </Link>
           </div>
 
-          {/* Standalone Home link */}
+          
           <div className="hidden md:flex items-center gap-1">
             <Link to={createPageUrl("Home")}>
               <button className={`flex items-center gap-1.5 px-3 py-2 rounded-xl transition-all text-sm font-medium ${currentPageName === "Home" ? "bg-violet-500/10 text-violet-400" : "opacity-50 hover:opacity-90"}`}>
@@ -481,7 +465,7 @@ export default function Layout({ children, currentPageName }) {
           <div className="flex items-center gap-2 flex-1 justify-end">
           <LanguageSwitcher />
           <AiUsageCounter />
-          {/* Hamburger for mobile/tablet */}
+          
           <button
             className="md:hidden flex flex-col items-center justify-center gap-1 p-2 rounded-xl opacity-70 hover:opacity-100 transition-all"
             onClick={() => setMobileMenuOpen(o => !o)}
@@ -495,7 +479,7 @@ export default function Layout({ children, currentPageName }) {
         </nav>
       )}
 
-      {/* Page content with slide-in animation */}
+      
       <main className="flex-1 min-h-0">
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
@@ -511,7 +495,7 @@ export default function Layout({ children, currentPageName }) {
         </AnimatePresence>
       </main>
 
-      {/* Footer credit */}
+      
       <div className="w-full text-center py-3 text-xs opacity-30 flex flex-col items-center gap-2" style={{ color: "var(--app-text)" }}>
         <span>Made by Yohan Chang, student of Marina High School. 2026.</span>
         <a href="https://instagram.com/cognita.study" target="_blank" rel="noopener noreferrer" className="opacity-70 hover:opacity-100 transition-opacity">
@@ -521,7 +505,7 @@ export default function Layout({ children, currentPageName }) {
         </a>
       </div>
 
-      {/* Mobile grouped menu overlay */}
+      
       {mobileMenuOpen && (
         <div
           className="md:hidden fixed inset-0 z-[60]"
@@ -540,14 +524,14 @@ export default function Layout({ children, currentPageName }) {
         }}
       >
         <div className="px-4 space-y-1">
-          {/* Home link in mobile menu */}
+          
           <Link to={createPageUrl("Home")} onClick={() => setMobileMenuOpen(false)}>
             <div className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all mb-1 ${currentPageName === "Home" ? "text-violet-400 bg-violet-500/10 font-bold" : "opacity-70 hover:opacity-100"}`}>
               <Home className="w-4 h-4 shrink-0" />
               <span className="text-sm font-medium">{t('home')}</span>
             </div>
           </Link>
-          {/* Courses link in mobile menu */}
+          
           <Link to={createPageUrl("Courses")} onClick={() => setMobileMenuOpen(false)}>
             <div className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all mb-1 ${currentPageName === "Courses" || currentPageName === "CourseView" ? "text-violet-400 bg-violet-500/10 font-bold" : "opacity-70 hover:opacity-100"}`}>
               <BookOpen className="w-4 h-4 shrink-0" />

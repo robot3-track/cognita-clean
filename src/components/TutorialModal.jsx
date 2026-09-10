@@ -205,15 +205,12 @@ export default function TutorialModal() {
   const [step, setStep] = useState(0);
 
   useEffect(() => {
-    // Tutorial permanently disabled — mark as done for any user who hasn't seen it
     localStorage.setItem(TUTORIAL_KEY, "1");
-    // Never show
   }, []);
 
   const dismiss = () => {
     localStorage.setItem(TUTORIAL_KEY, "1");
     if (accountType) localStorage.setItem(ACCOUNT_TYPE_KEY, accountType);
-    // Go to nav spotlight instead of closing entirely
     setPhase("spotlight");
   };
 
@@ -229,12 +226,10 @@ export default function TutorialModal() {
 
   if (!visible) return null;
 
-  // Phase 3: nav spotlight
   if (phase === "spotlight") {
     return <NavSpotlight onDone={finishAll} />;
   }
 
-  // Phase 1: ask account type
   if (phase === "type") {
     return (
       <div className="fixed inset-0 z-[9998] flex items-end sm:items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(6px)" }}>
@@ -286,7 +281,6 @@ export default function TutorialModal() {
     );
   }
 
-  // Phase 2: tour based on account type
   const steps = accountType === "teacher" ? teacherSteps : accountType === "personal" ? personalSteps : studentSteps;
   const { icon: Icon, color, title, desc, emoji } = steps[step];
   const isLast = step === steps.length - 1;

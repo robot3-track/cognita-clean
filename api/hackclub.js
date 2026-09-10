@@ -1,10 +1,8 @@
-// Configure Vercel to allow up to 120 seconds for this serverless function
 export const config = {
   maxDuration: 120,
 };
 
 export default async function handler(req, res) {
-  // Define allowed domains for CORS
   const allowedOrigins = [
     'https://cognitastudy.me',
     'https://www.cognitastudy.me',
@@ -28,12 +26,10 @@ export default async function handler(req, res) {
     'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
   );
 
-  // Handle browser preflight OPTIONS request
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
-  // Support GET health-check calls so hitting the URL directly doesn't return 405 Method Not Allowed
   if (req.method === 'GET') {
     return res.status(200).json({ status: 'ok', message: 'Hack Club API proxy endpoint is active.' });
   }
@@ -42,7 +38,6 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed. Please send a POST request.' });
   }
 
-  // Retrieve API Key prioritizing VITE_ prefixes
   const apiKey = (
     process.env.VITE_HACKCLUB_API_KEY || 
     process.env.HACKCLUB_API_KEY || 
@@ -53,14 +48,12 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Hack Club API key is missing in server environment variables.' });
   }
 
-  // Retrieve Base URL prioritizing VITE_ prefixes
   let rawBase = (
     process.env.VITE_HACKCLUB_BASE_URL || 
     process.env.HACKCLUB_BASE_URL || 
     'https://ai.hackclub.com/chat/completions'
   ).trim();
 
-  // Safely ensure endpoint targets /chat/completions without double slashes or repetition
   let targetUrl = rawBase;
   if (!targetUrl.endsWith('/chat/completions')) {
     targetUrl = `${targetUrl.replace(/\/+$/, '')}/chat/completions`;
@@ -70,7 +63,7 @@ export default async function handler(req, res) {
     const { model, messages, temperature, response_format } = req.body || {};
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 115000); // 115s timeout buffer
+    const timeoutId = setTimeout(() => controller.abort(), 115000);
 
     const hackclubRes = await fetch(targetUrl, {
       method: 'POST',

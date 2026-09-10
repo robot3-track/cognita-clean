@@ -1,8 +1,7 @@
 import { db } from '@/lib/firebase';
 import { incrementAiUsage } from "../components/aiUsageLimit";
-import { callAI } from "./lynxApi"; // Import the standardized LLM provider chain
+import { callAI } from "./lynxApi";
 
-// AP-style FRQ grader using College Board rubric guidelines
 export async function gradeAPFRQ({ frq, responseText, subject, userEmail }) {
   incrementAiUsage(userEmail, false, 1);
 

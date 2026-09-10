@@ -25,7 +25,6 @@ export function dispatchUsageUpdate() {
   }
 }
 
-// ─── Helper: Get Current User Document Reference ──────────────────────────────
 
 async function getUserRecord(email) {
   if (!email) return null;
@@ -33,7 +32,6 @@ async function getUserRecord(email) {
   return users.length > 0 ? users[0] : null;
 }
 
-// ─── Local cache (for synchronous reads) ─────────────────────────────────────
 
 function getCacheKey(email) {
   return `ai_credits_cache_${email}`;
@@ -50,7 +48,6 @@ function setCachedCredits(email, amount) {
   localStorage.setItem(getCacheKey(email), String(Math.max(0, Math.round(amount * 100) / 100)));
 }
 
-// ─── Usage History (local log) ────────────────────────────────────────────────
 
 function getHistoryKey(email) {
   return `ai_usage_history_${email}`;
@@ -70,7 +67,6 @@ function appendHistory(email, entry) {
   localStorage.setItem(getHistoryKey(email), JSON.stringify(hist));
 }
 
-// ─── Init: sync from server + daily replenish ────────────────────────────────
 
 export async function initAiCredits(email) {
   if (!email || email === EXEMPT_EMAIL) return;
@@ -83,7 +79,6 @@ export async function initAiCredits(email) {
     let credits = me.ai_credits ?? replenishAmount;
     const lastReplenish = me.ai_credits_last_replenish || "";
 
-    // Daily replenish: only if new day AND credits < replenishAmount
     if (lastReplenish !== today && credits < replenishAmount) {
       credits = replenishAmount;
       await db.entities.User.update(me.id, {
@@ -91,11 +86,9 @@ export async function initAiCredits(email) {
         ai_credits_last_replenish: today,
       });
     } else if (lastReplenish !== today) {
-      // Update replenish date even if no refill needed
       await db.entities.User.update(me.id, { ai_credits_last_replenish: today });
     }
 
-    // Also add any pending survey bonuses
     const surveyCredits = await db.entities.SurveyCredit.filter({ user_email: email, applied: false });
     let bonusTotal = 0;
     for (const credit of surveyCredits) {
@@ -114,7 +107,6 @@ export async function initAiCredits(email) {
   }
 }
 
-// ─── Core Usage ──────────────────────────────────────────────────────────────
 
 export function canUseAi(email, isUnlimited = false) {
   if (!email) return false;
@@ -130,7 +122,6 @@ export function incrementAiUsage(email, isUnlimited = false, amount = 1) {
   appendHistory(email, { type: "ai_use", amount: -amount });
   dispatchUsageUpdate();
 
-  // Push to server Firestore safely via User Entity
   getUserRecord(email).then(me => {
     if (me) {
       db.entities.User.update(me.id, { ai_credits: next }).catch(() => {});
@@ -156,7 +147,6 @@ export function getTotalLimit(email) {
   return getDailyReplenish(email) + getSurveyBonus(email);
 }
 
-// ─── Survey Bonus ────────────────────────────────────────────────────────────
 
 function getSurveyBonusKey(email) {
   return `ai_survey_bonus_${email}`;
@@ -173,7 +163,6 @@ export function addSurveyBonus(email, amount = 5, note = "Survey reward") {
   const current = getSurveyBonus(email);
   localStorage.setItem(key, String(Math.round((current + amount) * 100) / 100));
   
-  // Also add to cached credits
   const credCurrent = getCachedCredits(email);
   const nextCredits = credCurrent + amount;
   setCachedCredits(email, nextCredits);
@@ -181,7 +170,6 @@ export function addSurveyBonus(email, amount = 5, note = "Survey reward") {
   dispatchUsageUpdate();
   addSurveyBonusServer(amount, note).catch(() => {});
   
-  // Sync credits to server safely via User Entity
   getUserRecord(email).then(me => {
     if (me) {
       db.entities.User.update(me.id, { ai_credits: nextCredits }).catch(() => {});
@@ -189,7 +177,6 @@ export function addSurveyBonus(email, amount = 5, note = "Survey reward") {
   }).catch(() => {});
 }
 
-// ─── Legacy sync (backwards compat) ──────────────────────────────────────────
 
 export async function syncBonusFromServer(email) {
   if (!email) return;

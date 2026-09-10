@@ -6,11 +6,10 @@ import { createPageUrl } from "@/utils";
 
 const STORAGE_KEY = "cognita_ap_showcase_seen_v2";
 
-// Mini mockup of the AP exam interface
 function APExamMockup() {
   return (
     <div className="rounded-xl overflow-hidden shadow-2xl border border-gray-200 text-left select-none scale-95" style={{ fontFamily: "Georgia, serif", background: "#ffffff", color: "#1a1a2e" }}>
-      {/* Header */}
+      
       <div className="flex items-center px-4 py-2 bg-gray-100 border-b border-gray-200 gap-3" style={{ fontFamily: "system-ui" }}>
         <button className="flex items-center gap-1 text-xs font-semibold text-gray-600 px-2 py-1 rounded hover:bg-gray-200">
           Directions <span className="ml-0.5">▾</span>
@@ -24,9 +23,9 @@ function APExamMockup() {
         <MoreHorizontal className="w-4 h-4 text-gray-400" />
       </div>
 
-      {/* Two pane */}
+      
       <div className="flex" style={{ minHeight: 180 }}>
-        {/* Left: stimulus */}
+        
         <div className="w-1/2 p-4 border-r border-gray-200 text-xs leading-relaxed" style={{ fontFamily: "Georgia, serif", color: "#1a1a2e" }}>
           <p className="font-bold text-xs mb-2" style={{ fontFamily: "system-ui" }}>Questions 1–3 refer to the following data.</p>
           <div className="rounded overflow-hidden border border-gray-300 text-xs mb-2">
@@ -54,7 +53,7 @@ function APExamMockup() {
           <p className="text-gray-500 text-right text-[9px]">— UN World Population Prospects, 2023</p>
         </div>
 
-        {/* Right: question */}
+        
         <div className="w-1/2 p-4 flex flex-col gap-3">
           <div className="flex items-center justify-between" style={{ fontFamily: "system-ui" }}>
             <button className="flex items-center gap-1.5 px-3 py-1 rounded border-2 border-dashed border-amber-400 bg-amber-50 text-amber-600 text-xs font-semibold">
@@ -76,7 +75,7 @@ function APExamMockup() {
         </div>
       </div>
 
-      {/* Bottom bar */}
+      
       <div className="flex items-center px-4 py-2 bg-gray-100 border-t border-gray-200 gap-3" style={{ fontFamily: "system-ui" }}>
         <span className="flex-1 text-xs text-gray-500">Student Name</span>
         <button className="px-3 py-1.5 rounded border border-gray-300 text-xs font-semibold text-gray-700">Back</button>
@@ -95,11 +94,9 @@ export default function APShowcaseBanner() {
   const location = useLocation();
 
   useEffect(() => {
-    // AP showcase banner permanently disabled
     setVisible(false);
   }, []);
 
-  // Auto-dismiss when user navigates to APTesting
   useEffect(() => {
     if (location.pathname === "/APTesting" || location.pathname.startsWith("/APTesting")) {
       localStorage.setItem(STORAGE_KEY, "1");

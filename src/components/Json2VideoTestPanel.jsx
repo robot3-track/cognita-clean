@@ -38,7 +38,6 @@ export default function Json2VideoTestPanel({ cardStyle, mutedStyle }) {
     setResult(null);
     setError("");
 
-    // Minimal test payload: single scene, text only, HD low quality (fastest)
     const testPayload = {
       resolution: "hd",
       quality: "low",
@@ -48,7 +47,7 @@ export default function Json2VideoTestPanel({ cardStyle, mutedStyle }) {
         "background-color": "#1a1a2e",
         elements: [{
           type: "text",
-          text: "JSON2Video Test — Cognita AI Studio",
+          text: "JSON2Video Test — Cognita Studio",
           duration: 5,
           settings: {
             "font-family": "Roboto",
@@ -86,7 +85,7 @@ export default function Json2VideoTestPanel({ cardStyle, mutedStyle }) {
         Send a minimal render job to JSON2Video. Tracks all attempts (submit, done, CORS errors, failures) in the log below.
       </p>
 
-      {/* API info */}
+      
       <div className="rounded-xl p-4 mb-4" style={{ background: "var(--app-bg)", border: "1px solid var(--app-border)" }}>
         <p className="text-xs font-bold mb-2 text-pink-400">📋 API Details</p>
         <div className="space-y-1 text-xs font-mono">
@@ -128,7 +127,7 @@ export default function Json2VideoTestPanel({ cardStyle, mutedStyle }) {
         </div>
       )}
 
-      {/* Attempt history */}
+      
       <div>
         <p className="text-xs font-bold mb-2 opacity-50">Attempt Log ({attempts.length})</p>
         {loadingAttempts ? (

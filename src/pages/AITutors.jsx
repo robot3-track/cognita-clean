@@ -120,7 +120,6 @@ const TUTOR_CATEGORIES = [
   },
 ];
 
-// Helper fallback component if a dynamic icon reference is missing
 function FunctionSquare(props) {
   return <Calculator {...props} />;
 }
@@ -178,7 +177,6 @@ function TutorChat({ tutor, user, onBack }) {
         userMessage: text,
       });
       setMessages(prev => [...prev, { role: "assistant", content: reply }]);
-      // Log AI tutor usage
       db.entities.AIUsageLog.create({
         user_email: user?.email || "",
         provider: "gemini",
@@ -204,7 +202,7 @@ function TutorChat({ tutor, user, onBack }) {
 
   return (
     <div className="flex flex-col h-screen" style={bgStyle}>
-      {/* Header */}
+      
       <div className="flex items-center gap-3 px-4 py-3 border-b" style={{ borderColor: "var(--app-border)", background: "var(--app-surface)" }}>
         <button onClick={onBack} className="p-2 rounded-xl hover:bg-white/5 transition-all">
           <ArrowLeft className="w-5 h-5" />
@@ -218,7 +216,7 @@ function TutorChat({ tutor, user, onBack }) {
         </div>
       </div>
 
-      {/* Messages */}
+      
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} gap-2`}>
@@ -256,7 +254,7 @@ function TutorChat({ tutor, user, onBack }) {
         <div ref={bottomRef} />
       </div>
 
-      {/* Input */}
+      
       <div className="px-4 py-3 border-t" style={{ borderColor: "var(--app-border)", background: "var(--app-surface)" }}>
         <div className="flex gap-2 items-end">
           <textarea
@@ -306,7 +304,7 @@ export default function AITutors() {
   return (
     <div className="min-h-screen pb-28 px-5 py-10" style={bgStyle}>
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
+        
         <div className="text-center mb-10">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-3xl mb-4" style={{ background: "rgba(139,92,246,0.15)", border: "1px solid rgba(139,92,246,0.3)" }}>
             <GraduationCap className="w-8 h-8 text-violet-400" />
@@ -317,7 +315,7 @@ export default function AITutors() {
           </p>
         </div>
 
-        {/* Search */}
+        
         <div className="relative mb-8 max-w-sm mx-auto">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={mutedStyle} />
           <input
@@ -329,7 +327,7 @@ export default function AITutors() {
           />
         </div>
 
-        {/* Categories */}
+        
         <div className="space-y-10">
           {filteredCategories.map(cat => (
             <div key={cat.label}>

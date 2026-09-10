@@ -35,7 +35,6 @@ function createBrownNoise(ctx) {
 }
 
 function createRain(ctx) {
-  // Rain = filtered white noise
   const bufferSize = 4096;
   const node = ctx.createScriptProcessor(bufferSize, 1, 1);
   const filter = ctx.createBiquadFilter();

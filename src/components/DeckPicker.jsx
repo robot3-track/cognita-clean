@@ -19,8 +19,8 @@ export default function DeckPicker({ targetPage, title }) {
   const [tab, setTab] = useState("mine");
   const [myDecks, setMyDecks] = useState([]);
   const [publicDecks, setPublicDecks] = useState([]);
-  const [ratings, setRatings] = useState({}); // deck_id -> { avg, count }
-  const [trending, setTrending] = useState({}); // deck_id -> count
+  const [ratings, setRatings] = useState({});
+  const [trending, setTrending] = useState({});
   const [loading, setLoading] = useState(true);
 
   const bgStyle = { background: "var(--app-bg)", color: "var(--app-text)" };
@@ -38,7 +38,6 @@ export default function DeckPicker({ targetPage, title }) {
         db.entities.StudySession.list("-created_date", 500),
       ]);
 
-      // Compute ratings per deck
       const ratingMap = {};
       allRatings.forEach(r => {
         if (!ratingMap[r.deck_id]) ratingMap[r.deck_id] = { sum: 0, count: 0 };
@@ -50,7 +49,6 @@ export default function DeckPicker({ targetPage, title }) {
         ratingAvg[id] = { avg: sum / count, count };
       });
 
-      // Compute trending (sessions today per deck)
       const trendMap = {};
       todaySessions.forEach(s => {
         if (s.created_date && s.created_date.slice(0, 10) === today && s.deck_id) {
@@ -75,7 +73,7 @@ export default function DeckPicker({ targetPage, title }) {
         <h1 className="text-2xl font-black mb-1">Choose a Deck</h1>
         <p className="text-sm mb-5" style={mutedStyle}>Pick a deck to start {title}</p>
 
-        {/* Tabs */}
+        
         <div className="flex gap-2 mb-5">
           {["mine", "public"].map(t => (
             <button key={t} onClick={() => setTab(t)}

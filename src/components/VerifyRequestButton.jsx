@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { Loader2, ShieldCheck } from "lucide-react";
 
 export default function VerifyRequestButton({ deck, user, cardStyle, mutedStyle }) {
-  const [status, setStatus] = useState(null); // null | "pending" | "sent"
+  const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -42,7 +42,7 @@ export default function VerifyRequestButton({ deck, user, cardStyle, mutedStyle 
   }
 
   if (status === "approved") {
-    return null; // already verified
+    return null;
   }
 
   return (

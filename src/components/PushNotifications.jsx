@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 
 import { Bell, BellOff } from "lucide-react";
 
-// VAPID public key (self-hosted demo key - works for web push)
 const VAPID_PUBLIC_KEY = "BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBLNAIb6EezsB_6W5VBA";
 
 function urlBase64ToUint8Array(base64String) {
@@ -39,7 +38,6 @@ export default function PushNotifications() {
     check();
   }, []);
 
-  // Register service worker
   useEffect(() => {
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/sw.js").catch(() => {});
@@ -69,7 +67,6 @@ export default function PushNotifications() {
         platform: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? "mobile" : "desktop",
       });
       setSubscribed(true);
-      // Show a test notification
       reg.showNotification("Cognita", {
         body: "Push notifications enabled! You'll get study reminders.",
         icon: "/icon-192.png",
